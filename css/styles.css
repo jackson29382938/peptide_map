@@ -962,6 +962,44 @@ canvas {
     gap: 16px;
 }
 
+/* Calculator panel - override studies-list flex behavior */
+#calc-panel .studies-list {
+    padding: 0 !important;
+    gap: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto;
+    overflow-x: visible;
+    flex: 1 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+}
+
+/* Ensure calc-content fills the available space */
+#calc-panel .studies-list .calc-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative;
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto;
+}
+
+/* Make sure calc-content children are visible */
+#calc-panel .calc-content > * {
+    flex-shrink: 0;
+}
+
+/* Make mode content grow to fill space */
+#calc-panel .calc-content > .calc-mode-content.active {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 /* Quiz Panel Styles (mirror companies/studies) */
 #quiz-panel {
     position: fixed;
@@ -1137,6 +1175,16 @@ canvas {
     flex-direction: column;
     overflow: hidden;
     transition: transform 0.3s ease-in-out, background 0.3s ease;
+}
+
+/* Ensure panel content is not scaled or transformed */
+#calc-panel:not(.collapsed) {
+    transform: none !important;
+}
+
+#calc-panel:not(.collapsed) * {
+    transform: none !important;
+    scale: 1 !important;
 }
 
 #calc-panel.collapsed {
@@ -1584,6 +1632,23 @@ canvas {
     transition: background 0.3s ease;
 }
 
+/* Calculator content inside side panel - adjust sizing */
+#calc-panel .calc-content {
+    max-width: 100% !important;
+    padding: 20px !important;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow-y: auto;
+    overflow-x: visible;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+}
+
 .calc-header {
     display: flex;
     justify-content: space-between;
@@ -1621,10 +1686,22 @@ canvas {
     margin-bottom: 30px;
 }
 
+/* Adjust subtitle in side panel */
+#calc-panel .calc-subtitle {
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+}
+
 .calc-mode-toggle {
     display: flex;
     gap: 10px;
     margin-bottom: 30px;
+}
+
+/* Adjust mode toggle in side panel */
+#calc-panel .calc-mode-toggle {
+    gap: 8px;
+    margin-bottom: 20px;
 }
 
 .mode-btn {
@@ -1637,6 +1714,12 @@ canvas {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+}
+
+/* Adjust mode button in side panel */
+#calc-panel .mode-btn {
+    padding: 10px 16px;
+    font-size: 0.9rem;
 }
 
 .mode-btn.active {
@@ -1657,6 +1740,32 @@ canvas {
     display: block;
 }
 
+/* Ensure mode content is visible in panel */
+#calc-panel .calc-mode-content {
+    display: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#calc-panel .calc-mode-content.active {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Ensure all calc elements are properly sized */
+#calc-panel .calc-row,
+#calc-panel .calc-subtitle,
+#calc-panel .calc-mode-toggle,
+#calc-panel .mode-btn {
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
 .mode-note {
     color: var(--text-warning);
     font-style: italic;
@@ -1671,10 +1780,29 @@ canvas {
     flex-wrap: wrap;
 }
 
+/* Adjust row spacing in side panel */
+#calc-panel .calc-row {
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+/* Make inputs full width in side panel for better usability */
+#calc-panel .calc-row input[type="number"],
+#calc-panel .calc-row select {
+    width: 100%;
+    flex: 1 1 100%;
+}
+
 .calc-row label {
     color: var(--text-secondary);
     font-weight: 500;
     min-width: 250px;
+}
+
+/* Adjust label width in side panel */
+#calc-panel .calc-row label {
+    min-width: 140px;
+    font-size: 0.9rem;
 }
 
 .calc-row input[type="number"],
@@ -1688,6 +1816,14 @@ canvas {
     color: var(--text-primary);
     font-size: 1rem;
     transition: border-color 0.2s ease;
+}
+
+/* Adjust input sizing in side panel */
+#calc-panel .calc-row input[type="number"],
+#calc-panel .calc-row select {
+    min-width: 100px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
 }
 
 .calc-row input[type="number"]:focus,

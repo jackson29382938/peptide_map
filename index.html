@@ -2665,15 +2665,15 @@
 
         <!-- Bootstrap -->
         <script>
-            window.addEventListener("load", () => {
+            // Wait for both window load and Three.js dependencies
+            function startApplication() {
                 console.log("🚀 Starting application initialization...");
 
                 // Initialize scene first
                 initScene();
                 animate();
 
-                // Initialize search and calculator (they will wait for dependencies)
-                initializeSearch();
+                // Initialize calculator and peptide analysis (they may wait for dependencies)
                 initializeCalculator();
                 initializePeptideAnalysis();
 
@@ -2693,6 +2693,8 @@
 
                 // Calculator drag handle
                 const calcDragHandle = document.getElementById("calc-drag-handle");
+                const calcPanel = document.getElementById("calc-panel");
+                const calcToggleBtn = document.getElementById("calc-toggle");
                 let draggingCalc = false;
                 let calcStartX = 0;
                 let calcStartWidth = 0;
@@ -2708,6 +2710,7 @@
                         const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
                         if (themeToggle) themeToggle.style.transition = "none";
                         if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "none";
+                        const searchContainer = document.getElementById("search-container");
                         if (searchContainer) searchContainer.style.transition = "none";
                         e.preventDefault();
                     });
@@ -2720,30 +2723,6 @@
                     );
                 });
 
-                // Tab switching functionality
-                const tabButtons = document.querySelectorAll(".tab-btn");
-                tabButtons.forEach((button) => {
-                    button.addEventListener("click", () => {
-                        const targetTab = button.getAttribute("data-tab");
-
-                        // Remove active class from all buttons and contents
-                        tabButtons.forEach((btn) =>
-                            btn.classList.remove("active"),
-                        );
-                        document
-                            .querySelectorAll(".tab-content")
-                            .forEach((content) => {
-                                content.classList.remove("active");
-                            });
-
-                        // Add active class to clicked button and corresponding content
-                        button.classList.add("active");
-                        document
-                            .getElementById(`tab-${targetTab}`)
-                            .classList.add("active");
-                    });
-                });
-
                 const tabToggle = document.getElementById("tab-toggle");
                 const tabPanel = document.getElementById("tab-panel");
                 const studiesToggle = document.getElementById("studies-toggle");
@@ -2754,8 +2733,6 @@
                 const companiesToggle = document.getElementById("companies-toggle");
                 const quizPanel = document.getElementById("quiz-panel");
                 const quizToggle = document.getElementById("quiz-toggle");
-                const calcPanel = document.getElementById("calc-panel");
-                const calcToggleBtn = document.getElementById("calc-toggle");
 
                 function computeBaseLeft() {
                     if (typeof getLeftControlBase === "function") {
@@ -3279,7 +3256,101 @@
                 window.updateFloatingControls = updateFloatingControls;
 
                 updateFloatingControls();
-            });
+            }
+
+            // Wait for Three.js dependencies to load before starting the application
+            function initializeApp() {
+                if (window.threeDepsReady) {
+                    startApplication();
+                } else {
+                    // Wait for Three.js dependencies
+                    window.addEventListener('threeDepsReady', () => {
+                        startApplication();
+                    }, { once: true });
+                    
+                    // Fallback: if Three.js is already loaded, check immediately
+                    if (typeof THREE !== 'undefined' && typeof THREE.OBJLoader !== 'undefined') {
+                        window.threeDepsReady = true;
+                        window.dispatchEvent(new CustomEvent('threeDepsReady'));
+                    }
+                }
+            }
+
+            // Tab switching functionality - initialize immediately, doesn't depend on Three.js
+            function initializeTabs() {
+                const tabButtons = document.querySelectorAll(".tab-btn");
+                console.log(`🔍 Found ${tabButtons.length} tab buttons`);
+                
+                if (tabButtons.length === 0) {
+                    console.warn("⚠️ No tab buttons found");
+                    return;
+                }
+                
+                tabButtons.forEach((button) => {
+                    // Remove any existing listeners to prevent duplicates
+                    const newButton = button.cloneNode(true);
+                    button.parentNode.replaceChild(newButton, button);
+                    
+                    newButton.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const targetTab = newButton.getAttribute("data-tab");
+                        console.log(`🔄 Switching to tab: ${targetTab}`);
+
+                        if (!targetTab) {
+                            console.warn("⚠️ Tab button missing data-tab attribute");
+                            return;
+                        }
+
+                        // Remove active class from all buttons and contents
+                        document.querySelectorAll(".tab-btn").forEach((btn) =>
+                            btn.classList.remove("active"),
+                        );
+                        document
+                            .querySelectorAll(".tab-content")
+                            .forEach((content) => {
+                                content.classList.remove("active");
+                            });
+
+                        // Add active class to clicked button and corresponding content
+                        newButton.classList.add("active");
+                        const targetContent = document.getElementById(`tab-${targetTab}`);
+                        if (targetContent) {
+                            targetContent.classList.add("active");
+                            console.log(`✅ Switched to tab: ${targetTab}`);
+                        } else {
+                            console.error(`❌ Tab content not found: tab-${targetTab}`);
+                        }
+                    });
+                });
+            }
+
+            // Initialize search immediately - doesn't depend on Three.js
+            function initializeSearchNow() {
+                if (typeof initializeSearch === 'function') {
+                    console.log('🔍 Initializing search...');
+                    initializeSearch();
+                } else {
+                    console.warn('⚠️ initializeSearch function not available yet, retrying...');
+                    setTimeout(initializeSearchNow, 100);
+                }
+            }
+
+            // Initialize tabs and search immediately when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', () => {
+                    initializeTabs();
+                    initializeSearchNow();
+                    initializeApp();
+                });
+            } else {
+                // DOM is already ready
+                initializeTabs();
+                initializeSearchNow();
+                // DOM is already ready, but wait for window load for Three.js
+                window.addEventListener('load', initializeApp);
+            }
         </script>
 
         <!-- Image Lightbox for full-size viewing -->

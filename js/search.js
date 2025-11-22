@@ -33,7 +33,13 @@ function initializeSearch() {
     !searchClear ||
     !searchResults
   ) {
-    console.error("❌ Search UI elements not found");
+    console.error("❌ Search UI elements not found", {
+      searchContainer: !!searchContainer,
+      searchToggle: !!searchToggle,
+      searchInput: !!searchInput,
+      searchClear: !!searchClear,
+      searchResults: !!searchResults
+    });
     return;
   }
 
@@ -45,20 +51,41 @@ function initializeSearch() {
 
   console.log("✅ Search initialized");
 
+  // Remove any existing listeners to prevent duplicates
+  const newToggle = searchToggle.cloneNode(true);
+  searchToggle.parentNode.replaceChild(newToggle, searchToggle);
+
   // Toggle search expansion
-  searchToggle.addEventListener("click", () => {
-    const isExpanded = searchContainer.classList.contains("expanded");
+  newToggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("🔍 Search toggle clicked");
+    
+    const container = document.getElementById("search-container");
+    if (!container) {
+      console.error("❌ Search container not found");
+      return;
+    }
+    
+    const isExpanded = container.classList.contains("expanded");
+    console.log("🔍 Search is expanded:", isExpanded);
+    
     if (isExpanded) {
       clearSearch();
       return;
     }
 
-    searchContainer.classList.remove("collapsed");
-    searchContainer.classList.add("expanded");
+    container.classList.remove("collapsed");
+    container.classList.add("expanded");
     // Reset position for expanded state
-    searchContainer.style.left = "50%";
-    searchContainer.style.top = "20px";
-    setTimeout(() => searchInput.focus(), 100);
+    container.style.left = "50%";
+    container.style.top = "20px";
+    
+    const input = document.getElementById("search-input");
+    if (input) {
+      setTimeout(() => input.focus(), 100);
+    }
+    console.log("✅ Search expanded");
   });
 
   // Debounce function to limit search frequency
@@ -397,56 +424,73 @@ function initializeSearch() {
     const portion = parts[1];
     const injuries = regionInjuries[regionName] || ["No injuries listed"];
 
-    document.getElementById("panel-title").textContent = muscle;
+    const panelTitle = document.getElementById("panel-title");
+    if (panelTitle) {
+      panelTitle.textContent = muscle;
+    }
     const portionElement = document.getElementById("panel-portion");
-    if (portion) {
-      portionElement.textContent = `Portion: ${portion}`;
-      portionElement.style.display = "block";
-    } else {
-      portionElement.style.display = "none";
+    if (portionElement) {
+      if (portion) {
+        portionElement.textContent = `Portion: ${portion}`;
+        portionElement.style.display = "block";
+      } else {
+        portionElement.style.display = "none";
+      }
     }
 
     const injuriesList = document.getElementById("panel-injuries");
-    injuriesList.innerHTML = "";
-    injuries.forEach((injury) => {
-      const li = document.createElement("li");
-      li.textContent = injury;
-      injuriesList.appendChild(li);
-    });
+    if (injuriesList) {
+      injuriesList.innerHTML = "";
+      injuries.forEach((injury) => {
+        const li = document.createElement("li");
+        li.textContent = injury;
+        injuriesList.appendChild(li);
+      });
+    }
 
     // Update injection procedure data
     const procedure = regionProcedures[regionName];
     const procedureSection = document.getElementById("panel-procedure");
-    if (procedure) {
-      procedureSection.style.display = "block";
-      document.getElementById("proc-technique").textContent =
-        procedure.technique || "N/A";
-      document.getElementById("proc-position").textContent =
-        procedure.position || "N/A";
-      document.getElementById("proc-landmark").textContent =
-        procedure.landmark || "N/A";
-      document.getElementById("proc-needle").textContent =
-        procedure.needle || "N/A";
-      document.getElementById("proc-angle").textContent =
-        procedure.angleDepth || "N/A";
-      document.getElementById("proc-volume").textContent =
-        procedure.volume || "N/A";
-      document.getElementById("proc-notes").textContent =
-        procedure.notes || "N/A";
-    } else {
-      procedureSection.style.display = "none";
+    if (procedureSection) {
+      if (procedure) {
+        procedureSection.style.display = "block";
+        const procTechnique = document.getElementById("proc-technique");
+        const procPosition = document.getElementById("proc-position");
+        const procLandmark = document.getElementById("proc-landmark");
+        const procNeedle = document.getElementById("proc-needle");
+        const procAngle = document.getElementById("proc-angle");
+        const procVolume = document.getElementById("proc-volume");
+        const procNotes = document.getElementById("proc-notes");
+        
+        if (procTechnique) procTechnique.textContent = procedure.technique || "N/A";
+        if (procPosition) procPosition.textContent = procedure.position || "N/A";
+        if (procLandmark) procLandmark.textContent = procedure.landmark || "N/A";
+        if (procNeedle) procNeedle.textContent = procedure.needle || "N/A";
+        if (procAngle) procAngle.textContent = procedure.angleDepth || "N/A";
+        if (procVolume) procVolume.textContent = procedure.volume || "N/A";
+        if (procNotes) procNotes.textContent = procedure.notes || "N/A";
+      } else {
+        procedureSection.style.display = "none";
+      }
     }
 
     // Show side panel
     const panel = document.getElementById("side-panel");
-    panel.classList.add("active");
+    if (panel) {
+      panel.classList.add("active");
+    }
 
     // Hide title card
     const titleCard = document.getElementById("title-card");
-    titleCard.classList.add("hidden");
+    if (titleCard) {
+      titleCard.classList.add("hidden");
+    }
 
     // Hide info-box
-    document.getElementById("info-box").style.display = "none";
+    const infoBox = document.getElementById("info-box");
+    if (infoBox) {
+      infoBox.style.display = "none";
+    }
   }
 
   // Clear search and collapse

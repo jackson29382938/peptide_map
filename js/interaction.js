@@ -21,11 +21,15 @@ function removeInjectionPointSpheres() {
 
 function hideSidePanel() {
     const panel = document.getElementById('side-panel');
-    panel.classList.remove('active');
+    if (panel) {
+        panel.classList.remove('active');
+    }
     
     // Show title card when side panel is hidden
     const titleCard = document.getElementById('title-card');
-    titleCard.classList.remove('hidden');
+    if (titleCard) {
+        titleCard.classList.remove('hidden');
+    }
 }
 
 function onMouseClick(event) {
@@ -73,7 +77,10 @@ function onMouseClick(event) {
     removeCurrentHighlight();
     removeInjectionPointSpheres();
     hideSidePanel();
-    document.getElementById('info-box').style.display = 'block';
+    const infoBox = document.getElementById('info-box');
+    if (infoBox) {
+        infoBox.style.display = 'block';
+    }
     updateInfo('Model Ready', 'Click on any muscle region to see a highlight!');
 
     if (!intersects.length) {
@@ -118,51 +125,78 @@ function onMouseClick(event) {
         const injuries = regionInjuries[closestRegion] || ['No injuries listed'];
 
         // Update side panel
-        document.getElementById('panel-title').textContent = muscle;
+        const panelTitle = document.getElementById('panel-title');
+        if (panelTitle) {
+            panelTitle.textContent = muscle;
+        }
         const portionElement = document.getElementById('panel-portion');
-        if (portion) {
-            portionElement.textContent = `Portion: ${portion}`;
-            portionElement.style.display = 'block';
-        } else {
-            portionElement.style.display = 'none';
+        if (portionElement) {
+            if (portion) {
+                portionElement.textContent = `Portion: ${portion}`;
+                portionElement.style.display = 'block';
+            } else {
+                portionElement.style.display = 'none';
+            }
         }
 
         const injuriesList = document.getElementById('panel-injuries');
-        injuriesList.innerHTML = '';
-        injuries.forEach(injury => {
-            const li = document.createElement('li');
-            li.textContent = injury;
-            injuriesList.appendChild(li);
-        });
+        if (injuriesList) {
+            injuriesList.innerHTML = '';
+            injuries.forEach(injury => {
+                const li = document.createElement('li');
+                li.textContent = injury;
+                injuriesList.appendChild(li);
+            });
+        }
 
         // Update injection procedure data
         const procedure = regionProcedures[closestRegion];
         const procedureSection = document.getElementById('panel-procedure');
-        if (procedure) {
-            procedureSection.style.display = 'block';
-            document.getElementById('proc-technique').textContent = procedure.technique || 'N/A';
-            document.getElementById('proc-position').textContent = procedure.position || 'N/A';
-            document.getElementById('proc-landmark').textContent = procedure.landmark || 'N/A';
-            document.getElementById('proc-needle').textContent = procedure.needle || 'N/A';
-            document.getElementById('proc-angle').textContent = procedure.angleDepth || 'N/A';
-            document.getElementById('proc-volume').textContent = procedure.volume || 'N/A';
-            document.getElementById('proc-notes').textContent = procedure.notes || 'N/A';
-        } else {
-            procedureSection.style.display = 'none';
+        if (procedureSection) {
+            if (procedure) {
+                procedureSection.style.display = 'block';
+                const procTechnique = document.getElementById('proc-technique');
+                const procPosition = document.getElementById('proc-position');
+                const procLandmark = document.getElementById('proc-landmark');
+                const procNeedle = document.getElementById('proc-needle');
+                const procAngle = document.getElementById('proc-angle');
+                const procVolume = document.getElementById('proc-volume');
+                const procNotes = document.getElementById('proc-notes');
+                
+                if (procTechnique) procTechnique.textContent = procedure.technique || 'N/A';
+                if (procPosition) procPosition.textContent = procedure.position || 'N/A';
+                if (procLandmark) procLandmark.textContent = procedure.landmark || 'N/A';
+                if (procNeedle) procNeedle.textContent = procedure.needle || 'N/A';
+                if (procAngle) procAngle.textContent = procedure.angleDepth || 'N/A';
+                if (procVolume) procVolume.textContent = procedure.volume || 'N/A';
+                if (procNotes) procNotes.textContent = procedure.notes || 'N/A';
+            } else {
+                procedureSection.style.display = 'none';
+            }
         }
 
         // Show side panel
         const panel = document.getElementById('side-panel');
-        panel.classList.add('active');
+        if (panel) {
+            panel.classList.add('active');
+        }
         
         // Hide title card when side panel is shown
         const titleCard = document.getElementById('title-card');
-        titleCard.classList.add('hidden');
+        if (titleCard) {
+            titleCard.classList.add('hidden');
+        }
 
         // Hide info-box after click completed
-        document.getElementById('info-box').style.display = 'none';
+        const infoBox = document.getElementById('info-box');
+        if (infoBox) {
+            infoBox.style.display = 'none';
+        }
     } else {
-        document.getElementById('info-box').style.display = 'block';
+        const infoBox = document.getElementById('info-box');
+        if (infoBox) {
+            infoBox.style.display = 'block';
+        }
         updateInfo('Region Not Defined',
             `Clicked X:${point.x.toFixed(2)}, Y:${point.y.toFixed(2)}, Z:${point.z.toFixed(2)}`,
             'text-gray-400');
@@ -274,18 +308,27 @@ function onMouseMove(event) {
     const intersects = raycaster.intersectObjects(injectionPointSpheres, false);
 
     const tooltip = document.getElementById('injection-tooltip');
+    if (!tooltip) return;
     
     if (intersects.length > 0) {
         const sphere = intersects[0].object;
         const data = sphere.userData;
         
         // Update tooltip content
-        tooltip.querySelector('.tooltip-title').textContent = data.regionName;
-        tooltip.querySelector('.tooltip-type').textContent = 
-            data.type === 'injury_specific' ? '🎯 Injury-Specific Site' : '✅ General Injection Site';
-        tooltip.querySelector('.tooltip-injuries').textContent = 
-            'Targets: ' + data.targetInjuries.join(', ');
-        tooltip.querySelector('.tooltip-notes').textContent = data.notes;
+        const tooltipTitle = tooltip.querySelector('.tooltip-title');
+        const tooltipType = tooltip.querySelector('.tooltip-type');
+        const tooltipInjuries = tooltip.querySelector('.tooltip-injuries');
+        const tooltipNotes = tooltip.querySelector('.tooltip-notes');
+        
+        if (tooltipTitle) tooltipTitle.textContent = data.regionName;
+        if (tooltipType) {
+            tooltipType.textContent = 
+                data.type === 'injury_specific' ? '🎯 Injury-Specific Site' : '✅ General Injection Site';
+        }
+        if (tooltipInjuries && data.targetInjuries) {
+            tooltipInjuries.textContent = 'Targets: ' + data.targetInjuries.join(', ');
+        }
+        if (tooltipNotes) tooltipNotes.textContent = data.notes || '';
         
         // Add images if available (from injection-images.js)
         let imagesHtml = '';

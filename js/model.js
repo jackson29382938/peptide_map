@@ -25,14 +25,30 @@ function loadModel() {
     console.log('🔄 Starting model load process...');
     
     // Check if OBJLoader is available
-    if (typeof THREE === 'undefined' || typeof THREE.OBJLoader === 'undefined') {
-        console.warn('⚠️ THREE.OBJLoader not yet loaded, retrying in 100ms...');
+    if (typeof THREE === 'undefined') {
+        console.warn('⚠️ THREE is undefined, retrying in 100ms...');
         isLoadingModel = false;
         setTimeout(loadModel, 100);
         return;
     }
     
-    const loader = new THREE.OBJLoader();
+    // Check for OBJLoader in multiple ways
+    let OBJLoaderClass = null;
+    if (typeof THREE.OBJLoader !== 'undefined') {
+        OBJLoaderClass = THREE.OBJLoader;
+        console.log('✅ Found THREE.OBJLoader');
+    } else if (typeof window.THREE !== 'undefined' && typeof window.THREE.OBJLoader !== 'undefined') {
+        OBJLoaderClass = window.THREE.OBJLoader;
+        console.log('✅ Found window.THREE.OBJLoader');
+    } else {
+        console.warn('⚠️ THREE.OBJLoader not yet loaded, retrying in 200ms...');
+        console.warn('⚠️ THREE object keys:', Object.keys(THREE));
+        isLoadingModel = false;
+        setTimeout(loadModel, 200);
+        return;
+    }
+    
+    const loader = new OBJLoaderClass();
     const modelPath = 'assets/FinalBaseMesh.obj';
     console.log('📁 Model path:', modelPath);
 
@@ -75,56 +91,90 @@ function loadModel() {
             'Click the cube near muscle regions to highlight!');
     }
 
-    loader.load(
-        modelPath,
-        // Success callback
-        object => {
-            console.log('✅ OBJ file loaded successfully!');
-            console.log('📦 Object:', object);
-            
-            // Remove any existing placeholder or old model before adding the new one
-            removeExistingModels();
-            
-            modelContainer = object;
-            interactiveObjects = []; // Reset array
-            modelContainer.traverse(child => {
-                if (child.isMesh) {
-                    child.material = new THREE.MeshStandardMaterial({
-                        color: defaultColor,
-                        metalness: 0.8,
-                        roughness: 0.8,
-                        flatShading: false
-                    });
-                    interactiveObjects.push(child);
-                }
-            });
-
-            const box = new THREE.Box3().setFromObject(modelContainer);
-            const center = box.getCenter(new THREE.Vector3());
-            modelContainer.position.sub(center);
-
-            scene.add(modelContainer);
-            initState.modelLoaded = true;
-            isLoadingModel = false; // Reset loading flag
-            console.log(`✅ Model added to scene with ${interactiveObjects.length} interactive objects`);
-            checkReadiness();
-            if (initState.allReady) {
-                updateInfo('Model Ready', 'Click on any muscle region to see a highlight!');
+    const fullPath = window.location.origin + '/' + modelPath;
+    console.log('🔄 Attempting to load model from:', modelPath);
+    console.log('🔍 Full URL:', fullPath);
+    console.log('🔍 OBJLoader class:', OBJLoaderClass);
+    
+    // First, verify the file is accessible
+    fetch(modelPath, { method: 'HEAD' })
+        .then(response => {
+            if (response.ok) {
+                console.log('✅ Model file is accessible (HTTP', response.status + ')');
+            } else {
+                console.error('❌ Model file returned HTTP', response.status);
             }
-        },
+        })
+        .catch(err => {
+            console.warn('⚠️ Could not verify model file accessibility:', err.message);
+        });
+    
+    try {
+        loader.load(
+            modelPath,
+            // Success callback
+            object => {
+                console.log('✅ OBJ file loaded successfully!');
+                console.log('📦 Object:', object);
+                console.log('📦 Object children:', object.children.length);
+                
+                // Remove any existing placeholder or old model before adding the new one
+                removeExistingModels();
+                
+                modelContainer = object;
+                interactiveObjects = []; // Reset array
+                modelContainer.traverse(child => {
+                    if (child.isMesh) {
+                        child.material = new THREE.MeshStandardMaterial({
+                            color: defaultColor,
+                            metalness: 0.8,
+                            roughness: 0.8,
+                            flatShading: false
+                        });
+                        interactiveObjects.push(child);
+                    }
+                });
+
+                const box = new THREE.Box3().setFromObject(modelContainer);
+                const center = box.getCenter(new THREE.Vector3());
+                modelContainer.position.sub(center);
+
+                scene.add(modelContainer);
+                initState.modelLoaded = true;
+                isLoadingModel = false; // Reset loading flag
+                console.log(`✅ Model added to scene with ${interactiveObjects.length} interactive objects`);
+                checkReadiness();
+                if (initState.allReady) {
+                    updateInfo('Model Ready', 'Click on any muscle region to see a highlight!');
+                }
+            },
         // Progress callback
         xhr => {
-            const percentComplete = xhr.loaded / xhr.total * 100;
-            console.log(`📊 Loading model: ${Math.round(percentComplete)}%`);
+            if (xhr && xhr.total > 0) {
+                const percentComplete = xhr.loaded / xhr.total * 100;
+                console.log(`📊 Loading model: ${Math.round(percentComplete)}%`);
+            } else {
+                console.log('📊 Loading model... (size unknown)');
+            }
         },
         // Error callback
         err => {
             console.error('❌ OBJ load error details:');
             console.error('Error object:', err);
-            console.error('Error message:', err.message || 'No message');
+            console.error('Error type:', typeof err);
+            console.error('Error message:', err?.message || 'No message');
+            console.error('Error stack:', err?.stack || 'No stack');
             console.error('Attempted path:', modelPath);
+            console.error('Full URL would be:', window.location.origin + '/' + modelPath);
             isLoadingModel = false; // Reset loading flag
             createPlaceholder();
         }
     );
+    } catch (error) {
+        console.error('❌ Exception during loader.load():', error);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        isLoadingModel = false;
+        createPlaceholder();
+    }
 }
