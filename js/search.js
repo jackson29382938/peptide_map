@@ -54,6 +54,9 @@ function initializeSearch() {
   // Remove any existing listeners to prevent duplicates
   const newToggle = searchToggle.cloneNode(true);
   searchToggle.parentNode.replaceChild(newToggle, searchToggle);
+  
+  // Mark as bound to prevent duplicate listeners
+  newToggle.__bound = true;
 
   // Toggle search expansion
   newToggle.addEventListener("click", (e) => {
@@ -77,9 +80,10 @@ function initializeSearch() {
 
     container.classList.remove("collapsed");
     container.classList.add("expanded");
-    // Reset position for expanded state
+    // Center the search bar when expanded
     container.style.left = "50%";
     container.style.top = "20px";
+    container.style.transform = "translateX(-50%)";
     
     const input = document.getElementById("search-input");
     if (input) {
@@ -304,9 +308,23 @@ function initializeSearch() {
   function displayResults(results, query) {
     searchResults.innerHTML = "";
 
+    // Add close button
+    const closeButton = document.createElement("button");
+    closeButton.id = "search-results-close";
+    closeButton.innerHTML = "✕";
+    closeButton.title = "Close search results";
+    closeButton.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      clearSearch();
+    });
+    searchResults.appendChild(closeButton);
+
     if (results.length === 0) {
-      searchResults.innerHTML =
-        '<div class="no-results">No injuries or body parts found.</div>';
+      const noResults = document.createElement("div");
+      noResults.className = "no-results";
+      noResults.textContent = "No injuries or body parts found.";
+      searchResults.appendChild(noResults);
       searchResults.classList.add("active");
       return;
     }
@@ -503,22 +521,26 @@ function initializeSearch() {
     searchContainer.classList.remove("expanded");
     searchContainer.classList.add("collapsed");
 
-    // Reset transform immediately
-    searchContainer.style.transform = "none";
-
     // Calculate and set position based on panel state
     function setSearchPosition() {
-      const tabPanel = document.getElementById("tab-panel");
-      let toggleLeft;
-      if (typeof getLeftControlBase === "function") {
-        toggleLeft = getLeftControlBase();
-      } else if (tabPanel && !tabPanel.classList.contains("collapsed")) {
-        toggleLeft = tabPanel.offsetWidth + 20;
-      } else {
-        toggleLeft = 20;
+      if (searchContainer.classList.contains("collapsed")) {
+        // Position on the left when collapsed
+        const tabPanel = document.getElementById("tab-panel");
+        let toggleLeft;
+        if (typeof getLeftControlBase === "function") {
+          toggleLeft = getLeftControlBase();
+        } else if (tabPanel && !tabPanel.classList.contains("collapsed")) {
+          toggleLeft = tabPanel.offsetWidth + 20;
+        } else {
+          toggleLeft = 20;
+        }
+        searchContainer.style.left = `${toggleLeft}px`;
+        searchContainer.style.top = "60px";
+        searchContainer.style.transform = "none";
+        return;
       }
-      searchContainer.style.left = `${toggleLeft}px`;
-      searchContainer.style.top = "60px";
+      
+      // When expanded, it's already centered by CSS
     }
 
     // Set position immediately, then update again after transition

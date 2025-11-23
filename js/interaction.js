@@ -204,9 +204,14 @@ function onMouseClick(event) {
 }
 
 function addHighlightSphere(position, regionName) {
+    // Use highlightColor from regions.js if available, otherwise use fallback
+    const color = (typeof highlightColor !== 'undefined') ? highlightColor : 
+                  (typeof window.highlightColor !== 'undefined') ? window.highlightColor : 
+                  0xef4444; // Fallback red color
+    
     const geometry = new THREE.SphereGeometry(0.5, 16, 16);
     const material = new THREE.MeshBasicMaterial({
-        color: highlightColor,
+        color: color,
         transparent: true,
         opacity: 0.8,
         depthTest: true,

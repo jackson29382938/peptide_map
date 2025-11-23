@@ -42,29 +42,34 @@
       return;
     }
 
-    toggleBtn.addEventListener("click", () => {
-      const wasCollapsed = panel.classList.contains("collapsed");
+    // Only set up listener if not already bound (to avoid duplicates)
+    if (!toggleBtn.__bound) {
+      toggleBtn.addEventListener("click", () => {
+        const wasCollapsed = panel.classList.contains("collapsed");
 
-      // Prefer centralized panel control to keep all toggles/panels in sync
-      const tabPanel = document.getElementById("tab-panel");
-      const tabToggle = document.getElementById("tab-toggle");
-      const studiesPanel = document.getElementById("studies-panel");
-      const studiesToggle = document.getElementById("studies-toggle");
-      const quizPanel = document.getElementById("quiz-panel");
-      const quizToggle = document.getElementById("quiz-toggle");
+        // Prefer centralized panel control to keep all toggles/panels in sync
+        const tabPanel = document.getElementById("tab-panel");
+        const tabToggle = document.getElementById("tab-toggle");
+        const studiesPanel = document.getElementById("studies-panel");
+        const studiesToggle = document.getElementById("studies-toggle");
+        const quizPanel = document.getElementById("quiz-panel");
+        const quizToggle = document.getElementById("quiz-toggle");
+        const calcPanel = document.getElementById("calc-panel");
+        const calcToggle = document.getElementById("calc-toggle");
 
-      if (typeof window.togglePanel === "function") {
-        window.togglePanel(panel, toggleBtn, [
-          { panel: tabPanel, toggle: tabToggle },
-          { panel: studiesPanel, toggle: studiesToggle },
-          { panel: quizPanel, toggle: quizToggle },
-        ]);
-      } else {
-        panel.classList.toggle("collapsed");
-        toggleBtn.textContent = wasCollapsed ? "✕" : "🏢";
-      }
+        if (typeof window.togglePanel === "function") {
+          window.togglePanel(panel, toggleBtn, [
+            { panel: tabPanel, toggle: tabToggle },
+            { panel: studiesPanel, toggle: studiesToggle },
+            { panel: quizPanel, toggle: quizToggle },
+            { panel: calcPanel, toggle: calcToggle },
+          ]);
+        } else {
+          panel.classList.toggle("collapsed");
+          toggleBtn.textContent = wasCollapsed ? "✕" : "🏢";
+        }
 
-      if (wasCollapsed) loadVendors();
+        if (wasCollapsed) loadVendors();
 
       // Adjust toggle positions after panel state change
       setTimeout(() => {
@@ -74,7 +79,11 @@
           adjustTogglePosition();
         }
       }, 50);
-    });
+      });
+      toggleBtn.__bound = true;
+    } else {
+      console.log('ℹ️ Companies toggle already bound, skipping duplicate listener');
+    }
 
     filterInput.addEventListener("input", () => renderVendors());
     clearFilterBtn.addEventListener("click", () => {

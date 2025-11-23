@@ -1,4 +1,20 @@
 // ---- OPTIMAL INJECTION POINT DEFINITIONS ----
+// Wait for THREE.js to be loaded before initializing injection points
+(function initializeInjectionPoints() {
+    // Check if THREE is available
+    if (typeof THREE === 'undefined') {
+        // Wait for threeDepsReady event
+        if (window.threeDepsReady) {
+            // THREE should be available now, try again
+            setTimeout(initializeInjectionPoints, 50);
+        } else {
+            window.addEventListener('threeDepsReady', () => {
+                setTimeout(initializeInjectionPoints, 50);
+            }, { once: true });
+        }
+        return;
+    }
+
 // Each body region can have 2-4 optimal injection points
 // Each point specifies: position (x,y,z), size, type (general or injury-specific)
 
@@ -1647,6 +1663,11 @@ function checkInjectionCoverage() {
     };
 }
 
+// Make injectionPoints and related variables globally accessible
+window.injectionPoints = injectionPoints;
+window.INJECTION_COLORS = INJECTION_COLORS;
+window.INJECTION_SIZES = INJECTION_SIZES;
+
 // Make all helper functions globally accessible
 window.toggleInjectionDebugMode = toggleInjectionDebugMode;
 window.generateInjectionPointCode = generateInjectionPointCode;
@@ -1662,3 +1683,5 @@ console.log('  • listInjectionRegions() - Show all configured regions');
 console.log('  • showInjectionPoints("Region Name") - Show details for a region');
 console.log('  • checkInjectionCoverage() - See coverage statistics');
 console.log('  • generateInjectionPointCode("Region", x, y, z) - Generate code template\n');
+
+})(); // End of initializeInjectionPoints IIFE

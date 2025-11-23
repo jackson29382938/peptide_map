@@ -72,11 +72,34 @@ body {
     transition:
         background-color 0.3s ease,
         color 0.3s ease;
+    position: relative; /* Ensure body doesn't cover fixed elements */
 }
+
+/* Override Tailwind bg-gray-800 on body to allow canvas to show */
+body.bg-gray-800 {
+    background-color: transparent !important;
+}
+
+#container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0; /* Base layer - canvas should be visible */
+    background: transparent; /* Ensure no background covers canvas */
+}
+
 canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    background: transparent;
+    pointer-events: auto; /* Ensure canvas can receive events */
 }
 
 #info-box {
@@ -296,13 +319,13 @@ canvas {
     top: 60px; /* Will be updated by JavaScript to follow toggle button */
     left: 20px; /* Will be updated by JavaScript to follow toggle button */
     z-index: 25;
-    transition: left 0.3s ease-in-out;
+    transition: left 0.3s ease-in-out, top 0.3s ease-in-out;
 }
 
-/* Collapsed state - just the icon */
+/* Collapsed state - just the icon, on the left */
 #search-container.collapsed {
     width: 40px;
-    transition: left 0.3s ease-in-out;
+    transition: left 0.3s ease-in-out, top 0.3s ease-in-out, transform 0.3s ease-in-out;
 }
 
 #search-container.collapsed #search-bar {
@@ -539,14 +562,45 @@ canvas {
     overflow-y: auto;
     box-shadow: 0 8px 24px var(--shadow-md);
     display: none;
+    position: relative;
 }
 
 #search-results.active {
     display: block;
 }
 
+/* Close button for search results */
+#search-results-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: 50%;
+    color: var(--text-tertiary);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.2s ease;
+    line-height: 1;
+    padding: 0;
+}
+
+#search-results-close:hover {
+    background: var(--bg-hover);
+    color: var(--text-accent);
+    border-color: var(--text-accent);
+    transform: scale(1.1);
+}
+
 .search-result-item {
     padding: 12px 16px;
+    padding-right: 40px; /* Make room for close button */
     border-bottom: 1px solid var(--border-secondary);
     cursor: pointer;
     transition: background 0.2s ease;
@@ -964,41 +1018,27 @@ canvas {
 
 /* Calculator panel - override studies-list flex behavior */
 #calc-panel .studies-list {
-    padding: 0 !important;
-    gap: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow-y: auto;
-    overflow-x: visible;
-    flex: 1 !important;
+    flex: 1 1 auto !important;
     min-height: 0 !important;
-    height: 100% !important;
+    overflow-y: auto !important;   /* only this one scrolls */
+    overflow-x: hidden !important;
 }
 
-/* Ensure calc-content fills the available space */
-#calc-panel .studies-list .calc-content {
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box;
-    display: flex !important;
-    flex-direction: column !important;
-    position: relative;
-    flex: 1 !important;
+#calc-panel .calc-content {
+    flex: 1 1 auto !important;
     min-height: 0 !important;
-    overflow-y: auto;
+    height: auto !important;
+    overflow: visible !important;
 }
 
-/* Make sure calc-content children are visible */
-#calc-panel .calc-content > * {
-    flex-shrink: 0;
-}
-
-/* Make mode content grow to fill space */
 #calc-panel .calc-content > .calc-mode-content.active {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: visible !important;  /* removes the inner scrollbar */
 }
+
 
 /* Quiz Panel Styles (mirror companies/studies) */
 #quiz-panel {
@@ -1494,23 +1534,27 @@ canvas {
 
 /* Scrollbar Styling */
 .tab-content-wrapper::-webkit-scrollbar,
-#side-panel::-webkit-scrollbar {
+#side-panel::-webkit-scrollbar,
+#calc-panel .studies-list::-webkit-scrollbar {
     width: 8px;
 }
 
 .tab-content-wrapper::-webkit-scrollbar-track,
-#side-panel::-webkit-scrollbar-track {
+#side-panel::-webkit-scrollbar-track,
+#calc-panel .studies-list::-webkit-scrollbar-track {
     background: var(--bg-scrollbar-track);
 }
 
 .tab-content-wrapper::-webkit-scrollbar-thumb,
-#side-panel::-webkit-scrollbar-thumb {
+#side-panel::-webkit-scrollbar-thumb,
+#calc-panel .studies-list::-webkit-scrollbar-thumb {
     background: var(--bg-scrollbar-thumb);
     border-radius: 4px;
 }
 
 .tab-content-wrapper::-webkit-scrollbar-thumb:hover,
-#side-panel::-webkit-scrollbar-thumb:hover {
+#side-panel::-webkit-scrollbar-thumb:hover,
+#calc-panel .studies-list::-webkit-scrollbar-thumb:hover {
     background: var(--text-tertiary);
 }
 
@@ -1525,17 +1569,24 @@ canvas {
     border: 1px solid var(--border-primary);
     border-radius: 16px;
     box-shadow: 0 8px 24px var(--shadow-md);
-    z-index: 10;
+    z-index: 5; /* Above canvas but below other UI */
     text-align: center;
     opacity: 1;
+    pointer-events: none; /* Allow clicks to pass through to canvas */
     transition:
-        opacity 0.3s ease,
-        visibility 0.3s ease,
+        opacity 0.5s ease,
+        visibility 0.5s ease,
         background 0.3s ease,
         border-color 0.3s ease;
 }
 
 #title-card.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* Fade out title card when model is ready */
+#title-card.fade-out {
     opacity: 0;
     visibility: hidden;
 }
@@ -1641,12 +1692,12 @@ canvas {
     background: transparent;
     width: 100% !important;
     min-height: 0 !important;
-    height: 100% !important;
-    overflow-y: auto;
-    overflow-x: visible;
+    flex: 1 !important;
+    overflow: visible !important;
     display: flex !important;
     flex-direction: column !important;
-    flex: 1 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .calc-header {
@@ -1748,20 +1799,43 @@ canvas {
 }
 
 #calc-panel .calc-mode-content.active {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
     visibility: visible !important;
     opacity: 1 !important;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
+    flex: 1 1 auto !important;
+    flex-shrink: 1 !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    width: 100% !important;
 }
 
-/* Ensure all calc elements are properly sized */
-#calc-panel .calc-row,
+/* Ensure all calc elements are properly sized and visible */
 #calc-panel .calc-subtitle,
 #calc-panel .calc-mode-toggle,
 #calc-panel .mode-btn {
-    width: 100%;
+    width: 100% !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex-shrink: 0 !important;
+    min-height: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+/* Calc-row needs to be flex, not block */
+#calc-panel .calc-row {
+    width: 100% !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex-shrink: 0 !important;
+    min-height: auto !important;
+    height: auto !important;
+    max-height: none !important;
     box-sizing: border-box;
     max-width: 100%;
 }
@@ -1784,6 +1858,11 @@ canvas {
 #calc-panel .calc-row {
     gap: 10px;
     margin-bottom: 16px;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    min-height: auto !important;
+    height: auto !important;
 }
 
 /* Make inputs full width in side panel for better usability */

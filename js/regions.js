@@ -1,4 +1,20 @@
 // ---- ANATOMICAL REGION DEFINITIONS (Bounding Boxes) ----
+// Wait for THREE.js to be loaded before initializing regions
+(function initializeRegions() {
+    // Check if THREE is available
+    if (typeof THREE === 'undefined') {
+        // Wait for threeDepsReady event
+        if (window.threeDepsReady) {
+            // THREE should be available now, try again
+            setTimeout(initializeRegions, 50);
+        } else {
+            window.addEventListener('threeDepsReady', () => {
+                setTimeout(initializeRegions, 50);
+            }, { once: true });
+        }
+        return;
+    }
+
 const defaultColor = 0x808080;
 const highlightColor = 0xef4444;
 const regionTolerance = 0.5;             // extra click radius
@@ -1119,6 +1135,12 @@ const regionProcedures = {
     }
 };
 
+// Make regions and related variables globally accessible
+window.regions = regions;
+window.defaultColor = defaultColor;
+window.highlightColor = highlightColor;
+window.regionTolerance = regionTolerance;
+
 // Signal that regions data is ready (after all data is defined)
 // Use setTimeout to ensure initState is initialized in init.js first
 (function signalRegionsReady() {
@@ -1133,3 +1155,5 @@ const regionProcedures = {
         setTimeout(signalRegionsReady, 50);
     }
 })();
+
+})(); // End of initializeRegions IIFE

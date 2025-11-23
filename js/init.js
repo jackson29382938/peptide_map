@@ -1,9 +1,16 @@
+// Global variables for Three.js scene (needed by animate() in utils.js)
 let scene, camera, renderer, controls;
 let modelContainer;
 let raycaster, mouse;
 let interactiveObjects = [];
 let currentHighlight = null;
 let ambientLight, directionalLight; // Store light references for theme adjustments
+
+// Make them globally accessible for animate() function
+window.scene = scene;
+window.camera = camera;
+window.renderer = renderer;
+window.controls = controls;
 
 // Initialization state tracking
 let initState = {
@@ -59,16 +66,43 @@ function initScene() {
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
-    container.appendChild(renderer.domElement);
+    
+    // Ensure canvas is visible
+    const canvas = renderer.domElement;
+    canvas.style.display = 'block';
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.zIndex = '0';
+    
+    container.appendChild(canvas);
+    
+    // Update global references after creation
+    window.scene = scene;
+    window.camera = camera;
+    window.renderer = renderer;
+    
+    console.log('✅ Renderer created and canvas added to DOM');
+    console.log('📐 Canvas size:', width, 'x', height);
+    console.log('🎨 Canvas element:', canvas);
+    console.log('🎨 Canvas computed style:', window.getComputedStyle(canvas).display, window.getComputedStyle(canvas).visibility);
+    console.log('🎨 Container computed style:', window.getComputedStyle(container).display, window.getComputedStyle(container).zIndex);
 
     // Lights - store references for theme adjustments
     ambientLight = new THREE.AmbientLight(0x404040, 5);
     scene.add(ambientLight);
     
+    // Directional light positioned in world space (not attached to camera)
     directionalLight = new THREE.DirectionalLight(0xffffff, 3);
-    directionalLight.position.set(0, 0, -1);
-    camera.add(directionalLight);
-    scene.add(camera);
+    directionalLight.position.set(10, 10, 10); // Position in world space
+    scene.add(directionalLight);
+    
+    // Add a second directional light from the opposite side for better illumination
+    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 1.5);
+    directionalLight2.position.set(-10, 5, -10);
+    scene.add(directionalLight2);
     
     // Function to update lighting based on theme
     function updateLightingForTheme(theme) {
@@ -96,6 +130,9 @@ function initScene() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = true;
+    
+    // Update global reference after controls creation
+    window.controls = controls;
 
     // Raycaster
     raycaster = new THREE.Raycaster();

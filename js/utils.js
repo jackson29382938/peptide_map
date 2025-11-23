@@ -8,10 +8,26 @@ function updateInfo(title, message, titleClass = 'text-white') {
     msgEl.textContent   = message;
 }
 
+let animateStarted = false;
+
 function animate() {
     requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
+    
+    // Use global references (set in init.js)
+    const controls = window.controls;
+    const renderer = window.renderer;
+    const scene = window.scene;
+    const camera = window.camera;
+    
+    // Only render if all components are ready
+    if (controls && renderer && scene && camera) {
+        if (!animateStarted) {
+            console.log('✅ Animation loop started - rendering scene');
+            animateStarted = true;
+        }
+        controls.update();
+        renderer.render(scene, camera);
+    }
 }
 
 function onWindowResize() {
@@ -19,9 +35,15 @@ function onWindowResize() {
     const w = container.clientWidth;
     const h = container.clientHeight;
 
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
+    // Use global references
+    const camera = window.camera;
+    const renderer = window.renderer;
+    
+    if (camera && renderer) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+    }
 }
 
 function getLeftPanelsWidth() {

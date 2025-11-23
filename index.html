@@ -124,7 +124,7 @@
         </div>
 
         <!-- Calculator Button -->
-        <button id="calc-toggle" class="left-toggle" title="Peptide Reconstitution Calculator">
+        <button id="calc-toggle" class="left-toggle" data-closed-icon='<svg class="calc-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><rect x="6" y="4" width="12" height="4" rx="1"></rect><circle cx="8" cy="11" r="1"></circle><circle cx="12" cy="11" r="1"></circle><circle cx="16" cy="11" r="1"></circle><circle cx="8" cy="15" r="1"></circle><circle cx="12" cy="15" r="1"></circle><circle cx="16" cy="15" r="1"></circle><circle cx="8" cy="19" r="1"></circle><circle cx="12" cy="19" r="1"></circle><rect x="15" y="17" width="3" height="4" rx="1"></rect></svg>' data-open-icon="✕" title="Peptide Reconstitution Calculator">
             <svg
                 class="calc-icon"
                 xmlns="http://www.w3.org/2000/svg"
@@ -136,12 +136,16 @@
                 stroke-linejoin="round"
             >
                 <rect x="4" y="2" width="16" height="20" rx="2"></rect>
-                <line x1="8" y1="6" x2="16" y2="6"></line>
-                <line x1="16" y1="10" x2="16" y2="10"></line>
-                <line x1="8" y1="10" x2="12" y2="10"></line>
-                <line x1="8" y1="14" x2="12" y2="14"></line>
-                <line x1="16" y1="14" x2="16" y2="14"></line>
-                <line x1="8" y1="18" x2="16" y2="18"></line>
+                <rect x="6" y="4" width="12" height="4" rx="1"></rect>
+                <circle cx="8" cy="11" r="1"></circle>
+                <circle cx="12" cy="11" r="1"></circle>
+                <circle cx="16" cy="11" r="1"></circle>
+                <circle cx="8" cy="15" r="1"></circle>
+                <circle cx="12" cy="15" r="1"></circle>
+                <circle cx="16" cy="15" r="1"></circle>
+                <circle cx="8" cy="19" r="1"></circle>
+                <circle cx="12" cy="19" r="1"></circle>
+                <rect x="15" y="17" width="3" height="4" rx="1"></rect>
             </svg>
         </button>
 
@@ -187,7 +191,7 @@
         </button>
 
         <!-- Companies Panel Toggle Button -->
-        <button id="companies-toggle" class="left-toggle" title="Toggle peptide companies panel">
+        <button id="companies-toggle" class="left-toggle" data-closed-icon="🏢" data-open-icon="✕" title="Toggle peptide companies panel">
             🏢
         </button>
 
@@ -2786,13 +2790,16 @@
                         quizToggle.style.left = `${baseLeft}px`;
                     }
 
-                    if (
-                        searchContainer &&
-                        searchContainer.classList.contains("collapsed")
-                    ) {
-                        searchContainer.style.transform = "none";
-                        searchContainer.style.left = `${baseLeft}px`;
-                        searchContainer.style.top = "60px";
+                    if (searchContainer) {
+                        if (searchContainer.classList.contains("collapsed")) {
+                            // Position on the left when collapsed
+                            searchContainer.style.transform = "none";
+                            searchContainer.style.left = `${baseLeft}px`;
+                            searchContainer.style.top = "60px";
+                        } else {
+                            // When expanded, it's centered by CSS (no need to override)
+                            // The CSS already handles centering for .expanded state
+                        }
                     }
 
                     const calcToggle = document.getElementById("calc-toggle");
@@ -2825,11 +2832,19 @@
                     if (open) {
                         panel.classList.remove("collapsed");
                         toggle.classList.remove("panel-collapsed");
-                        toggle.innerHTML = toggle.dataset.openIcon || "✕";
+                        if (toggle.dataset.openIcon) {
+                            toggle.innerHTML = toggle.dataset.openIcon;
+                        } else {
+                            toggle.innerHTML = "✕";
+                        }
                     } else {
                         panel.classList.add("collapsed");
                         toggle.classList.add("panel-collapsed");
-                        toggle.innerHTML = toggle.dataset.closedIcon || "☰";
+                        if (toggle.dataset.closedIcon) {
+                            toggle.innerHTML = toggle.dataset.closedIcon;
+                        } else {
+                            toggle.innerHTML = "☰";
+                        }
                     }
 
                     updateFloatingControls();
@@ -2859,7 +2874,7 @@
                 // Expose centralized toggling for other modules
                 window.togglePanel = togglePanel;
 
-                if (tabToggle && tabPanel) {
+                if (tabToggle && tabPanel && !tabToggle.__bound) {
                     tabToggle.addEventListener("click", () => {
                         togglePanel(tabPanel, tabToggle, [
                             { panel: studiesPanel, toggle: studiesToggle },
@@ -2867,6 +2882,7 @@
                             { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
                         ]);
                     });
+                    tabToggle.__bound = true;
                 }
 
                 // Quiz drag handle
@@ -2922,7 +2938,7 @@
                     });
                 }
 
-                if (studiesToggle && studiesPanel) {
+                if (studiesToggle && studiesPanel && !studiesToggle.__bound) {
                     studiesToggle.addEventListener("click", () => {
                         const wasCollapsed =
                             studiesPanel.classList.contains("collapsed");
@@ -2940,35 +2956,55 @@
                             });
                         }
                     });
+                    studiesToggle.__bound = true;
                 }
 
-                // Quiz toggle wiring
-                if (quizToggle && quizPanel) {
+                // Quiz toggle wiring (only if not already bound by initializeToggleButtons)
+                if (quizToggle && quizPanel && !quizToggle.__bound) {
                     quizToggle.addEventListener("click", () => {
                         const wasCollapsed = quizPanel.classList.contains("collapsed");
-                        togglePanel(quizPanel, quizToggle, [
-                            { panel: tabPanel, toggle: tabToggle },
-                            { panel: studiesPanel, toggle: studiesToggle },
-                            { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
-                        ]);
+                        if (typeof window.togglePanel === "function") {
+                            window.togglePanel(quizPanel, quizToggle, [
+                                { panel: tabPanel, toggle: tabToggle },
+                                { panel: studiesPanel, toggle: studiesToggle },
+                                { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
+                                { panel: calcPanel, toggle: calcToggleBtn },
+                            ]);
+                        } else if (typeof togglePanel === "function") {
+                            togglePanel(quizPanel, quizToggle, [
+                                { panel: tabPanel, toggle: tabToggle },
+                                { panel: studiesPanel, toggle: studiesToggle },
+                                { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
+                            ]);
+                        } else {
+                            quizPanel.classList.toggle("collapsed");
+                        }
                         if (wasCollapsed && typeof window.initializePeptideQuiz === "function") {
                             window.initializePeptideQuiz();
                         }
                     });
-                    // Prevent fallback from double-binding
                     quizToggle.__bound = true;
                 }
 
                 // Calculator toggle wiring
-                if (calcToggleBtn && calcPanel) {
+                if (calcToggleBtn && calcPanel && !calcToggleBtn.__bound) {
                     calcToggleBtn.addEventListener("click", () => {
+                        const wasCollapsed = calcPanel.classList.contains("collapsed");
                         togglePanel(calcPanel, calcToggleBtn, [
                             { panel: tabPanel, toggle: tabToggle },
                             { panel: studiesPanel, toggle: studiesToggle },
                             { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
                             { panel: quizPanel, toggle: quizToggle },
                         ]);
+                        // Initialize calculator when panel opens
+                        if (wasCollapsed && typeof initializeCalculator === "function") {
+                            // Use setTimeout to ensure panel is fully visible before initializing
+                            setTimeout(() => {
+                                initializeCalculator();
+                            }, 100);
+                        }
                     });
+                    calcToggleBtn.__bound = true;
                 }
 
                 // Drag functionality for adjusting panel widths
@@ -3337,19 +3373,348 @@
                 }
             }
 
-            // Initialize tabs and search immediately when DOM is ready
+            // Initialize toggle buttons immediately - doesn't depend on Three.js
+            function initializeToggleButtons() {
+                console.log('🔘 Initializing toggle buttons...');
+                
+                // Get all panel elements
+                const tabToggle = document.getElementById("tab-toggle");
+                const tabPanel = document.getElementById("tab-panel");
+                const studiesToggle = document.getElementById("studies-toggle");
+                const studiesPanel = document.getElementById("studies-panel");
+                const calcToggleBtn = document.getElementById("calc-toggle");
+                const calcPanel = document.getElementById("calc-panel");
+                const quizToggle = document.getElementById("quiz-toggle");
+                const quizPanel = document.getElementById("quiz-panel");
+                const companiesToggle = document.getElementById("companies-toggle");
+                const companiesPanel = document.getElementById("companies-panel");
+                
+                console.log('🔘 Panel elements found:', {
+                    tabToggle: !!tabToggle,
+                    tabPanel: !!tabPanel,
+                    studiesToggle: !!studiesToggle,
+                    studiesPanel: !!studiesPanel,
+                    calcToggleBtn: !!calcToggleBtn,
+                    calcPanel: !!calcPanel,
+                    quizToggle: !!quizToggle,
+                    quizPanel: !!quizPanel,
+                    companiesToggle: !!companiesToggle,
+                    companiesPanel: !!companiesPanel
+                });
+
+                // Define togglePanel function if it doesn't exist yet
+                if (typeof window.togglePanel === 'undefined') {
+                    function setPanelState(panel, toggle, open) {
+                        if (!panel || !toggle) {
+                            console.warn('⚠️ setPanelState: missing panel or toggle', { panel: !!panel, toggle: !!toggle });
+                            return;
+                        }
+                        const currentlyOpen = !panel.classList.contains("collapsed");
+                        console.log(`🔘 setPanelState: panel=${panel.id}, currentlyOpen=${currentlyOpen}, requestedOpen=${open}`);
+                        
+                        if (open === currentlyOpen) {
+                            console.log('⚠️ Panel already in requested state');
+                            return;
+                        }
+
+                        if (open) {
+                            panel.classList.remove("collapsed");
+                            toggle.classList.remove("panel-collapsed");
+                            if (toggle.dataset.openIcon) {
+                                toggle.innerHTML = toggle.dataset.openIcon;
+                            }
+                            console.log(`✅ Panel ${panel.id} opened`);
+                        } else {
+                            panel.classList.add("collapsed");
+                            toggle.classList.add("panel-collapsed");
+                            if (toggle.dataset.closedIcon) {
+                                toggle.innerHTML = toggle.dataset.closedIcon;
+                            }
+                            console.log(`✅ Panel ${panel.id} closed`);
+                        }
+                        
+                        // Update floating controls if available
+                        if (typeof window.updateFloatingControls === 'function') {
+                            window.updateFloatingControls();
+                        }
+                    }
+
+                    window.togglePanel = function(panel, toggle, collapseList = []) {
+                        if (!panel || !toggle) {
+                            console.warn('⚠️ togglePanel: missing panel or toggle', { panel: !!panel, toggle: !!toggle });
+                            return;
+                        }
+                        console.log(`🔘 togglePanel called: panel=${panel.id}, toggle=${toggle.id}`);
+                        const shouldOpen = panel.classList.contains("collapsed");
+                        console.log(`🔘 Panel ${panel.id} is currently ${shouldOpen ? 'collapsed' : 'open'}, will ${shouldOpen ? 'open' : 'close'}`);
+
+                        if (shouldOpen && Array.isArray(collapseList)) {
+                            collapseList.forEach(({ panel: otherPanel, toggle: otherToggle }) => {
+                                if (otherPanel && otherToggle) {
+                                    console.log(`🔘 Closing other panel: ${otherPanel.id}`);
+                                    setPanelState(otherPanel, otherToggle, false);
+                                }
+                            });
+                        }
+
+                        setPanelState(panel, toggle, shouldOpen);
+                    };
+                } else {
+                    console.log('✅ togglePanel function already exists');
+                }
+
+                // Tab toggle
+                if (tabToggle && tabPanel && !tabToggle.__bound) {
+                    console.log('✅ Setting up tab toggle', { tabToggle: !!tabToggle, tabPanel: !!tabPanel });
+                    tabToggle.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🔘 Tab toggle clicked');
+                        console.log('🔘 Tab panel state before:', tabPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
+                        if (window.togglePanel) {
+                            window.togglePanel(tabPanel, tabToggle, [
+                                { panel: studiesPanel, toggle: studiesToggle },
+                                { panel: quizPanel, toggle: quizToggle },
+                                { panel: companiesPanel, toggle: companiesToggle },
+                                { panel: calcPanel, toggle: calcToggleBtn },
+                            ]);
+                            console.log('🔘 Tab panel state after:', tabPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
+                        } else {
+                            console.warn('⚠️ togglePanel not available, using fallback');
+                            // Fallback if togglePanel not ready
+                            tabPanel.classList.toggle("collapsed");
+                        }
+                    });
+                    tabToggle.__bound = true;
+                } else {
+                    console.warn('⚠️ Tab toggle not set up', { tabToggle: !!tabToggle, tabPanel: !!tabPanel, bound: tabToggle?.__bound });
+                }
+
+                // Studies toggle
+                if (studiesToggle && studiesPanel && !studiesToggle.__bound) {
+                    studiesToggle.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🔘 Studies toggle clicked');
+                        if (window.togglePanel) {
+                            window.togglePanel(studiesPanel, studiesToggle, [
+                                { panel: tabPanel, toggle: tabToggle },
+                                { panel: quizPanel, toggle: quizToggle },
+                                { panel: companiesPanel, toggle: companiesToggle },
+                                { panel: calcPanel, toggle: calcToggleBtn },
+                            ]);
+                        } else {
+                            studiesPanel.classList.toggle("collapsed");
+                        }
+                    });
+                    studiesToggle.__bound = true;
+                }
+
+                // Calculator toggle
+                if (calcToggleBtn && calcPanel && !calcToggleBtn.__bound) {
+                    console.log('✅ Setting up calculator toggle', { calcToggleBtn: !!calcToggleBtn, calcPanel: !!calcPanel });
+                    calcToggleBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🔘 Calculator toggle clicked');
+                        const wasCollapsed = calcPanel.classList.contains("collapsed");
+                        console.log('🔘 Calc panel state before:', wasCollapsed ? 'collapsed' : 'open');
+                        if (window.togglePanel) {
+                            window.togglePanel(calcPanel, calcToggleBtn, [
+                                { panel: tabPanel, toggle: tabToggle },
+                                { panel: studiesPanel, toggle: studiesToggle },
+                                { panel: quizPanel, toggle: quizToggle },
+                                { panel: companiesPanel, toggle: companiesToggle },
+                            ]);
+                            console.log('🔘 Calc panel state after:', calcPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
+                            // Initialize calculator when panel opens
+                            if (wasCollapsed && typeof initializeCalculator === "function") {
+                                console.log('🔘 Initializing calculator...');
+                                // Use setTimeout to ensure panel is fully visible before initializing
+                                setTimeout(() => {
+                                    initializeCalculator();
+                                }, 100);
+                            }
+                        } else {
+                            console.warn('⚠️ togglePanel not available, using fallback');
+                            calcPanel.classList.toggle("collapsed");
+                            if (!calcPanel.classList.contains("collapsed") && typeof initializeCalculator === "function") {
+                                initializeCalculator();
+                            }
+                        }
+                    });
+                    calcToggleBtn.__bound = true;
+                } else {
+                    console.warn('⚠️ Calculator toggle not set up', { calcToggleBtn: !!calcToggleBtn, calcPanel: !!calcPanel, bound: calcToggleBtn?.__bound });
+                }
+
+                // Quiz toggle
+                if (quizToggle && quizPanel && !quizToggle.__bound) {
+                    console.log('✅ Setting up quiz toggle', { quizToggle: !!quizToggle, quizPanel: !!quizPanel });
+                    quizToggle.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🔘 Quiz toggle clicked');
+                        const wasCollapsed = quizPanel.classList.contains("collapsed");
+                        console.log('🔘 Quiz panel state before:', wasCollapsed ? 'collapsed' : 'open');
+                        console.log('🔘 window.togglePanel available:', typeof window.togglePanel === 'function');
+                        
+                        if (window.togglePanel) {
+                            try {
+                                window.togglePanel(quizPanel, quizToggle, [
+                                    { panel: tabPanel, toggle: tabToggle },
+                                    { panel: studiesPanel, toggle: studiesToggle },
+                                    { panel: companiesPanel, toggle: companiesToggle },
+                                    { panel: calcPanel, toggle: calcToggleBtn },
+                                ]);
+                                console.log('🔘 Quiz panel state after:', quizPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
+                                // Initialize quiz when panel opens
+                                if (wasCollapsed && typeof window.initializePeptideQuiz === "function") {
+                                    console.log('🔘 Initializing quiz...');
+                                    setTimeout(() => {
+                                        window.initializePeptideQuiz();
+                                    }, 100);
+                                }
+                            } catch (error) {
+                                console.error('❌ Error in togglePanel:', error);
+                                // Fallback
+                                quizPanel.classList.toggle("collapsed");
+                                if (!quizPanel.classList.contains("collapsed") && typeof window.initializePeptideQuiz === "function") {
+                                    setTimeout(() => {
+                                        window.initializePeptideQuiz();
+                                    }, 100);
+                                }
+                            }
+                        } else {
+                            console.warn('⚠️ togglePanel not available, using fallback');
+                            quizPanel.classList.toggle("collapsed");
+                            if (!quizPanel.classList.contains("collapsed") && typeof window.initializePeptideQuiz === "function") {
+                                setTimeout(() => {
+                                    window.initializePeptideQuiz();
+                                }, 100);
+                            }
+                        }
+                    });
+                    quizToggle.__bound = true;
+                } else {
+                    console.warn('⚠️ Quiz toggle not set up', { quizToggle: !!quizToggle, quizPanel: !!quizPanel, bound: quizToggle?.__bound });
+                }
+
+                // Companies toggle (may be initialized by companies.js, but add fallback)
+                if (companiesToggle && companiesPanel && !companiesToggle.__bound) {
+                    console.log('✅ Setting up companies toggle', { companiesToggle: !!companiesToggle, companiesPanel: !!companiesPanel });
+                    companiesToggle.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🔘 Companies toggle clicked');
+                        const wasCollapsed = companiesPanel.classList.contains("collapsed");
+                        console.log('🔘 Companies panel state before:', wasCollapsed ? 'collapsed' : 'open');
+                        if (window.togglePanel) {
+                            window.togglePanel(companiesPanel, companiesToggle, [
+                                { panel: tabPanel, toggle: tabToggle },
+                                { panel: studiesPanel, toggle: studiesToggle },
+                                { panel: quizPanel, toggle: quizToggle },
+                                { panel: calcPanel, toggle: calcToggleBtn },
+                            ]);
+                            console.log('🔘 Companies panel state after:', companiesPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
+                            // Initialize companies when panel opens
+                            if (wasCollapsed && typeof window.initializeCompaniesPanel === "function") {
+                                console.log('🔘 Initializing companies panel...');
+                                setTimeout(() => {
+                                    window.initializeCompaniesPanel();
+                                }, 100);
+                            }
+                        } else {
+                            console.warn('⚠️ togglePanel not available, using fallback');
+                            companiesPanel.classList.toggle("collapsed");
+                            if (!companiesPanel.classList.contains("collapsed") && typeof window.initializeCompaniesPanel === "function") {
+                                setTimeout(() => {
+                                    window.initializeCompaniesPanel();
+                                }, 100);
+                            }
+                        }
+                    });
+                    companiesToggle.__bound = true;
+                } else {
+                    console.warn('⚠️ Companies toggle not set up', { companiesToggle: !!companiesToggle, companiesPanel: !!companiesPanel, bound: companiesToggle?.__bound });
+                }
+
+                console.log('✅ Toggle buttons initialized');
+            }
+
+            // Initialize tabs, search, and toggle buttons immediately when DOM is ready
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => {
                     initializeTabs();
                     initializeSearchNow();
+                    initializeToggleButtons();
                     initializeApp();
+                    // Fallback: ensure search toggle works even if initializeSearch fails
+                    setTimeout(() => {
+                        const searchToggle = document.getElementById('search-toggle');
+                        const searchContainer = document.getElementById('search-container');
+                        if (searchToggle && searchContainer && !searchToggle.__bound) {
+                            console.log('🔍 Setting up fallback search toggle');
+                            searchToggle.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const isExpanded = searchContainer.classList.contains('expanded');
+                                if (isExpanded) {
+                                    searchContainer.classList.remove('expanded');
+                                    searchContainer.classList.add('collapsed');
+                                    searchContainer.style.left = '';
+                                    searchContainer.style.top = '';
+                                    searchContainer.style.transform = '';
+                                } else {
+                                    searchContainer.classList.remove('collapsed');
+                                    searchContainer.classList.add('expanded');
+                                    searchContainer.style.left = '50%';
+                                    searchContainer.style.top = '20px';
+                                    searchContainer.style.transform = 'translateX(-50%)';
+                                    const input = document.getElementById('search-input');
+                                    if (input) setTimeout(() => input.focus(), 100);
+                                }
+                            });
+                            searchToggle.__bound = true;
+                        }
+                    }, 500);
                 });
             } else {
                 // DOM is already ready
                 initializeTabs();
                 initializeSearchNow();
+                initializeToggleButtons();
                 // DOM is already ready, but wait for window load for Three.js
                 window.addEventListener('load', initializeApp);
+                // Fallback: ensure search toggle works even if initializeSearch fails
+                setTimeout(() => {
+                    const searchToggle = document.getElementById('search-toggle');
+                    const searchContainer = document.getElementById('search-container');
+                    if (searchToggle && searchContainer && !searchToggle.__bound) {
+                        console.log('🔍 Setting up fallback search toggle');
+                        searchToggle.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const isExpanded = searchContainer.classList.contains('expanded');
+                            if (isExpanded) {
+                                searchContainer.classList.remove('expanded');
+                                searchContainer.classList.add('collapsed');
+                                searchContainer.style.left = '';
+                                searchContainer.style.top = '';
+                                searchContainer.style.transform = '';
+                            } else {
+                                searchContainer.classList.remove('collapsed');
+                                searchContainer.classList.add('expanded');
+                                searchContainer.style.left = '50%';
+                                searchContainer.style.top = '20px';
+                                searchContainer.style.transform = 'translateX(-50%)';
+                                const input = document.getElementById('search-input');
+                                if (input) setTimeout(() => input.focus(), 100);
+                            }
+                        });
+                        searchToggle.__bound = true;
+                    }
+                }, 500);
             }
         </script>
 
@@ -3410,18 +3775,8 @@
                     window.initializeCompaniesPanel();
                 }
 
-                // Fallback binding for quiz toggle in case earlier wiring didn't attach
-                const qt = document.getElementById('quiz-toggle');
-                const qp = document.getElementById('quiz-panel');
-                if (qt && qp && !qt.__bound) {
-                    qt.addEventListener('click', () => {
-                        const wasCollapsed = qp.classList.contains('collapsed');
-                        if (wasCollapsed) qp.classList.remove('collapsed'); else qp.classList.add('collapsed');
-                        if (typeof window.updateFloatingControls === 'function') window.updateFloatingControls();
-                        if (wasCollapsed && typeof window.initializePeptideQuiz === 'function') window.initializePeptideQuiz();
-                    });
-                    qt.__bound = true;
-                }
+                // Quiz and companies toggles should already be set up by initializeToggleButtons()
+                // This fallback is no longer needed as we handle it in the early initialization
             });
         </script>
     </body>
