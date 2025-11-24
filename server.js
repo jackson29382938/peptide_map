@@ -12,7 +12,10 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
+// Only serve static files when running locally, not in Vercel
+if (process.env.VERCEL !== '1') {
+    app.use(express.static(__dirname));
+}
 
 // Initialize SQLite database
 const db = new sqlite3.Database('./analytics.db', (err) => {
@@ -514,11 +517,16 @@ app.get('/analytics', (req, res) => {
     res.sendFile(path.join(__dirname, 'analytics-dashboard.html'));
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`🚀 Analytics server running on http://localhost:${PORT}`);
-    console.log(`📊 Analytics dashboard: http://localhost:${PORT}/analytics`);
-});
+// Export for Vercel serverless functions
+module.exports = app;
+
+// Only start server if not in Vercel environment
+if (process.env.VERCEL !== '1') {
+    app.listen(PORT, () => {
+        console.log(`🚀 Analytics server running on http://localhost:${PORT}`);
+        console.log(`📊 Analytics dashboard: http://localhost:${PORT}/analytics`);
+    });
+}
 
 // Graceful shutdown
 process.on('SIGINT', () => {
