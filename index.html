@@ -12,7 +12,10 @@
         <link rel="stylesheet" href="css/styles.css" />
     </head>
 
-    <body class="bg-gray-800">
+    <body>
+        <!-- 3D CANVAS CONTAINER (Moved to top so it renders first) -->
+        <div id="container" class="w-screen h-screen"></div>
+        
         <div id="info-box">
             <p class="font-bold text-lg mb-1" id="info-title">Model Ready</p>
             <p class="text-gray-300 whitespace-pre-line" id="info-message">
@@ -2284,14 +2287,7 @@
             <div id="studies-list" class="studies-list"></div>
         </div>
 
-        <!-- Title Card (displayed when side panel is closed) -->
-        <div id="title-card" class="title-card">
-            <h1 class="title-main">Body Peptide Map</h1>
-            <p class="title-description">
-                Interactive 3D guide for peptide injection sites and muscle
-                anatomy
-            </p>
-        </div>
+        <!-- Title Card removed - was covering the 3D canvas -->
 
         <div id="side-panel" class="side-panel">
             <h2 id="panel-title" class="text-xl font-bold mb-3 text-white"></h2>
@@ -2646,8 +2642,6 @@
                 </div>
             </div>
         </div>
-
-        <div id="container" class="w-screen h-screen"></div>
 
         <!-- Three.js core + helpers -->
         <script src="js/three-deps.js"></script>

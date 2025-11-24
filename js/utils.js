@@ -32,19 +32,57 @@ function animate() {
 
 function onWindowResize() {
     const container = document.getElementById('container');
-    const w = container.clientWidth;
-    const h = container.clientHeight;
+    if (!container) return;
+    
+    // Get actual visible dimensions
+    const w = container.clientWidth || window.innerWidth;
+    const h = container.clientHeight || window.innerHeight;
 
     // Use global references
     const camera = window.camera;
     const renderer = window.renderer;
+    const scene = window.scene;
     
-    if (camera && renderer) {
+    if (camera && renderer && scene) {
+        // Update camera aspect ratio
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
+        
+        // Resize renderer to match container
         renderer.setSize(w, h);
+        
+        // Force a render after resize to ensure canvas updates
+        renderer.render(scene, camera);
+        
+        console.log(`✅ Renderer resized to ${w}x${h}`);
     }
 }
+
+// Also listen for container visibility changes
+function setupContainerVisibilityObserver() {
+    const container = document.getElementById('container');
+    if (!container) return;
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Container became visible - resize renderer
+                if (window.onWindowResize) {
+                    window.onWindowResize();
+                }
+                console.log('✅ Container became visible - resized renderer');
+            }
+        });
+    }, { threshold: 0 });
+    
+    observer.observe(container);
+}
+
+// Make onWindowResize globally accessible
+window.onWindowResize = onWindowResize;
+
+// Make setupContainerVisibilityObserver globally accessible
+window.setupContainerVisibilityObserver = setupContainerVisibilityObserver;
 
 function getLeftPanelsWidth() {
     let maxWidth = 0;

@@ -190,6 +190,12 @@ function loadModel() {
                         console.log(`  📦 Mesh: ${child.name || 'unnamed'}, vertices: ${child.geometry?.attributes?.position?.count || 0}`);
                     }
                 });
+                
+                // Verify interactive objects were added
+                console.log(`📊 Total interactive objects: ${interactiveObjects.length}`);
+                if (interactiveObjects.length === 0) {
+                    console.error('❌ WARNING: No interactive objects found in model!');
+                }
 
                 const box = new THREE.Box3().setFromObject(modelContainer);
                 const center = box.getCenter(new THREE.Vector3());

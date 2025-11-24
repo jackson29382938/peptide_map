@@ -2,21 +2,41 @@
 function initializeSearch() {
   // Check if required data is available
   if (typeof regions === "undefined" || typeof regionInjuries === "undefined") {
-    console.error("❌ Cannot initialize search - region data not available");
-    // Wait a bit and try again
+    console.log("⏳ Waiting for region data to load...");
+    // Wait for regionsReady event instead of just retrying once
+    const handleRegionsReady = () => {
+      if (
+        typeof regions !== "undefined" &&
+        typeof regionInjuries !== "undefined"
+      ) {
+        console.log("✅ Region data available, initializing search");
+        window.removeEventListener('regionsReady', handleRegionsReady);
+        window.removeEventListener('appReady', handleRegionsReady);
+        initializeSearch();
+      }
+    };
+    
+    // Listen for regionsReady event
+    window.addEventListener('regionsReady', handleRegionsReady, { once: true });
+    // Also listen for appReady as a fallback
+    window.addEventListener('appReady', handleRegionsReady, { once: true });
+    
+    // Fallback: retry after a delay if events don't fire
     setTimeout(() => {
       if (
         typeof regions !== "undefined" &&
         typeof regionInjuries !== "undefined"
       ) {
-        console.log("✅ Retrying search initialization");
+        console.log("✅ Retrying search initialization after timeout");
+        window.removeEventListener('regionsReady', handleRegionsReady);
+        window.removeEventListener('appReady', handleRegionsReady);
         initializeSearch();
       } else {
-        console.error(
-          "❌ Search initialization failed - region data still not available",
+        console.warn(
+          "⚠️ Search initialization delayed - region data still loading",
         );
       }
-    }, 100);
+    }, 2000);
     return;
   }
 

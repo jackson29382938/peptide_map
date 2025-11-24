@@ -1137,6 +1137,8 @@ const regionProcedures = {
 
 // Make regions and related variables globally accessible
 window.regions = regions;
+window.regionInjuries = regionInjuries;
+window.regionProcedures = regionProcedures;
 window.defaultColor = defaultColor;
 window.highlightColor = highlightColor;
 window.regionTolerance = regionTolerance;
@@ -1147,6 +1149,8 @@ window.regionTolerance = regionTolerance;
     if (typeof initState !== 'undefined') {
         initState.regionsReady = true;
         console.log('✅ Regions data loaded');
+        // Dispatch event so init.js can listen for it
+        window.dispatchEvent(new CustomEvent('regionsReady'));
         if (typeof checkReadiness === 'function') {
             checkReadiness();
         }

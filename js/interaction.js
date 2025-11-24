@@ -37,14 +37,21 @@ function onMouseClick(event) {
 
     // Readiness check - ensure all systems are initialized
     if (!initState.allReady) {
-        console.warn('⚠️ Click ignored - systems not ready yet', {
-            sceneReady: initState.sceneReady,
-            modelLoaded: initState.modelLoaded,
-            regionsReady: initState.regionsReady,
-            interactiveObjectsCount: interactiveObjects.length,
-            hasRegions: typeof regions !== 'undefined',
-            hasRegionInjuries: typeof regionInjuries !== 'undefined'
-        });
+        console.warn('⚠️ Click ignored - systems not ready yet');
+        // Call checkReadiness to get detailed breakdown of what's missing
+        if (typeof checkReadiness === 'function') {
+            checkReadiness();
+        } else {
+            // Fallback logging if checkReadiness isn't available
+            console.warn('Readiness status:', {
+                sceneReady: initState.sceneReady,
+                modelLoaded: initState.modelLoaded,
+                regionsReady: initState.regionsReady,
+                interactiveObjectsCount: interactiveObjects.length,
+                hasRegions: typeof regions !== 'undefined',
+                hasRegionInjuries: typeof regionInjuries !== 'undefined'
+            });
+        }
         updateInfo('Loading...', 'Please wait for the model to finish loading.');
         return;
     }

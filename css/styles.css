@@ -67,7 +67,7 @@ body {
     margin: 0;
     overflow: hidden;
     font-family: "Inter", sans-serif;
-    background-color: var(--bg-primary);
+    background-color: transparent !important; /* Completely transparent - canvas shows through */
     color: var(--text-primary);
     transition:
         background-color 0.3s ease,
@@ -75,8 +75,10 @@ body {
     position: relative; /* Ensure body doesn't cover fixed elements */
 }
 
-/* Override Tailwind bg-gray-800 on body to allow canvas to show */
-body.bg-gray-800 {
+/* Remove any body background classes */
+body.bg-gray-800,
+body.bg-gray-900,
+body.bg-black {
     background-color: transparent !important;
 }
 
@@ -86,20 +88,22 @@ body.bg-gray-800 {
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 0; /* Base layer - canvas should be visible */
-    background: transparent; /* Ensure no background covers canvas */
+    z-index: 0; /* Below panels (panels are z-index 12+) */
+    background: transparent;
+    pointer-events: auto; /* Container accepts pointer events */
+    display: block; /* Proper layout element */
 }
 
-canvas {
-    display: block !important;
-    width: 100% !important;
-    height: 100% !important;
-    position: absolute;
-    top: 0;
-    left: 0;
+#container canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: relative; /* NOT absolute - normal flow */
     z-index: 0;
     background: transparent;
-    pointer-events: auto; /* Ensure canvas can receive events */
+    pointer-events: auto; /* Canvas receives events */
+    visibility: visible;
+    opacity: 1;
 }
 
 #info-box {
@@ -1572,12 +1576,14 @@ canvas {
     z-index: 5; /* Above canvas but below other UI */
     text-align: center;
     opacity: 1;
-    pointer-events: none; /* Allow clicks to pass through to canvas */
+    pointer-events: none !important; /* Allow clicks to pass through to canvas */
     transition:
         opacity 0.5s ease,
         visibility 0.5s ease,
         background 0.3s ease,
         border-color 0.3s ease;
+    /* Ensure it doesn't block canvas visually */
+    mix-blend-mode: normal;
 }
 
 #title-card.hidden {
