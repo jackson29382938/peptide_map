@@ -227,19 +227,6 @@ function initScene() {
         if (renderer && scene && camera) {
             renderer.render(scene, camera);
         }
-        
-        // Test if canvas is actually rendering
-        const testColor = new THREE.Color(0xff0000); // Red test color
-        scene.background = testColor;
-        renderer.render(scene, camera); // Force render with red background
-        console.log('🧪 TEST: Set scene background to RED - you should see red if canvas is visible');
-        setTimeout(() => {
-            // Restore original background
-            const originalBg = new THREE.Color(initialTheme === 'light' ? 0xf9fafb : 0x1f2937);
-            scene.background = originalBg;
-            renderer.render(scene, camera); // Force render with original background
-            console.log('🧪 TEST: Restored original background color');
-        }, 2000);
     }, 100);
 
     // Lights - store references for theme adjustments

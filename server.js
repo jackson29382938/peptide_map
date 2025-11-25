@@ -13,9 +13,17 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 // Only serve static files when running locally, not in Vercel
-if (process.env.VERCEL !== '1') {
-    app.use(express.static(__dirname));
-}
+app.use(express.static(path.join(__dirname)));
+
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/images', express.static(path.join(__dirname, 'images')));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
+
+// Serve main SPA / landing page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Initialize SQLite database
 const db = new sqlite3.Database('./analytics.db', (err) => {
