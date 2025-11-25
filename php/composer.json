@@ -1,0 +1,8 @@
+{
+    "name": "peptide-map/contact",
+    "description": "Contact form email handler",
+    "require": {
+        "phpmailer/phpmailer": "^6.9"
+    }
+}
+

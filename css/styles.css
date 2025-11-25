@@ -1111,6 +1111,118 @@ body.bg-black {
     background: var(--bg-hover);
 }
 
+/* Contact Panel Styles */
+#contact-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 32vw;
+    min-width: 320px;
+    max-width: 540px;
+    height: 100vh;
+    background: var(--bg-panel);
+    box-shadow: 4px 0 12px var(--shadow-sm);
+    border-right: 1px solid var(--border-primary);
+    z-index: 11; /* Lower z-index so other panels appear on top */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition:
+        transform 0.3s ease-in-out,
+        background 0.3s ease;
+}
+
+#contact-panel.collapsed {
+    transform: translateX(-100%);
+}
+
+#contact-drag-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 10px;
+    height: 100%;
+    background: rgba(139, 92, 246, 0.2); /* purple-ish to differentiate */
+    cursor: ew-resize;
+    transition: background 0.2s ease;
+    z-index: 10;
+}
+
+#contact-drag-handle:hover {
+    background: rgba(139, 92, 246, 0.45);
+}
+
+#contact-toggle {
+    position: fixed;
+    top: 410px; /* Stacked under quiz toggle */
+    left: 20px;
+    width: 40px;
+    height: 40px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-accent);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    z-index: 20;
+    box-shadow: 0 4px 12px var(--shadow-sm);
+    transition:
+        left 0.3s ease-in-out,
+        background 0.2s ease;
+}
+
+#contact-toggle:hover {
+    background: var(--bg-hover);
+}
+
+#contact-container {
+    padding: 20px;
+}
+
+#contact-form input[type="email"]:focus,
+#contact-form textarea:focus {
+    outline: none;
+    border-color: var(--border-accent-hover);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+#contact-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+}
+
+#contact-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#contact-status {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+#contact-status.success {
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16, 185, 129, 0.5);
+    color: var(--text-primary);
+}
+
+#contact-status.error {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: var(--text-accent);
+}
+
+#contact-status.info {
+    background: rgba(59, 130, 246, 0.2);
+    border: 1px solid rgba(59, 130, 246, 0.5);
+    color: var(--text-primary);
+}
+
 /* Quiz UI beautification and color normalization */
 #quiz-container {
     padding: 12px 16px;

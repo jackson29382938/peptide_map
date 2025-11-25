@@ -77,6 +77,55 @@
             <div id="companies-list" class="studies-list"></div>
         </div>
 
+        <!-- Contact Panel (Left) -->
+        <div id="contact-panel" class="collapsed">
+            <div id="contact-drag-handle" title="Drag to adjust panel width"></div>
+            <div class="studies-header">
+                <h2 class="studies-title">✉️ Contact Us</h2>
+                <div class="studies-meta">
+                    <span>Send us a message if you have any questions or advice. NOTE: we do not provide medical advice and should not be taken as such.</span>
+                </div>
+            </div>
+            <div id="contact-container" class="studies-list">
+                <form id="contact-form">
+                    <div style="margin-bottom: 20px;">
+                        <label for="contact-email" style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem;">
+                            Your Email Address
+                        </label>
+                        <input
+                            type="email"
+                            id="contact-email"
+                            name="email"
+                            required
+                            placeholder="your.email@example.com"
+                            style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-input); color: var(--text-primary); font-size: 0.95rem; box-sizing: border-box;"
+                        />
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label for="contact-message" style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem;">
+                            Message
+                        </label>
+                        <textarea
+                            id="contact-message"
+                            name="message"
+                            required
+                            rows="8"
+                            placeholder="Type your message here..."
+                            style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-input); color: var(--text-primary); font-size: 0.95rem; box-sizing: border-box; resize: vertical; font-family: inherit;"
+                        ></textarea>
+                    </div>
+                    <div id="contact-status" style="margin-bottom: 12px; padding: 12px; border-radius: 8px; display: none;"></div>
+                    <button
+                        type="submit"
+                        id="contact-submit"
+                        style="width: 100%; padding: 12px; background: linear-gradient(135deg, #ef4444, #dc2626); border: none; border-radius: 8px; color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);"
+                    >
+                        Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+
         <!-- Injection Point Tooltip -->
         <div id="injection-tooltip">
             <div class="tooltip-title"></div>
@@ -200,6 +249,9 @@
 
         <!-- Quiz Panel Toggle Button -->
         <button id="quiz-toggle" class="left-toggle" data-closed-icon="🧩" data-open-icon="✕" title="Toggle peptide quiz panel">🧩</button>
+
+        <!-- Contact Panel Toggle Button -->
+        <button id="contact-toggle" class="left-toggle" data-closed-icon="✉️" data-open-icon="✕" title="Contact us">✉️</button>
 
         <!-- Toggle Button for Tab Panel -->
         <button
@@ -2740,6 +2792,7 @@
                     const companiesPanel = document.getElementById("companies-panel");
                     const quizPanel = document.getElementById("quiz-panel");
                     const calcPanel = document.getElementById("calc-panel");
+                    const contactPanel = document.getElementById("contact-panel");
                     if (tabPanel && !tabPanel.classList.contains("collapsed")) {
                         width = Math.max(width, tabPanel.offsetWidth);
                     }
@@ -2753,13 +2806,16 @@
                         companiesPanel &&
                         !companiesPanel.classList.contains("collapsed")
                     ) {
-                        width = Math.max(width, companiesPanel.offsetWidth);
+width = Math.max(width, companiesPanel.offsetWidth);
                     }
                     if (quizPanel && !quizPanel.classList.contains("collapsed")) {
                         width = Math.max(width, quizPanel.offsetWidth);
                     }
                     if (calcPanel && !calcPanel.classList.contains("collapsed")) {
                         width = Math.max(width, calcPanel.offsetWidth);
+                    }
+                    if (contactPanel && !contactPanel.classList.contains("collapsed")) {
+                        width = Math.max(width, contactPanel.offsetWidth);
                     }
                     return width + 20;
                 }
@@ -2782,6 +2838,11 @@
                     const quizToggle = document.getElementById("quiz-toggle");
                     if (quizToggle) {
                         quizToggle.style.left = `${baseLeft}px`;
+                    }
+
+                    const contactToggle = document.getElementById("contact-toggle");
+                    if (contactToggle) {
+                        contactToggle.style.left = `${baseLeft}px`;
                     }
 
                     if (searchContainer) {
@@ -2874,6 +2935,7 @@
                             { panel: studiesPanel, toggle: studiesToggle },
                             { panel: document.getElementById("quiz-panel"), toggle: document.getElementById("quiz-toggle") },
                             { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
+                            { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
                         ]);
                     });
                     tabToggle.__bound = true;
@@ -2932,6 +2994,33 @@
                     });
                 }
 
+                // Contact drag handle
+                const contactDragHandle = document.getElementById("contact-drag-handle");
+                let draggingContact = false;
+                let contactStartX = 0;
+                let contactStartWidth = 0;
+
+                if (contactDragHandle && contactPanel) {
+                    contactDragHandle.addEventListener("mousedown", (e) => {
+                        draggingContact = true;
+                        contactStartX = e.clientX;
+                        contactStartWidth = contactPanel.offsetWidth;
+                        contactPanel.style.transition = "none";
+                        if (contactToggle) contactToggle.style.transition = "none";
+                        const calcToggle = document.getElementById("calc-toggle");
+                        const themeToggle = document.getElementById("theme-toggle");
+                        const peptideAnalysisToggle = document.getElementById(
+                            "peptide-analysis-toggle",
+                        );
+                        if (calcToggle) calcToggle.style.transition = "none";
+                        if (themeToggle) themeToggle.style.transition = "none";
+                        if (peptideAnalysisToggle)
+                            peptideAnalysisToggle.style.transition = "none";
+                        if (searchContainer) searchContainer.style.transition = "none";
+                        e.preventDefault();
+                    });
+                }
+
                 if (studiesToggle && studiesPanel && !studiesToggle.__bound) {
                     studiesToggle.addEventListener("click", () => {
                         const wasCollapsed =
@@ -2940,6 +3029,7 @@
                             { panel: tabPanel, toggle: tabToggle },
                             { panel: document.getElementById("quiz-panel"), toggle: document.getElementById("quiz-toggle") },
                             { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
+                            { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
                         ]);
                         if (
                             wasCollapsed &&
@@ -2963,6 +3053,7 @@
                                 { panel: studiesPanel, toggle: studiesToggle },
                                 { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
                                 { panel: calcPanel, toggle: calcToggleBtn },
+                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
                             ]);
                         } else if (typeof togglePanel === "function") {
                             togglePanel(quizPanel, quizToggle, [
@@ -2989,6 +3080,7 @@
                             { panel: studiesPanel, toggle: studiesToggle },
                             { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
                             { panel: quizPanel, toggle: quizToggle },
+                            { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
                         ]);
                         // Initialize calculator when panel opens
                         if (wasCollapsed && typeof initializeCalculator === "function") {
@@ -3123,6 +3215,16 @@
                         calcPanel.style.width = `${constrainedWidth}px`;
                         if (calcToggleBtn) calcToggleBtn.style.transition = "none";
                         updateFloatingControls();
+                    } else if (draggingContact) {
+                        const deltaX = e.clientX - contactStartX;
+                        const newWidth = contactStartWidth + deltaX;
+                        const constrainedWidth = Math.max(
+                            300,
+                            Math.min(window.innerWidth * 0.6, newWidth),
+                        );
+                        contactPanel.style.width = `${constrainedWidth}px`;
+                        if (contactToggle) contactToggle.style.transition = "none";
+                        updateFloatingControls();
                     }
                 });
 
@@ -3245,6 +3347,19 @@
                         calcPanel.style.transition = "transform 0.3s ease-in-out";
                         if (calcToggleBtn) {
                             calcToggleBtn.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
+                        }
+                        const themeToggle = document.getElementById("theme-toggle");
+                        const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
+                        if (themeToggle) themeToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
+                        if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
+                        if (searchContainer) searchContainer.style.transition = "left 0.3s ease-in-out";
+                        updateFloatingControls();
+                    }
+                    if (draggingContact) {
+                        draggingContact = false;
+                        contactPanel.style.transition = "transform 0.3s ease-in-out";
+                        if (contactToggle) {
+                            contactToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
                         }
                         const themeToggle = document.getElementById("theme-toggle");
                         const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
@@ -3519,6 +3634,7 @@
                                 { panel: studiesPanel, toggle: studiesToggle },
                                 { panel: quizPanel, toggle: quizToggle },
                                 { panel: companiesPanel, toggle: companiesToggle },
+                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
                             ]);
                             console.log('🔘 Calc panel state after:', calcPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                             // Initialize calculator when panel opens
@@ -3560,6 +3676,7 @@
                                     { panel: studiesPanel, toggle: studiesToggle },
                                     { panel: companiesPanel, toggle: companiesToggle },
                                     { panel: calcPanel, toggle: calcToggleBtn },
+                                    { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
                                 ]);
                                 console.log('🔘 Quiz panel state after:', quizPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                                 // Initialize quiz when panel opens
@@ -3594,6 +3711,114 @@
                     console.warn('⚠️ Quiz toggle not set up', { quizToggle: !!quizToggle, quizPanel: !!quizPanel, bound: quizToggle?.__bound });
                 }
 
+                // Contact toggle - use setPanelState like other panels
+                const contactToggle = document.getElementById("contact-toggle");
+                const contactPanel = document.getElementById("contact-panel");
+                if (contactToggle && contactPanel && !contactToggle.__bound) {
+                    console.log('✅ Setting up contact toggle', { contactToggle: !!contactToggle, contactPanel: !!contactPanel });
+                    contactToggle.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🔘 Contact toggle clicked');
+                        const wasCollapsed = contactPanel.classList.contains("collapsed");
+                        console.log('🔘 Contact panel state before:', wasCollapsed ? 'collapsed' : 'open');
+                        // Use setPanelState like other panels, but don't close other panels
+                        const shouldOpen = wasCollapsed;
+                        setPanelState(contactPanel, contactToggle, shouldOpen);
+                        console.log('🔘 Contact panel state after:', contactPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
+                    });
+                    contactToggle.__bound = true;
+                }
+
+                // Contact form submission
+                const contactForm = document.getElementById("contact-form");
+                const contactEmail = document.getElementById("contact-email");
+                const contactMessage = document.getElementById("contact-message");
+                const contactSubmit = document.getElementById("contact-submit");
+                const contactStatus = document.getElementById("contact-status");
+                
+                if (contactForm) {
+                    contactForm.addEventListener("submit", async (e) => {
+                        e.preventDefault();
+                        
+                        const email = contactEmail.value.trim();
+                        const message = contactMessage.value.trim();
+                        
+                        if (!email || !message) {
+                            showContactStatus("Please fill in all fields.", "error");
+                            return;
+                        }
+                        
+                        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                            showContactStatus("Please enter a valid email address.", "error");
+                            return;
+                        }
+                        
+                        // Disable submit button
+                        contactSubmit.disabled = true;
+                        contactSubmit.textContent = "Sending...";
+                        showContactStatus("Sending your message...", "info");
+                        
+                        try {
+                            // Try Vercel API first, fallback to PHP endpoint
+                            let response;
+                            try {
+                                response = await fetch("/api/contact", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                        email: email,
+                                        message: message,
+                                    }),
+                                });
+                            } catch (apiError) {
+                                // Fallback to PHP endpoint if Vercel API fails
+                                console.log("Vercel API failed, trying PHP endpoint:", apiError);
+                                response = await fetch("php/api/contact.php", {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                        email: email,
+                                        message: message,
+                                    }),
+                                });
+                            }
+                            
+                            const data = await response.json();
+                            
+                            if (response.ok && data.success) {
+                                showContactStatus("Message sent successfully! We'll get back to you soon.", "success");
+                                contactForm.reset();
+                            } else {
+                                showContactStatus(data.error || "Failed to send message. Please try again.", "error");
+                            }
+                        } catch (error) {
+                            console.error("Error sending contact form:", error);
+                            showContactStatus("Network error. Please check your connection and try again.", "error");
+                        } finally {
+                            contactSubmit.disabled = false;
+                            contactSubmit.textContent = "Send Message";
+                        }
+                    });
+                }
+                
+                function showContactStatus(message, type) {
+                    if (!contactStatus) return;
+                    contactStatus.textContent = message;
+                    contactStatus.className = type;
+                    contactStatus.style.display = "block";
+                    
+                    if (type === "success") {
+                        setTimeout(() => {
+                            contactStatus.style.display = "none";
+                        }, 5000);
+                    }
+                }
+
                 // Companies toggle (may be initialized by companies.js, but add fallback)
                 if (companiesToggle && companiesPanel && !companiesToggle.__bound) {
                     console.log('✅ Setting up companies toggle', { companiesToggle: !!companiesToggle, companiesPanel: !!companiesPanel });
@@ -3609,6 +3834,7 @@
                                 { panel: studiesPanel, toggle: studiesToggle },
                                 { panel: quizPanel, toggle: quizToggle },
                                 { panel: calcPanel, toggle: calcToggleBtn },
+                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
                             ]);
                             console.log('🔘 Companies panel state after:', companiesPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                             // Initialize companies when panel opens
