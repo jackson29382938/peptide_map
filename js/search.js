@@ -251,7 +251,7 @@ function initializeSearch() {
       : "";
   }
 
-  // Search through injuries and body parts
+  // Search through injuries, body parts, studies, and peptides
   function searchInjuries(query) {
     if (!query || query.length < 1) {
       searchResults.classList.remove("active");
@@ -293,6 +293,7 @@ function initializeSearch() {
       });
     }
 
+    // Search through studies (peptide studies)
     if (studiesData.length > 0) {
       studiesData.forEach((study) => {
         const combinedText = `${study.name} ${study.description} ${study.summary || ""} ${study.source}`;
@@ -307,7 +308,30 @@ function initializeSearch() {
               `${study.description} ${study.summary || ""}`,
               query,
             ),
-            score: matchResult.score + 80,
+            score: matchResult.score + 80, // Boost studies
+            isExact: matchResult.exactMatch,
+          });
+        }
+      });
+    }
+
+    // Search through peptides database (BPC-157, etc.)
+    if (typeof window.PEPTIDES_DATABASE !== 'undefined') {
+      Object.entries(window.PEPTIDES_DATABASE).forEach(([key, peptide]) => {
+        const combinedText = `${peptide.fullName} ${peptide.shortcuts ? peptide.shortcuts.join(' ') : ''} ${peptide.benefits ? peptide.benefits.join(' ') : ''} ${peptide.category || ''} ${peptide.dose || ''} ${peptide.vialAmount || ''} ${peptide.description || ''}`;
+        const matchResult = fuzzyMatch(combinedText, query);
+        if (matchResult.matched) {
+          results.push({
+            type: "peptide",
+            peptideKey: key,
+            peptideName: peptide.fullName,
+            shortcuts: peptide.shortcuts ? peptide.shortcuts.join(' / ') : '',
+            category: peptide.category,
+            snippet: createHighlightedSnippet(
+              (peptide.benefits && peptide.benefits.length > 0 ? peptide.benefits[0] : '') || peptide.description || peptide.dose || '',
+              query
+            ),
+            score: matchResult.score + 90, // Boost peptides (between regions and studies)
             isExact: matchResult.exactMatch,
           });
         }
@@ -343,7 +367,7 @@ function initializeSearch() {
     if (results.length === 0) {
       const noResults = document.createElement("div");
       noResults.className = "no-results";
-      noResults.textContent = "No injuries or body parts found.";
+      noResults.textContent = "No injuries, body parts, studies, or peptides found.";
       searchResults.appendChild(noResults);
       searchResults.classList.add("active");
       return;
@@ -356,25 +380,29 @@ function initializeSearch() {
 
       if (result.type === "region") {
         item.innerHTML = `
-                    <div class="result-injury">${highlightFuzzyMatch(result.injury, query, result.isExact)}</div>
-                    <div class="result-region">Body Part</div>
-                `;
+          <div class="result-injury">${highlightFuzzyMatch(result.injury, query, result.isExact)}</div>
+          <div class="result-region">Body Part</div>
+        `;
+      } else if (result.type === "peptide") {
+        item.innerHTML = `
+          <div class="result-injury">${highlightFuzzyMatch(result.peptideName, query, result.isExact)}</div>
+          <div class="result-region">💊 ${escapeHtml(result.category || 'Peptide')}</div>
+          <div class="result-snippet">${result.snippet}</div>
+        `;
+      } else if (result.type === "study") {
+        item.innerHTML = `
+          <div class="result-injury">${highlightFuzzyMatch(result.studyName, query, result.isExact)}</div>
+          <div class="result-region">📚 ${escapeHtml(result.studySource)}</div>
+          <div class="result-snippet">${result.snippet}</div>
+        `;
       } else {
-        if (result.type === "study") {
-          item.innerHTML = `
-                        <div class="result-injury">${highlightFuzzyMatch(result.studyName, query, result.isExact)}</div>
-                        <div class="result-region">📚 ${escapeHtml(result.studySource)}</div>
-                        <div class="result-snippet">${result.snippet}</div>
-                    `;
-        } else {
-          item.innerHTML = `
-                    <div class="result-injury">${highlightFuzzyMatch(result.injury, query, result.isExact)}</div>
-                    <div class="result-region">📍 ${result.region}</div>
-                `;
-        }
+        item.innerHTML = `
+          <div class="result-injury">${highlightFuzzyMatch(result.injury, query, result.isExact)}</div>
+          <div class="result-region">📍 ${result.region}</div>
+        `;
       }
 
-      // Click handler to highlight region
+      // Click handler to select result
       item.addEventListener("click", () => {
         handleResultSelection(result);
       });
@@ -400,7 +428,9 @@ function initializeSearch() {
 
   function handleResultSelection(result) {
     if (!result) return;
-    if (result.type === "study") {
+    if (result.type === "peptide") {
+      selectPeptideFromResult(result);
+    } else if (result.type === "study") {
       selectStudyFromResult(result);
     } else {
       selectRegionFromResult(result);
@@ -421,6 +451,16 @@ function initializeSearch() {
       console.warn(
         "⚠️ Study selection requested but study panel is not available",
       );
+    }
+    clearSearch();
+  }
+
+  // Select peptide from search result (e.g., BPC-157)
+  function selectPeptideFromResult(result) {
+    if (typeof showPeptideDetails === "function") {
+      showPeptideDetails(result.peptideKey);
+    } else {
+      console.warn("⚠️ Peptide selection requested but peptide panel is not available");
     }
     clearSearch();
   }
@@ -641,3 +681,6 @@ function initializeSearch() {
     e.stopPropagation();
   });
 }
+
+// Initialize search when DOM is ready
+document.addEventListener("DOMContentLoaded", initializeSearch);
