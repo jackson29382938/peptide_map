@@ -3572,7 +3572,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     console.log('✅ togglePanel function already exists');
                 }
 
-                // Tab toggle
+
                 if (tabToggle && tabPanel && !tabToggle.__bound) {
                     console.log('✅ Setting up tab toggle', { tabToggle: !!tabToggle, tabPanel: !!tabPanel });
                     tabToggle.addEventListener("click", (e) => {
@@ -3586,6 +3586,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 { panel: quizPanel, toggle: quizToggle },
                                 { panel: companiesPanel, toggle: companiesToggle },
                                 { panel: calcPanel, toggle: calcToggleBtn },
+                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },  // Added Contact to collapseList
                             ]);
                             console.log('🔘 Tab panel state after:', tabPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                         } else {
@@ -3599,7 +3600,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     console.warn('⚠️ Tab toggle not set up', { tabToggle: !!tabToggle, tabPanel: !!tabPanel, bound: tabToggle?.__bound });
                 }
 
-                // Studies toggle
+                <!-- Studies toggle -->
                 if (studiesToggle && studiesPanel && !studiesToggle.__bound) {
                     studiesToggle.addEventListener("click", (e) => {
                         e.preventDefault();
@@ -3611,6 +3612,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 { panel: quizPanel, toggle: quizToggle },
                                 { panel: companiesPanel, toggle: companiesToggle },
                                 { panel: calcPanel, toggle: calcToggleBtn },
+                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },  // Added Contact to collapseList
                             ]);
                         } else {
                             studiesPanel.classList.toggle("collapsed");
@@ -3619,7 +3621,6 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     studiesToggle.__bound = true;
                 }
 
-                // Calculator toggle
                 if (calcToggleBtn && calcPanel && !calcToggleBtn.__bound) {
                     console.log('✅ Setting up calculator toggle', { calcToggleBtn: !!calcToggleBtn, calcPanel: !!calcPanel });
                     calcToggleBtn.addEventListener("click", (e) => {
@@ -3634,7 +3635,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 { panel: studiesPanel, toggle: studiesToggle },
                                 { panel: quizPanel, toggle: quizToggle },
                                 { panel: companiesPanel, toggle: companiesToggle },
-                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },  // Already includes Contact
                             ]);
                             console.log('🔘 Calc panel state after:', calcPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                             // Initialize calculator when panel opens
@@ -3658,7 +3659,6 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     console.warn('⚠️ Calculator toggle not set up', { calcToggleBtn: !!calcToggleBtn, calcPanel: !!calcPanel, bound: calcToggleBtn?.__bound });
                 }
 
-                // Quiz toggle
                 if (quizToggle && quizPanel && !quizToggle.__bound) {
                     console.log('✅ Setting up quiz toggle', { quizToggle: !!quizToggle, quizPanel: !!quizPanel });
                     quizToggle.addEventListener("click", (e) => {
@@ -3676,7 +3676,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                     { panel: studiesPanel, toggle: studiesToggle },
                                     { panel: companiesPanel, toggle: companiesToggle },
                                     { panel: calcPanel, toggle: calcToggleBtn },
-                                    { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                                    { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },  // Already includes Contact
                                 ]);
                                 console.log('🔘 Quiz panel state after:', quizPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                                 // Initialize quiz when panel opens
@@ -3711,7 +3711,45 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     console.warn('⚠️ Quiz toggle not set up', { quizToggle: !!quizToggle, quizPanel: !!quizPanel, bound: quizToggle?.__bound });
                 }
 
-                // Contact toggle - use setPanelState like other panels
+                if (companiesToggle && companiesPanel && !companiesToggle.__bound) {
+                    console.log('✅ Setting up companies toggle', { companiesToggle: !!companiesToggle, companiesPanel: !!companiesPanel });
+                    companiesToggle.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🔘 Companies toggle clicked');
+                        const wasCollapsed = companiesPanel.classList.contains("collapsed");
+                        console.log('🔘 Companies panel state before:', wasCollapsed ? 'collapsed' : 'open');
+                        if (window.togglePanel) {
+                            window.togglePanel(companiesPanel, companiesToggle, [
+                                { panel: tabPanel, toggle: tabToggle },
+                                { panel: studiesPanel, toggle: studiesToggle },
+                                { panel: quizPanel, toggle: quizToggle },
+                                { panel: calcPanel, toggle: calcToggleBtn },
+                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },  // Already includes Contact
+                            ]);
+                            console.log('🔘 Companies panel state after:', companiesPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
+                            // Initialize companies when panel opens
+                            if (wasCollapsed && typeof window.initializeCompaniesPanel === "function") {
+                                console.log('🔘 Initializing companies panel...');
+                                setTimeout(() => {
+                                    window.initializeCompaniesPanel();
+                                }, 100);
+                            }
+                        } else {
+                            console.warn('⚠️ togglePanel not available, using fallback');
+                            companiesPanel.classList.toggle("collapsed");
+                            if (!companiesPanel.classList.contains("collapsed") && typeof window.initializeCompaniesPanel === "function") {
+                                setTimeout(() => {
+                                    window.initializeCompaniesPanel();
+                                }, 100);
+                            }
+                        }
+                    });
+                    companiesToggle.__bound = true;
+                } else {
+                    console.warn('⚠️ Companies toggle not set up', { companiesToggle: !!companiesToggle, companiesPanel: !!companiesPanel, bound: companiesToggle?.__bound });
+                }
+
                 const contactToggle = document.getElementById("contact-toggle");
                 const contactPanel = document.getElementById("contact-panel");
                 if (contactToggle && contactPanel && !contactToggle.__bound) {
@@ -3722,13 +3760,24 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         console.log('🔘 Contact toggle clicked');
                         const wasCollapsed = contactPanel.classList.contains("collapsed");
                         console.log('🔘 Contact panel state before:', wasCollapsed ? 'collapsed' : 'open');
-                        // Use setPanelState like other panels, but don't close other panels
-                        const shouldOpen = wasCollapsed;
-                        setPanelState(contactPanel, contactToggle, shouldOpen);
-                        console.log('🔘 Contact panel state after:', contactPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
+                        if (window.togglePanel) {
+                            window.togglePanel(contactPanel, contactToggle, [  // Changed to use togglePanel with full collapseList
+                                { panel: tabPanel, toggle: tabToggle },
+                                { panel: studiesPanel, toggle: studiesToggle },
+                                { panel: quizPanel, toggle: quizToggle },
+                                { panel: companiesPanel, toggle: companiesToggle },
+                                { panel: calcPanel, toggle: calcToggleBtn },
+                            ]);
+                            console.log('🔘 Contact panel state after:', contactPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
+                        } else {
+                            console.warn('⚠️ togglePanel not available, using fallback');
+                            contactPanel.classList.toggle("collapsed");
+                        }
                     });
                     contactToggle.__bound = true;
                 }
+
+
 
                 // Contact form submission
                 const contactForm = document.getElementById("contact-form");
