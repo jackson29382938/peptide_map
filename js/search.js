@@ -251,7 +251,7 @@ function initializeSearch() {
       : "";
   }
 
-  // Search through injuries, body parts, studies, and peptides
+  // Search through injuries and body parts
   function searchInjuries(query) {
     if (!query || query.length < 1) {
       searchResults.classList.remove("active");
@@ -261,18 +261,16 @@ function initializeSearch() {
 
     const results = [];
 
-    // Search through body parts/regions
+    // Search through body parts/regions (highest priority: +100)
     for (const regionName of Object.keys(regionInjuries)) {
       const matchResult = fuzzyMatch(regionName, query);
       if (matchResult.matched) {
-        const injuries = regionInjuries[regionName];
         results.push({
           type: "region",
           injury: regionName,
           region: regionName,
-          score: matchResult.score + 100, // Boost region matches
+          score: matchResult.score + 100,
           isExact: matchResult.exactMatch,
-          displayText: `📍 ${regionName} (Body Part)`,
         });
       }
     }
@@ -293,7 +291,7 @@ function initializeSearch() {
       });
     }
 
-    // Search through studies (peptide studies)
+    // Search research studies (+80 priority)
     if (studiesData.length > 0) {
       studiesData.forEach((study) => {
         const combinedText = `${study.name} ${study.description} ${study.summary || ""} ${study.source}`;
@@ -308,30 +306,43 @@ function initializeSearch() {
               `${study.description} ${study.summary || ""}`,
               query,
             ),
-            score: matchResult.score + 80, // Boost studies
+            score: matchResult.score + 80,
             isExact: matchResult.exactMatch,
           });
         }
       });
     }
 
-    // Search through peptides database (BPC-157, etc.)
+    // Search peptides database (+95 priority - just below regions)
     if (typeof window.PEPTIDES_DATABASE !== 'undefined') {
       Object.entries(window.PEPTIDES_DATABASE).forEach(([key, peptide]) => {
-        const combinedText = `${peptide.fullName} ${peptide.shortcuts ? peptide.shortcuts.join(' ') : ''} ${peptide.benefits ? peptide.benefits.join(' ') : ''} ${peptide.category || ''} ${peptide.dose || ''} ${peptide.vialAmount || ''} ${peptide.description || ''}`;
+        const searchableFields = [
+          peptide.fullName || '',
+          ...(peptide.shortcuts || []),
+          ...(Array.isArray(peptide.benefits) ? peptide.benefits : []),
+          peptide.category || '',
+          peptide.dose || '',
+          peptide.vialAmount || ''
+        ];
+        const combinedText = searchableFields.join(' ');
         const matchResult = fuzzyMatch(combinedText, query);
         if (matchResult.matched) {
+          const displayName = peptide.fullName || key;
+          const shortcutsStr = peptide.shortcuts && peptide.shortcuts.length > 0 
+            ? ` (${peptide.shortcuts.join(', ')})` 
+            : '';
           results.push({
             type: "peptide",
             peptideKey: key,
-            peptideName: peptide.fullName,
-            shortcuts: peptide.shortcuts ? peptide.shortcuts.join(' / ') : '',
-            category: peptide.category,
+            peptideName: displayName + shortcutsStr,
+            category: peptide.category || 'Peptide',
             snippet: createHighlightedSnippet(
-              (peptide.benefits && peptide.benefits.length > 0 ? peptide.benefits[0] : '') || peptide.description || peptide.dose || '',
+              (Array.isArray(peptide.benefits) && peptide.benefits.length > 0 
+                ? peptide.benefits[0] 
+                : peptide.dose || ''), 
               query
             ),
-            score: matchResult.score + 90, // Boost peptides (between regions and studies)
+            score: matchResult.score + 95,
             isExact: matchResult.exactMatch,
           });
         }
@@ -367,7 +378,7 @@ function initializeSearch() {
     if (results.length === 0) {
       const noResults = document.createElement("div");
       noResults.className = "no-results";
-      noResults.textContent = "No injuries, body parts, studies, or peptides found.";
+      noResults.textContent = "No injuries, body parts, peptides, or studies found.";
       searchResults.appendChild(noResults);
       searchResults.classList.add("active");
       return;
@@ -378,31 +389,31 @@ function initializeSearch() {
       item.className = "search-result-item";
       item.dataset.index = index;
 
+      let injuryHtml, regionHtml, snippetHtml = '';
+
       if (result.type === "region") {
-        item.innerHTML = `
-          <div class="result-injury">${highlightFuzzyMatch(result.injury, query, result.isExact)}</div>
-          <div class="result-region">Body Part</div>
-        `;
+        injuryHtml = highlightFuzzyMatch(result.injury, query, result.isExact);
+        regionHtml = 'Body Part';
       } else if (result.type === "peptide") {
-        item.innerHTML = `
-          <div class="result-injury">${highlightFuzzyMatch(result.peptideName, query, result.isExact)}</div>
-          <div class="result-region">💊 ${escapeHtml(result.category || 'Peptide')}</div>
-          <div class="result-snippet">${result.snippet}</div>
-        `;
+        injuryHtml = highlightFuzzyMatch(result.peptideName, query, result.isExact);
+        regionHtml = `💊 ${escapeHtml(result.category)}`;
+        snippetHtml = result.snippet;
       } else if (result.type === "study") {
-        item.innerHTML = `
-          <div class="result-injury">${highlightFuzzyMatch(result.studyName, query, result.isExact)}</div>
-          <div class="result-region">📚 ${escapeHtml(result.studySource)}</div>
-          <div class="result-snippet">${result.snippet}</div>
-        `;
-      } else {
-        item.innerHTML = `
-          <div class="result-injury">${highlightFuzzyMatch(result.injury, query, result.isExact)}</div>
-          <div class="result-region">📍 ${result.region}</div>
-        `;
+        injuryHtml = highlightFuzzyMatch(result.studyName, query, result.isExact);
+        regionHtml = `📚 ${escapeHtml(result.studySource)}`;
+        snippetHtml = result.snippet;
+      } else { // injury
+        injuryHtml = highlightFuzzyMatch(result.injury, query, result.isExact);
+        regionHtml = `📍 ${result.region}`;
       }
 
-      // Click handler to select result
+      item.innerHTML = `
+        <div class="result-injury">${injuryHtml}</div>
+        <div class="result-region">${regionHtml}</div>
+        ${snippetHtml ? `<div class="result-snippet">${snippetHtml}</div>` : ''}
+      `;
+
+      // Click handler
       item.addEventListener("click", () => {
         handleResultSelection(result);
       });
@@ -428,34 +439,20 @@ function initializeSearch() {
 
   function handleResultSelection(result) {
     if (!result) return;
+
     if (result.type === "peptide") {
       selectPeptideFromResult(result);
-    } else if (result.type === "study") {
+      return;
+    }
+    if (result.type === "study") {
       selectStudyFromResult(result);
-    } else {
-      selectRegionFromResult(result);
+      return;
     }
+    // region or injury
+    selectRegionFromResult(result);
   }
 
-  // Select region from search result
-  function selectRegionFromResult(result) {
-    selectRegion(result.region);
-    // Clear and collapse search immediately
-    clearSearch();
-  }
-
-  function selectStudyFromResult(result) {
-    if (typeof showStudyDetails === "function") {
-      showStudyDetails(result.studyId);
-    } else {
-      console.warn(
-        "⚠️ Study selection requested but study panel is not available",
-      );
-    }
-    clearSearch();
-  }
-
-  // Select peptide from search result (e.g., BPC-157)
+  // Select peptide from search result
   function selectPeptideFromResult(result) {
     if (typeof showPeptideDetails === "function") {
       showPeptideDetails(result.peptideKey);
@@ -465,8 +462,83 @@ function initializeSearch() {
     clearSearch();
   }
 
+  // Select study from search result
+  function selectStudyFromResult(result) {
+    openResearchPanelAndScroll(result.studyId, result.studyName);
+    clearSearch();
+  }
+
+  // Open research panel and scroll to specific study
+  function openResearchPanelAndScroll(studyId, studyName) {
+    // Get the studies panel and toggle
+    const studiesPanel = document.getElementById("studies-panel");
+    const studiesToggle = document.getElementById("studies-toggle");
+    const studiesList = document.getElementById("studies-list");
+
+    if (!studiesPanel || !studiesToggle || !studiesList) {
+      console.warn("⚠️ Studies panel elements not found", {
+        studiesPanel: !!studiesPanel,
+        studiesToggle: !!studiesToggle,
+        studiesList: !!studiesList
+      });
+      return;
+    }
+
+    // Check if studies panel is collapsed, if so open it
+    const wasCollapsed = studiesPanel.classList.contains("collapsed");
+    if (wasCollapsed) {
+      studiesPanel.classList.remove("collapsed");
+      studiesToggle.classList.remove("panel-collapsed");
+      if (studiesToggle.dataset.openIcon) {
+        studiesToggle.innerHTML = studiesToggle.dataset.openIcon;
+      }
+      console.log('✅ Studies panel opened');
+    }
+
+    // Wait for panel to fully render/open, then search for the study
+    setTimeout(() => {
+      // Find the study card - look for data-study-id attribute
+      let studyCard = studiesList.querySelector(`[data-study-id="${studyId}"]`);
+      
+      // If not found by ID, try searching by study name in the content
+      if (!studyCard) {
+        console.log(`🔍 Study not found by ID ${studyId}, searching by name...`);
+        const allStudyItems = studiesList.querySelectorAll(".study-item, [data-study-id], .research-study");
+        studyCard = Array.from(allStudyItems).find(item => {
+          const textContent = item.textContent || '';
+          return textContent.includes(studyName);
+        });
+      }
+
+      if (studyCard) {
+        // Add temporary highlight class
+        studyCard.classList.add("highlighted");
+        console.log(`✅ Found study card, scrolling to: ${studyName}`);
+        
+        // Scroll into view with smooth behavior
+        studyCard.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        // Remove highlight after 5 seconds
+        setTimeout(() => {
+          studyCard.classList.remove("highlighted");
+        }, 5000);
+      } else {
+        console.warn(`⚠️ Study card not found for: ${studyName} (ID: ${studyId})`);
+        console.log('📋 Available study items:', studiesList.querySelectorAll(".study-item, [data-study-id], .research-study").length);
+      }
+    }, 350); // Wait for panel transition/animation to complete
+  }
+
+  // Select region from search result
+  function selectRegionFromResult(result) {
+    const regionName = result.region || result.injury;
+    const highlightInjury = result.type === "injury" ? result.injury : null;
+    selectRegion(regionName, highlightInjury);
+    clearSearch();
+  }
+
   // Select and highlight a specific region
-  function selectRegion(regionName) {
+  function selectRegion(regionName, highlightInjury = null) {
     // Readiness check
     if (!initState.allReady) {
       console.warn("⚠️ Cannot select region - systems not ready");
@@ -556,6 +628,27 @@ function initializeSearch() {
     const panel = document.getElementById("side-panel");
     if (panel) {
       panel.classList.add("active");
+      // Ensure panel is scrolled to top initially
+      panel.scrollTop = 0;
+    }
+
+    // If there's a specific injury to highlight, find and scroll to it
+    if (highlightInjury && injuriesList) {
+      const targetLi = Array.from(injuriesList.querySelectorAll("li")).find(
+        li => li.textContent.trim() === highlightInjury
+      );
+      if (targetLi) {
+        // Add temporary highlight
+        targetLi.classList.add("highlighted");
+        setTimeout(() => {
+          targetLi.classList.remove("highlighted");
+        }, 5000); // Remove after 5 seconds
+
+        // Scroll to the injury in the list
+        setTimeout(() => {
+          targetLi.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 300); // Small delay to allow panel to fully open/animate
+      }
     }
 
     // Hide title card
@@ -681,6 +774,3 @@ function initializeSearch() {
     e.stopPropagation();
   });
 }
-
-// Initialize search when DOM is ready
-document.addEventListener("DOMContentLoaded", initializeSearch);
