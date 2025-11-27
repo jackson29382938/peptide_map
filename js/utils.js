@@ -92,6 +92,7 @@ function getLeftPanelsWidth() {
     const quizPanel = document.getElementById('quiz-panel');
     const calcPanel = document.getElementById('calc-panel');
     const contactPanel = document.getElementById('contact-panel');
+    const newPanel = document.getElementById('new-panel');
 
     if (tabPanel && !tabPanel.classList.contains('collapsed')) {
         maxWidth = Math.max(maxWidth, tabPanel.offsetWidth);
@@ -115,6 +116,10 @@ function getLeftPanelsWidth() {
 
     if (contactPanel && !contactPanel.classList.contains('collapsed')) {
         maxWidth = Math.max(maxWidth, contactPanel.offsetWidth);
+    }
+
+    if (newPanel && !newPanel.classList.contains('collapsed')) {
+        maxWidth = Math.max(maxWidth, newPanel.offsetWidth);
     }
 
     return maxWidth;

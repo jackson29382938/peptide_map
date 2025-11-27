@@ -126,12 +126,43 @@
             </div>
         </div>
 
+        <!-- Peptides Panel -->
+        <div id="new-panel" class="collapsed">
+            <div id="new-panel-drag-handle" title="Drag to adjust panel width"></div>
+            <div class="studies-header">
+                <h2 class="studies-title">💊 Peptides Database</h2>
+                <div class="studies-filter">
+                    <input
+                        type="text"
+                        id="peptides-filter"
+                        placeholder="Search peptides by name, category, or benefit..."
+                        autocomplete="off"
+                    />
+                    <button id="peptides-clear-filter" title="Clear filter">
+                        ✕
+                    </button>
+                </div>
+                <div class="studies-meta">
+                    <span id="peptides-count">0 peptides</span>
+                </div>
+            </div>
+            <div id="peptides-list" class="studies-list"></div>
+        </div>
+
         <!-- Injection Point Tooltip -->
         <div id="injection-tooltip">
             <div class="tooltip-title"></div>
             <div class="tooltip-type"></div>
             <div class="tooltip-injuries"></div>
             <div class="tooltip-notes"></div>
+        </div>
+
+        <!-- Peptide Details Modal -->
+        <div id="peptide-modal" class="peptide-modal">
+            <div class="peptide-modal-content">
+                <button class="peptide-modal-close" aria-label="Close">&times;</button>
+                <div id="peptide-modal-body"></div>
+            </div>
         </div>
 
         <!-- Search Bar -->
@@ -252,6 +283,9 @@
 
         <!-- Contact Panel Toggle Button -->
         <button id="contact-toggle" class="left-toggle" data-closed-icon="✉️" data-open-icon="✕" title="Contact us">✉️</button>
+
+        <!-- Peptides Panel Toggle Button -->
+        <button id="new-panel-toggle" class="left-toggle" data-closed-icon="💊" data-open-icon="✕" title="Toggle peptides database">💊</button>
 
         <!-- Toggle Button for Tab Panel -->
         <button
@@ -2715,6 +2749,7 @@
         <script src="js/peptide-analysis.js"></script>
         <script src="js/utils.js"></script>
         <script src="js/studies.js"></script>
+        <script src="js/peptides-panel.js"></script>
         <script src="js/keyboard-nav.js"></script>
         <script src="js/analytics.js"></script>
 
@@ -2763,8 +2798,10 @@
                         if (calcToggleBtn) calcToggleBtn.style.transition = "none";
                         const themeToggle = document.getElementById("theme-toggle");
                         const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
+                        const newPanelToggle = document.getElementById("new-panel-toggle");
                         if (themeToggle) themeToggle.style.transition = "none";
                         if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "none";
+                        if (newPanelToggle) newPanelToggle.style.transition = "none";
                         const searchContainer = document.getElementById("search-container");
                         if (searchContainer) searchContainer.style.transition = "none";
                         e.preventDefault();
@@ -2798,6 +2835,7 @@
                     const quizPanel = document.getElementById("quiz-panel");
                     const calcPanel = document.getElementById("calc-panel");
                     const contactPanel = document.getElementById("contact-panel");
+                    const newPanel = document.getElementById("new-panel");
                     if (tabPanel && !tabPanel.classList.contains("collapsed")) {
                         width = Math.max(width, tabPanel.offsetWidth);
                     }
@@ -2821,6 +2859,9 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     }
                     if (contactPanel && !contactPanel.classList.contains("collapsed")) {
                         width = Math.max(width, contactPanel.offsetWidth);
+                    }
+                    if (newPanel && !newPanel.classList.contains("collapsed")) {
+                        width = Math.max(width, newPanel.offsetWidth);
                     }
                     return width + 20;
                 }
@@ -2848,6 +2889,11 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     const contactToggle = document.getElementById("contact-toggle");
                     if (contactToggle) {
                         contactToggle.style.left = `${baseLeft}px`;
+                    }
+
+                    const newPanelToggle = document.getElementById("new-panel-toggle");
+                    if (newPanelToggle) {
+                        newPanelToggle.style.left = `${baseLeft}px`;
                     }
 
                     if (searchContainer) {
@@ -2941,6 +2987,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                             { panel: document.getElementById("quiz-panel"), toggle: document.getElementById("quiz-toggle") },
                             { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
                             { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                            { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
                         ]);
                     });
                     tabToggle.__bound = true;
@@ -2963,9 +3010,11 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         const peptideAnalysisToggle = document.getElementById(
                             "peptide-analysis-toggle",
                         );
+                        const newPanelToggle = document.getElementById("new-panel-toggle");
                         if (calcToggle) calcToggle.style.transition = "none";
                         if (themeToggle) themeToggle.style.transition = "none";
                         if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "none";
+                        if (newPanelToggle) newPanelToggle.style.transition = "none";
                         if (searchContainer) searchContainer.style.transition = "none";
                         e.preventDefault();
                     });
@@ -2989,9 +3038,11 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         const peptideAnalysisToggle = document.getElementById(
                             "peptide-analysis-toggle",
                         );
+                        const newPanelToggle = document.getElementById("new-panel-toggle");
                         if (calcToggle) calcToggle.style.transition = "none";
                         if (themeToggle) themeToggle.style.transition = "none";
                         if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "none";
+                        if (newPanelToggle) newPanelToggle.style.transition = "none";
                         if (searchContainer) searchContainer.style.transition = "none";
                         e.preventDefault();
                     });
@@ -3015,6 +3066,34 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         const peptideAnalysisToggle = document.getElementById(
                             "peptide-analysis-toggle",
                         );
+                        const newPanelToggle = document.getElementById("new-panel-toggle");
+                        if (calcToggle) calcToggle.style.transition = "none";
+                        if (themeToggle) themeToggle.style.transition = "none";
+                        if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "none";
+                        if (newPanelToggle) newPanelToggle.style.transition = "none";
+                        if (searchContainer) searchContainer.style.transition = "none";
+                        e.preventDefault();
+                    });
+                }
+
+                // New panel drag handle
+                const newPanelDragHandle = document.getElementById("new-panel-drag-handle");
+                let draggingNewPanel = false;
+                let newPanelStartX = 0;
+                let newPanelStartWidth = 0;
+
+                if (newPanelDragHandle && newPanel) {
+                    newPanelDragHandle.addEventListener("mousedown", (e) => {
+                        draggingNewPanel = true;
+                        newPanelStartX = e.clientX;
+                        newPanelStartWidth = newPanel.offsetWidth;
+                        newPanel.style.transition = "none";
+                        if (newPanelToggle) newPanelToggle.style.transition = "none";
+                        const calcToggle = document.getElementById("calc-toggle");
+                        const themeToggle = document.getElementById("theme-toggle");
+                        const peptideAnalysisToggle = document.getElementById(
+                            "peptide-analysis-toggle",
+                        );
                         if (calcToggle) calcToggle.style.transition = "none";
                         if (themeToggle) themeToggle.style.transition = "none";
                         if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "none";
@@ -3032,6 +3111,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                             { panel: document.getElementById("quiz-panel"), toggle: document.getElementById("quiz-toggle") },
                             { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
                             { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                            { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
                         ]);
                         if (
                             wasCollapsed &&
@@ -3055,6 +3135,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                             { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
                             { panel: calcPanel, toggle: calcToggleBtn },
                             { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                            { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
                         ]);
                         if (wasCollapsed && typeof window.initializePeptideQuiz === "function") {
                             window.initializePeptideQuiz();
@@ -3073,6 +3154,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                             { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
                             { panel: quizPanel, toggle: quizToggle },
                             { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                            { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
                         ]);
                         // Initialize calculator when panel opens
                         if (wasCollapsed && typeof initializeCalculator === "function") {
@@ -3108,10 +3190,13 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         const peptideAnalysisToggle = document.getElementById(
                             "peptide-analysis-toggle",
                         );
+                        const newPanelToggle = document.getElementById("new-panel-toggle");
                         if (calcToggle) calcToggle.style.transition = "none";
                         if (themeToggle) themeToggle.style.transition = "none";
                         if (peptideAnalysisToggle)
                             peptideAnalysisToggle.style.transition = "none";
+                        if (newPanelToggle)
+                            newPanelToggle.style.transition = "none";
                         if (searchContainer)
                             searchContainer.style.transition = "none";
                         e.preventDefault();
@@ -3141,10 +3226,13 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         const peptideAnalysisToggle = document.getElementById(
                             "peptide-analysis-toggle",
                         );
+                        const newPanelToggle = document.getElementById("new-panel-toggle");
                         if (calcToggle) calcToggle.style.transition = "none";
                         if (themeToggle) themeToggle.style.transition = "none";
                         if (peptideAnalysisToggle)
                             peptideAnalysisToggle.style.transition = "none";
+                        if (newPanelToggle)
+                            newPanelToggle.style.transition = "none";
                         if (searchContainer)
                             searchContainer.style.transition = "none";
                         e.preventDefault();
@@ -3217,6 +3305,16 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         contactPanel.style.width = `${constrainedWidth}px`;
                         if (contactToggle) contactToggle.style.transition = "none";
                         updateFloatingControls();
+                    } else if (draggingNewPanel) {
+                        const deltaX = e.clientX - newPanelStartX;
+                        const newWidth = newPanelStartWidth + deltaX;
+                        const constrainedWidth = Math.max(
+                            300,
+                            Math.min(window.innerWidth * 0.6, newWidth),
+                        );
+                        newPanel.style.width = `${constrainedWidth}px`;
+                        if (newPanelToggle) newPanelToggle.style.transition = "none";
+                        updateFloatingControls();
                     }
                 });
 
@@ -3236,6 +3334,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         const peptideAnalysisToggle = document.getElementById(
                             "peptide-analysis-toggle",
                         );
+                        const newPanelToggle = document.getElementById("new-panel-toggle");
                         if (calcToggle)
                             calcToggle.style.transition =
                                 "left 0.3s ease-in-out, background 0.2s ease";
@@ -3244,6 +3343,9 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 "left 0.3s ease-in-out, background 0.2s ease";
                         if (peptideAnalysisToggle)
                             peptideAnalysisToggle.style.transition =
+                                "left 0.3s ease-in-out, background 0.2s ease";
+                        if (newPanelToggle)
+                            newPanelToggle.style.transition =
                                 "left 0.3s ease-in-out, background 0.2s ease";
                         if (searchContainer)
                             searchContainer.style.transition =
@@ -3265,6 +3367,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         const peptideAnalysisToggle = document.getElementById(
                             "peptide-analysis-toggle",
                         );
+                        const newPanelToggle = document.getElementById("new-panel-toggle");
                         if (calcToggle)
                             calcToggle.style.transition =
                                 "left 0.3s ease-in-out, background 0.2s ease";
@@ -3273,6 +3376,9 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 "left 0.3s ease-in-out, background 0.2s ease";
                         if (peptideAnalysisToggle)
                             peptideAnalysisToggle.style.transition =
+                                "left 0.3s ease-in-out, background 0.2s ease";
+                        if (newPanelToggle)
+                            newPanelToggle.style.transition =
                                 "left 0.3s ease-in-out, background 0.2s ease";
                         if (searchContainer)
                             searchContainer.style.transition =
@@ -3293,6 +3399,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         const peptideAnalysisToggle = document.getElementById(
                             "peptide-analysis-toggle",
                         );
+                        const newPanelToggle = document.getElementById("new-panel-toggle");
                         if (calcToggle)
                             calcToggle.style.transition =
                                 "left 0.3s ease-in-out, background 0.2s ease";
@@ -3301,6 +3408,9 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 "left 0.3s ease-in-out, background 0.2s ease";
                         if (peptideAnalysisToggle)
                             peptideAnalysisToggle.style.transition =
+                                "left 0.3s ease-in-out, background 0.2s ease";
+                        if (newPanelToggle)
+                            newPanelToggle.style.transition =
                                 "left 0.3s ease-in-out, background 0.2s ease";
                         if (searchContainer)
                             searchContainer.style.transition =
@@ -3320,6 +3430,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         const peptideAnalysisToggle = document.getElementById(
                             "peptide-analysis-toggle",
                         );
+                        const newPanelToggle = document.getElementById("new-panel-toggle");
                         if (calcToggle)
                             calcToggle.style.transition =
                                 "left 0.3s ease-in-out, background 0.2s ease";
@@ -3328,6 +3439,9 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 "left 0.3s ease-in-out, background 0.2s ease";
                         if (peptideAnalysisToggle)
                             peptideAnalysisToggle.style.transition =
+                                "left 0.3s ease-in-out, background 0.2s ease";
+                        if (newPanelToggle)
+                            newPanelToggle.style.transition =
                                 "left 0.3s ease-in-out, background 0.2s ease";
                         if (searchContainer)
                             searchContainer.style.transition =
@@ -3342,8 +3456,10 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         }
                         const themeToggle = document.getElementById("theme-toggle");
                         const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
+                        const newPanelToggle = document.getElementById("new-panel-toggle");
                         if (themeToggle) themeToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
                         if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
+                        if (newPanelToggle) newPanelToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
                         if (searchContainer) searchContainer.style.transition = "left 0.3s ease-in-out";
                         updateFloatingControls();
                     }
@@ -3352,6 +3468,19 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         contactPanel.style.transition = "transform 0.3s ease-in-out";
                         if (contactToggle) {
                             contactToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
+                        }
+                        const themeToggle = document.getElementById("theme-toggle");
+                        const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
+                        if (themeToggle) themeToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
+                        if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
+                        if (searchContainer) searchContainer.style.transition = "left 0.3s ease-in-out";
+                        updateFloatingControls();
+                    }
+                    if (draggingNewPanel) {
+                        draggingNewPanel = false;
+                        newPanel.style.transition = "transform 0.3s ease-in-out";
+                        if (newPanelToggle) {
+                            newPanelToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
                         }
                         const themeToggle = document.getElementById("theme-toggle");
                         const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
@@ -3717,7 +3846,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 { panel: studiesPanel, toggle: studiesToggle },
                                 { panel: quizPanel, toggle: quizToggle },
                                 { panel: calcPanel, toggle: calcToggleBtn },
-                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },  // Added Contact to collapseList
+                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                                { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
                             ]);
                             console.log('🔘 Companies panel state after:', companiesPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                             // Initialize companies when panel opens
@@ -3759,6 +3889,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 { panel: quizPanel, toggle: quizToggle },
                                 { panel: companiesPanel, toggle: companiesToggle },
                                 { panel: calcPanel, toggle: calcToggleBtn },
+                                { panel: newPanel, toggle: newPanelToggle },
                             ]);
                             console.log('🔘 Contact panel state after:', contactPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                         } else {
@@ -3769,7 +3900,33 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     contactToggle.__bound = true;
                 }
 
-
+                const newPanelToggle = document.getElementById("new-panel-toggle");
+                const newPanel = document.getElementById("new-panel");
+                if (newPanelToggle && newPanel && !newPanelToggle.__bound) {
+                    console.log('✅ Setting up new panel toggle', { newPanelToggle: !!newPanelToggle, newPanel: !!newPanel });
+                    newPanelToggle.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('🔘 New panel toggle clicked');
+                        const wasCollapsed = newPanel.classList.contains("collapsed");
+                        console.log('🔘 New panel state before:', wasCollapsed ? 'collapsed' : 'open');
+                        if (window.togglePanel) {
+                            window.togglePanel(newPanel, newPanelToggle, [
+                                { panel: tabPanel, toggle: tabToggle },
+                                { panel: studiesPanel, toggle: studiesToggle },
+                                { panel: quizPanel, toggle: quizToggle },
+                                { panel: companiesPanel, toggle: companiesToggle },
+                                { panel: contactPanel, toggle: contactToggle },
+                                { panel: calcPanel, toggle: calcToggleBtn },
+                            ]);
+                            console.log('🔘 New panel state after:', newPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
+                        } else {
+                            console.warn('⚠️ togglePanel not available, using fallback');
+                            newPanel.classList.toggle("collapsed");
+                        }
+                    });
+                    newPanelToggle.__bound = true;
+                }
 
                 // Contact form submission
                 const contactForm = document.getElementById("contact-form");
@@ -3876,6 +4033,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 { panel: quizPanel, toggle: quizToggle },
                                 { panel: calcPanel, toggle: calcToggleBtn },
                                 { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                                { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
                             ]);
                             console.log('🔘 Companies panel state after:', companiesPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                             // Initialize companies when panel opens

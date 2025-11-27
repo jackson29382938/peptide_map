@@ -56,6 +56,10 @@
         const quizToggle = document.getElementById("quiz-toggle");
         const calcPanel = document.getElementById("calc-panel");
         const calcToggle = document.getElementById("calc-toggle");
+        const contactPanel = document.getElementById("contact-panel");
+        const contactToggle = document.getElementById("contact-toggle");
+        const newPanel = document.getElementById("new-panel");
+        const newPanelToggle = document.getElementById("new-panel-toggle");
 
         if (typeof window.togglePanel === "function") {
           window.togglePanel(panel, toggleBtn, [
@@ -63,6 +67,8 @@
             { panel: studiesPanel, toggle: studiesToggle },
             { panel: quizPanel, toggle: quizToggle },
             { panel: calcPanel, toggle: calcToggle },
+            { panel: contactPanel, toggle: contactToggle },
+            { panel: newPanel, toggle: newPanelToggle },
           ]);
         } else {
           panel.classList.toggle("collapsed");
@@ -105,6 +111,7 @@
 
     const tabPanel = document.getElementById("tab-panel");
     const studiesPanel = document.getElementById("studies-panel");
+    const newPanel = document.getElementById("new-panel");
 
     if (tabPanel) {
       observer.observe(tabPanel, {
@@ -114,6 +121,12 @@
     }
     if (studiesPanel) {
       observer.observe(studiesPanel, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+    }
+    if (newPanel) {
+      observer.observe(newPanel, {
         attributes: true,
         attributeFilter: ["class"],
       });
