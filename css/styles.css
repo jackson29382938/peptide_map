@@ -832,7 +832,12 @@ body.bg-black {
     background: rgba(239, 68, 68, 0.2);
     cursor: ew-resize;
     transition: background 0.2s ease;
-    z-index: 10;
+    z-index: 50;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 #tab-drag-handle:hover {
@@ -873,7 +878,12 @@ body.bg-black {
     background: rgba(59, 130, 246, 0.2);
     cursor: ew-resize;
     transition: background 0.2s ease;
-    z-index: 10;
+    z-index: 50;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 #studies-drag-handle:hover {
@@ -940,7 +950,12 @@ body.bg-black {
     background: rgba(239, 68, 68, 0.2);
     cursor: ew-resize;
     transition: background 0.2s ease;
-    z-index: 10;
+    z-index: 50;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 #companies-drag-handle:hover {
@@ -1102,7 +1117,12 @@ body.bg-black {
     background: rgba(16, 185, 129, 0.2); /* teal-ish to differentiate */
     cursor: ew-resize;
     transition: background 0.2s ease;
-    z-index: 10;
+    z-index: 50;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 #quiz-drag-handle:hover {
@@ -1169,7 +1189,12 @@ body.bg-black {
     background: rgba(139, 92, 246, 0.2); /* purple-ish to differentiate */
     cursor: ew-resize;
     transition: background 0.2s ease;
-    z-index: 10;
+    z-index: 50;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 #contact-drag-handle:hover {
@@ -1252,7 +1277,12 @@ body.bg-black {
     cursor: ew-resize;
     background: rgba(139, 92, 246, 0.25);
     transition: background 0.2s ease;
-    z-index: 10;
+    z-index: 50;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 #new-panel-drag-handle:hover {
@@ -1451,7 +1481,12 @@ body.bg-black {
     background: rgba(107, 114, 128, 0.25); /* neutral */
     cursor: ew-resize;
     transition: background 0.2s ease;
-    z-index: 10;
+    z-index: 50;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 #calc-drag-handle:hover {

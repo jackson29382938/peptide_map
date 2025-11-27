@@ -2795,6 +2795,8 @@
                         calcStartX = e.clientX;
                         calcStartWidth = calcPanel.offsetWidth;
                         calcPanel.style.transition = "none";
+                        document.body.style.userSelect = "none";
+                        document.body.style.webkitUserSelect = "none";
                         if (calcToggleBtn) calcToggleBtn.style.transition = "none";
                         const themeToggle = document.getElementById("theme-toggle");
                         const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
@@ -3005,6 +3007,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         quizStartX = e.clientX;
                         quizStartWidth = quizPanel.offsetWidth;
                         quizPanel.style.transition = "none";
+                        document.body.style.userSelect = "none";
+                        document.body.style.webkitUserSelect = "none";
                         const calcToggle = document.getElementById("calc-toggle");
                         const themeToggle = document.getElementById("theme-toggle");
                         const peptideAnalysisToggle = document.getElementById(
@@ -3032,6 +3036,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         companiesStartX = e.clientX;
                         companiesStartWidth = companiesPanel.offsetWidth;
                         companiesPanel.style.transition = "none";
+                        document.body.style.userSelect = "none";
+                        document.body.style.webkitUserSelect = "none";
                         if (companiesToggle) companiesToggle.style.transition = "none";
                         const calcToggle = document.getElementById("calc-toggle");
                         const themeToggle = document.getElementById("theme-toggle");
@@ -3060,6 +3066,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         contactStartX = e.clientX;
                         contactStartWidth = contactPanel.offsetWidth;
                         contactPanel.style.transition = "none";
+                        document.body.style.userSelect = "none";
+                        document.body.style.webkitUserSelect = "none";
                         if (contactToggle) contactToggle.style.transition = "none";
                         const calcToggle = document.getElementById("calc-toggle");
                         const themeToggle = document.getElementById("theme-toggle");
@@ -3088,6 +3096,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         newPanelStartX = e.clientX;
                         newPanelStartWidth = newPanel.offsetWidth;
                         newPanel.style.transition = "none";
+                        document.body.style.userSelect = "none";
+                        document.body.style.webkitUserSelect = "none";
                         if (newPanelToggle) newPanelToggle.style.transition = "none";
                         const calcToggle = document.getElementById("calc-toggle");
                         const themeToggle = document.getElementById("theme-toggle");
@@ -3180,6 +3190,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         tabStartX = e.clientX;
                         tabStartWidth = tabPanel.offsetWidth;
                         tabPanel.style.transition = "none";
+                        document.body.style.userSelect = "none";
+                        document.body.style.webkitUserSelect = "none";
                         if (tabToggle) {
                             tabToggle.style.transition = "none";
                         }
@@ -3216,6 +3228,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         studiesStartX = e.clientX;
                         studiesStartWidth = studiesPanel.offsetWidth;
                         studiesPanel.style.transition = "none";
+                        document.body.style.userSelect = "none";
+                        document.body.style.webkitUserSelect = "none";
                         if (studiesToggle) {
                             studiesToggle.style.transition = "none";
                         }
@@ -3323,6 +3337,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         draggingTab = false;
                         tabPanel.style.transition =
                             "transform 0.3s ease-in-out";
+                        document.body.style.userSelect = "";
+                        document.body.style.webkitUserSelect = "";
                         if (tabToggle) {
                             tabToggle.style.transition =
                                 "left 0.3s ease-in-out, background 0.2s ease";
@@ -3356,6 +3372,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         draggingStudies = false;
                         studiesPanel.style.transition =
                             "transform 0.3s ease-in-out";
+                        document.body.style.userSelect = "";
+                        document.body.style.webkitUserSelect = "";
                         if (studiesToggle) {
                             studiesToggle.style.transition =
                                 "left 0.3s ease-in-out, background 0.2s ease";
@@ -3389,6 +3407,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         draggingQuiz = false;
                         quizPanel.style.transition =
                             "transform 0.3s ease-in-out";
+                        document.body.style.userSelect = "";
+                        document.body.style.webkitUserSelect = "";
                         const quizToggleBtn = document.getElementById("quiz-toggle");
                         if (quizToggleBtn) {
                             quizToggleBtn.style.transition =
@@ -3421,6 +3441,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         draggingCompanies = false;
                         companiesPanel.style.transition =
                             "transform 0.3s ease-in-out";
+                        document.body.style.userSelect = "";
+                        document.body.style.webkitUserSelect = "";
                         if (companiesToggle) {
                             companiesToggle.style.transition =
                                 "left 0.3s ease-in-out, background 0.2s ease";
@@ -3451,6 +3473,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     if (draggingCalc) {
                         draggingCalc = false;
                         calcPanel.style.transition = "transform 0.3s ease-in-out";
+                        document.body.style.userSelect = "";
+                        document.body.style.webkitUserSelect = "";
                         if (calcToggleBtn) {
                             calcToggleBtn.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
                         }
@@ -3466,6 +3490,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     if (draggingContact) {
                         draggingContact = false;
                         contactPanel.style.transition = "transform 0.3s ease-in-out";
+                        document.body.style.userSelect = "";
+                        document.body.style.webkitUserSelect = "";
                         if (contactToggle) {
                             contactToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
                         }
@@ -3479,6 +3505,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     if (draggingNewPanel) {
                         draggingNewPanel = false;
                         newPanel.style.transition = "transform 0.3s ease-in-out";
+                        document.body.style.userSelect = "";
+                        document.body.style.webkitUserSelect = "";
                         if (newPanelToggle) {
                             newPanelToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
                         }
