@@ -1,6 +1,11 @@
 // Analytics Backend Server
 // Handles click tracking and analytics database
 
+// Load environment variables from .env file (for local development)
+if (process.env.NODE_ENV !== 'production' && process.env.VERCEL !== '1') {
+    require('dotenv').config();
+}
+
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
@@ -522,7 +527,142 @@ app.get('/api/analytics/export/clicks', (req, res) => {
 
 // Serve analytics dashboard
 app.get('/analytics', (req, res) => {
-    res.sendFile(path.join(__dirname, 'analytics-dashboard.html'));
+  res.sendFile(path.join(__dirname, 'analytics-dashboard.html'));
+});
+
+// Contact form endpoint (for local development)
+// In Vercel, this is handled by /api/contact.js serverless function
+app.post('/api/contact', async (req, res) => {
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
+    try {
+        const { email, message } = req.body;
+        
+        // Validate required fields
+        if (!email || !message) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ error: 'Invalid email address' });
+        }
+        
+        // Validate message length
+        if (message.trim().length < 10) {
+            return res.status(400).json({ error: 'Message must be at least 10 characters long' });
+        }
+        
+        // Recipient email
+        const to = 'bodymappeptide@gmail.com';
+        
+        // Email subject
+        const subject = 'Contact Form Submission from Peptide Map';
+        
+        // Email body
+        const emailBody = `New contact form submission from Peptide Map
+
+From: ${email}
+Date: ${new Date().toISOString()}
+
+Message:
+${message}
+
+---
+This email was sent from the contact form on the Peptide Map website.`;
+        
+        // Check if SMTP is configured
+        if (!process.env.SMTP_HOST && !process.env.SMTP_USER) {
+            console.warn('SMTP not configured - email sending will likely fail');
+            return res.status(500).json({ 
+                error: 'Email service not configured. Please contact the administrator.',
+                details: process.env.NODE_ENV === 'development' ? 
+                    'SMTP_HOST and SMTP_USER environment variables are not set. See VERCEL_EMAIL_SETUP.md for configuration instructions.' : 
+                    undefined
+            });
+        }
+        
+        // Create transporter
+        const nodemailer = require('nodemailer');
+        const transporterConfig = {
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
+            port: parseInt(process.env.SMTP_PORT || '587'),
+            secure: process.env.SMTP_SECURE === 'true',
+        };
+        
+        // Only add auth if credentials are provided
+        if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+            transporterConfig.auth = {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+            };
+        }
+        
+        const transporter = nodemailer.createTransport(transporterConfig);
+        
+        // Verify transporter configuration (optional, but helpful for debugging)
+        try {
+            await transporter.verify();
+            console.log('SMTP server is ready to send emails');
+        } catch (verifyError) {
+            console.error('SMTP verification failed:', verifyError);
+            // Continue anyway - verification might fail but sending could still work
+        }
+        
+        // Send email
+        const mailOptions = {
+            from: process.env.SMTP_FROM || email,
+            replyTo: email,
+            to: to,
+            subject: subject,
+            text: emailBody,
+        };
+        
+        const info = await transporter.sendMail(mailOptions);
+        
+        return res.status(200).json({
+            success: true,
+            message: 'Email sent successfully',
+            messageId: info.messageId
+        });
+        
+    } catch (error) {
+        console.error('Error sending contact email:', error);
+        console.error('Error stack:', error.stack);
+        
+        // Provide more detailed error information for debugging
+        const errorDetails = {
+            message: error.message,
+            code: error.code,
+            command: error.command,
+            response: error.response,
+            responseCode: error.responseCode
+        };
+        
+        console.error('Error details:', JSON.stringify(errorDetails, null, 2));
+        
+        return res.status(500).json({ 
+            error: 'Failed to send email. Please try again later.',
+            details: process.env.NODE_ENV === 'development' 
+                ? {
+                    message: error.message,
+                    code: error.code,
+                    hint: !process.env.SMTP_HOST ? 'SMTP_HOST environment variable not set' : 
+                          !process.env.SMTP_USER || !process.env.SMTP_PASS ? 'SMTP credentials not configured' : 
+                          'Check SMTP server configuration'
+                } 
+                : undefined
+        });
+    }
 });
 
 // Export for Vercel serverless functions

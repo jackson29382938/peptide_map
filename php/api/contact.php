@@ -49,7 +49,7 @@ try {
     }
     
     // Recipient email
-    $to = 'peptidemap@proton.me';
+    $to = 'bodymappeptide@gmail.com';
     
     // Email subject
     $subject = 'Contact Form Submission from Peptide Map';

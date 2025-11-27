@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
         }
         
         // Recipient email
-        const to = 'peptidemap@proton.me';
+        const to = 'bodymappeptide@gmail.com';
         
         // Email subject
         const subject = 'Contact Form Submission from Peptide Map';
