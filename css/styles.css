@@ -1024,6 +1024,47 @@ body.bg-black {
     color: var(--text-placeholder);
 }
 
+#peptides-filter {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-primary);
+    background: var(--bg-input);
+    font-size: 0.9rem;
+}
+
+[data-theme="dark"] #peptides-filter {
+    color: #ffffff;
+}
+
+[data-theme="light"] #peptides-filter {
+    color: #000000;
+}
+
+#peptides-filter::placeholder {
+    color: var(--text-placeholder);
+}
+
+#peptides-clear-filter {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    border: 1px solid var(--border-secondary);
+    background: var(--bg-secondary);
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+#peptides-clear-filter:hover {
+    background: var(--bg-hover);
+    color: var(--text-accent);
+    border-color: var(--border-accent);
+}
+
 #studies-clear-filter {
     width: 38px;
     height: 38px;
