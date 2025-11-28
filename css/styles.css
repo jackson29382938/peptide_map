@@ -407,7 +407,7 @@ body.bg-black {
     transition:
         left 0.3s ease-in-out,
         background 0.2s ease;
-    z-index: 25;
+    z-index: 20;
 }
 
 #calc-toggle:hover {
@@ -436,7 +436,7 @@ body.bg-black {
     transition:
         left 0.3s ease-in-out,
         background 0.2s ease;
-    z-index: 25;
+    z-index: 20;
 }
 
 #theme-toggle:hover {
@@ -465,7 +465,7 @@ body.bg-black {
     transition:
         left 0.3s ease-in-out,
         background 0.2s ease;
-    z-index: 25;
+    z-index: 20;
 }
 
 #peptide-analysis-toggle:hover {

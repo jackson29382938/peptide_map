@@ -474,23 +474,36 @@ function initializeSearch() {
       return;
     }
 
-    // Check if peptides panel is collapsed, if so open it
+    // Check if peptides panel is collapsed, if so open it and close all other panels
     const wasCollapsed = peptidesPanel.classList.contains("collapsed");
     if (wasCollapsed) {
-      peptidesPanel.classList.remove("collapsed");
-      peptidesToggle.classList.remove("panel-collapsed");
-      if (peptidesToggle.dataset.openIcon) {
-        peptidesToggle.innerHTML = peptidesToggle.dataset.openIcon;
-      }
-      console.log('✅ Peptides panel opened');
-      
-      // Update floating controls to shift all toggles
-      // Wait for panel CSS transition to complete (300ms) before updating controls
-      setTimeout(() => {
-        if (typeof window.updateFloatingControls === 'function') {
-          window.updateFloatingControls();
+      // Use togglePanel to open peptides panel and close all other panels
+      if (typeof window.togglePanel === 'function') {
+        window.togglePanel(peptidesPanel, peptidesToggle, [
+          { panel: document.getElementById("tab-panel"), toggle: document.getElementById("tab-toggle") },
+          { panel: document.getElementById("studies-panel"), toggle: document.getElementById("studies-toggle") },
+          { panel: document.getElementById("quiz-panel"), toggle: document.getElementById("quiz-toggle") },
+          { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
+          { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+          { panel: document.getElementById("calc-panel"), toggle: document.getElementById("calc-toggle") },
+        ]);
+        console.log('✅ Peptides panel opened, other panels closed');
+      } else {
+        // Fallback if togglePanel is not available
+        peptidesPanel.classList.remove("collapsed");
+        peptidesToggle.classList.remove("panel-collapsed");
+        if (peptidesToggle.dataset.openIcon) {
+          peptidesToggle.innerHTML = peptidesToggle.dataset.openIcon;
         }
-      }, 320);
+        console.log('✅ Peptides panel opened (fallback)');
+        
+        // Update floating controls to shift all toggles
+        setTimeout(() => {
+          if (typeof window.updateFloatingControls === 'function') {
+            window.updateFloatingControls();
+          }
+        }, 320);
+      }
     }
 
     // Wait for panel to fully render/open, then search for the peptide
@@ -549,23 +562,36 @@ function initializeSearch() {
       return;
     }
 
-    // Check if studies panel is collapsed, if so open it
+    // Check if studies panel is collapsed, if so open it and close all other panels
     const wasCollapsed = studiesPanel.classList.contains("collapsed");
     if (wasCollapsed) {
-      studiesPanel.classList.remove("collapsed");
-      studiesToggle.classList.remove("panel-collapsed");
-      if (studiesToggle.dataset.openIcon) {
-        studiesToggle.innerHTML = studiesToggle.dataset.openIcon;
-      }
-      console.log('✅ Studies panel opened');
-      
-      // Update floating controls to shift all toggles
-      // Wait for panel CSS transition to complete (300ms) before updating controls
-      setTimeout(() => {
-        if (typeof window.updateFloatingControls === 'function') {
-          window.updateFloatingControls();
+      // Use togglePanel to open studies panel and close all other panels
+      if (typeof window.togglePanel === 'function') {
+        window.togglePanel(studiesPanel, studiesToggle, [
+          { panel: document.getElementById("tab-panel"), toggle: document.getElementById("tab-toggle") },
+          { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
+          { panel: document.getElementById("quiz-panel"), toggle: document.getElementById("quiz-toggle") },
+          { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
+          { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+          { panel: document.getElementById("calc-panel"), toggle: document.getElementById("calc-toggle") },
+        ]);
+        console.log('✅ Studies panel opened, other panels closed');
+      } else {
+        // Fallback if togglePanel is not available
+        studiesPanel.classList.remove("collapsed");
+        studiesToggle.classList.remove("panel-collapsed");
+        if (studiesToggle.dataset.openIcon) {
+          studiesToggle.innerHTML = studiesToggle.dataset.openIcon;
         }
-      }, 320);
+        console.log('✅ Studies panel opened (fallback)');
+        
+        // Update floating controls to shift all toggles
+        setTimeout(() => {
+          if (typeof window.updateFloatingControls === 'function') {
+            window.updateFloatingControls();
+          }
+        }, 320);
+      }
     }
 
     // Wait for panel to fully render/open, then search for the study
