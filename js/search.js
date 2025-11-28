@@ -454,12 +454,77 @@ function initializeSearch() {
 
   // Select peptide from search result
   function selectPeptideFromResult(result) {
-    if (typeof showPeptideDetails === "function") {
-      showPeptideDetails(result.peptideKey);
-    } else {
-      console.warn("⚠️ Peptide selection requested but peptide panel is not available");
-    }
+    openPeptidePanelAndScroll(result.peptideKey, result.peptideName);
     clearSearch();
+  }
+
+  // Open peptides panel and scroll to specific peptide
+  function openPeptidePanelAndScroll(peptideKey, peptideName) {
+    // Get the peptides panel and toggle
+    const peptidesPanel = document.getElementById("new-panel");
+    const peptidesToggle = document.getElementById("new-panel-toggle");
+    const peptidesList = document.getElementById("peptides-list");
+
+    if (!peptidesPanel || !peptidesToggle || !peptidesList) {
+      console.warn("⚠️ Peptides panel elements not found", {
+        peptidesPanel: !!peptidesPanel,
+        peptidesToggle: !!peptidesToggle,
+        peptidesList: !!peptidesList
+      });
+      return;
+    }
+
+    // Check if peptides panel is collapsed, if so open it
+    const wasCollapsed = peptidesPanel.classList.contains("collapsed");
+    if (wasCollapsed) {
+      peptidesPanel.classList.remove("collapsed");
+      peptidesToggle.classList.remove("panel-collapsed");
+      if (peptidesToggle.dataset.openIcon) {
+        peptidesToggle.innerHTML = peptidesToggle.dataset.openIcon;
+      }
+      console.log('✅ Peptides panel opened');
+      
+      // Update floating controls to shift all toggles
+      // Wait for panel CSS transition to complete (300ms) before updating controls
+      setTimeout(() => {
+        if (typeof window.updateFloatingControls === 'function') {
+          window.updateFloatingControls();
+        }
+      }, 320);
+    }
+
+    // Wait for panel to fully render/open, then search for the peptide
+    setTimeout(() => {
+      // Find the peptide card - look for data-peptide-id attribute
+      let peptideCard = peptidesList.querySelector(`[data-peptide-id="${peptideKey}"]`);
+      
+      // If not found by ID, try searching by peptide name in the content
+      if (!peptideCard) {
+        console.log(`🔍 Peptide not found by ID ${peptideKey}, searching by name...`);
+        const allPeptideCards = peptidesList.querySelectorAll(".peptide-card, [data-peptide-id], .study-card");
+        peptideCard = Array.from(allPeptideCards).find(card => {
+          const textContent = card.textContent || '';
+          return textContent.includes(peptideName);
+        });
+      }
+
+      if (peptideCard) {
+        // Add temporary highlight class
+        peptideCard.classList.add("highlight");
+        console.log(`✅ Found peptide card, scrolling to: ${peptideName}`);
+        
+        // Scroll into view with smooth behavior
+        peptideCard.scrollIntoView({ behavior: "smooth", block: "center" });
+
+        // Remove highlight after 5 seconds
+        setTimeout(() => {
+          peptideCard.classList.remove("highlight");
+        }, 5000);
+      } else {
+        console.warn(`⚠️ Peptide card not found for: ${peptideName} (ID: ${peptideKey})`);
+        console.log('📋 Available peptide cards:', peptidesList.querySelectorAll(".peptide-card, [data-peptide-id], .study-card").length);
+      }
+    }, 350); // Wait for panel transition/animation to complete
   }
 
   // Select study from search result
@@ -493,6 +558,14 @@ function initializeSearch() {
         studiesToggle.innerHTML = studiesToggle.dataset.openIcon;
       }
       console.log('✅ Studies panel opened');
+      
+      // Update floating controls to shift all toggles
+      // Wait for panel CSS transition to complete (300ms) before updating controls
+      setTimeout(() => {
+        if (typeof window.updateFloatingControls === 'function') {
+          window.updateFloatingControls();
+        }
+      }, 320);
     }
 
     // Wait for panel to fully render/open, then search for the study
@@ -512,7 +585,7 @@ function initializeSearch() {
 
       if (studyCard) {
         // Add temporary highlight class
-        studyCard.classList.add("highlighted");
+        studyCard.classList.add("highlight");
         console.log(`✅ Found study card, scrolling to: ${studyName}`);
         
         // Scroll into view with smooth behavior
@@ -520,7 +593,7 @@ function initializeSearch() {
 
         // Remove highlight after 5 seconds
         setTimeout(() => {
-          studyCard.classList.remove("highlighted");
+          studyCard.classList.remove("highlight");
         }, 5000);
       } else {
         console.warn(`⚠️ Study card not found for: ${studyName} (ID: ${studyId})`);

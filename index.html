@@ -3740,7 +3740,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 { panel: quizPanel, toggle: quizToggle },
                                 { panel: companiesPanel, toggle: companiesToggle },
                                 { panel: calcPanel, toggle: calcToggleBtn },
-                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },  // Added Contact to collapseList
+                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                                { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
                             ]);
                             console.log('🔘 Tab panel state after:', tabPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                         } else {
@@ -3766,7 +3767,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 { panel: quizPanel, toggle: quizToggle },
                                 { panel: companiesPanel, toggle: companiesToggle },
                                 { panel: calcPanel, toggle: calcToggleBtn },
-                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },  // Added Contact to collapseList
+                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                                { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
                             ]);
                         } else {
                             studiesPanel.classList.toggle("collapsed");
@@ -3789,7 +3791,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                 { panel: studiesPanel, toggle: studiesToggle },
                                 { panel: quizPanel, toggle: quizToggle },
                                 { panel: companiesPanel, toggle: companiesToggle },
-                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },  // Added Contact to collapseList
+                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                                { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
                             ]);
                             console.log('🔘 Calc panel state after:', calcPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                             // Initialize calculator when panel opens
@@ -3830,7 +3833,8 @@ width = Math.max(width, companiesPanel.offsetWidth);
                                     { panel: studiesPanel, toggle: studiesToggle },
                                     { panel: companiesPanel, toggle: companiesToggle },
                                     { panel: calcPanel, toggle: calcToggleBtn },
-                                    { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },  // Added Contact to collapseList
+                                    { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
+                                    { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
                                 ]);
                                 console.log('🔘 Quiz panel state after:', quizPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
                                 // Initialize quiz when panel opens
