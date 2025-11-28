@@ -3004,3 +3004,53 @@ body.bg-black {
 #peptide-modal-body::-webkit-scrollbar-thumb:hover {
     background: var(--text-accent);
 }
+
+/* Logo Container */
+.logo-container {
+    position: fixed;
+    bottom: 8px;
+    left: 8px;
+    z-index: 1000;
+}
+
+.logo-container img {
+    width: 100px; /* Adjust size as needed */
+    height: auto;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.logo-container img:hover {
+    opacity: 1;
+}
+
+/* Disclaimer Links */
+.disclaimer-links {
+    position: fixed;
+    right: 8px;
+    bottom: 8px;
+    font-size: 10px;
+    z-index: 1000;
+    text-align: right;
+    line-height: 1.2;
+}
+
+.disclaimer-links a {
+    text-decoration: underline;
+}
+
+.disclaimer-links span {
+    margin: 0 4px;
+}
+
+/* Light Mode */
+:root[data-theme="light"] .disclaimer-links a,
+:root[data-theme="light"] .disclaimer-links span {
+    color: #000000; /* Black text */
+}
+
+/* Dark Mode */
+:root[data-theme="dark"] .disclaimer-links a,
+:root[data-theme="dark"] .disclaimer-links span {
+    color: rgba(255, 255, 255, 0.6); /* Light text */
+}

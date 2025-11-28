@@ -1,24 +1,24 @@
-# Peptide Map UI Fixes
+# Task Plan: Logo and Link Styling Updates
 
-## Task Overview
-Fix UI layout issues where:
-1. Search injuries and body parts toggle doesn't shift when left panels move
-2. Improve formatting of peptide info panels
-3. Make left toggle shift out with peptide panel when opened/adjusted
+## Objective
+1. Add the main logo image at the bottom left corner of all screens
+2. Make the "Links Disclaimer" and "Not Medical Advice" links black text when in light mode and light text when in dark mode
 
-## Implementation Steps
-
-- [ ] Analyze current HTML structure and CSS layout
-- [ ] Identify the search injuries/body parts toggle positioning
-- [ ] Analyze peptide info panel structure and current formatting
-- [ ] Examine left panel toggle mechanism
-- [ ] Fix search toggle positioning to respond to left panel movements
-- [ ] Improve peptide info panel formatting and styling
-- [ ] Ensure left toggle shifts with peptide panel
-- [ ] Test all changes for proper responsive behavior
-- [ ] Verify compatibility across different screen sizes
+## Steps
+- [ ] Examine the current theme system to understand how theme switching works
+- [ ] Add the logo image at the bottom left corner with proper positioning
+- [ ] Update the disclaimer links to use theme-aware colors
+- [ ] Test the changes to ensure they work correctly in both light and dark modes
 
 ## Files to Modify
-- index.html (structure analysis)
-- css/styles.css (styling updates)
-- js/interaction.js or relevant JS files (behavior updates)
+- `index.html` - Add logo element and update disclaimer links styling
+
+## Logo Placement
+- Position: Fixed bottom left corner
+- Z-index: Ensure it appears above other elements
+- Responsive: Should work on all screen sizes
+
+## Link Styling
+- Light mode: Black text (#000000)
+- Dark mode: Light/white text (rgba(255,255,255,0.6) or similar)
+- Apply to both "Links Disclaimer" and "Not Medical Advice" links
