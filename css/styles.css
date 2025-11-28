@@ -3011,6 +3011,7 @@ body.bg-black {
     bottom: 8px;
     left: 8px;
     z-index: 1000;
+    transition: left 0.3s ease-in-out;
 }
 
 .logo-container img {
@@ -3033,6 +3034,7 @@ body.bg-black {
     z-index: 1000;
     text-align: right;
     line-height: 1.2;
+    transition: right 0.3s ease-in-out;
 }
 
 .disclaimer-links a {

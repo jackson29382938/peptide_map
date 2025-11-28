@@ -462,4 +462,53 @@ function initScene() {
             return result;
         };
     }
+
+    // Logo and Disclaimer panel shift logic
+    const logoContainer = document.querySelector('.logo-container');
+    const disclaimerLinks = document.querySelector('.disclaimer-links');
+    const leftPanels = document.querySelectorAll('#quiz-panel, #companies-panel, #contact-panel, #new-panel, #tab-panel');
+    const rightPanel = document.querySelector('#side-panel');
+
+    function updateBottomElements() {
+        let leftPanelOpen = false;
+        let leftPanelWidth = 0;
+        leftPanels.forEach(panel => {
+            if (!panel.classList.contains('collapsed')) {
+                leftPanelOpen = true;
+                leftPanelWidth = Math.max(leftPanelWidth, panel.offsetWidth);
+            }
+        });
+
+        if (leftPanelOpen) {
+            logoContainer.style.left = `${leftPanelWidth + 20}px`;
+        } else {
+            logoContainer.style.left = '8px';
+        }
+
+        if (rightPanel.classList.contains('active')) {
+            disclaimerLinks.style.right = `${rightPanel.offsetWidth + 20}px`;
+        } else {
+            disclaimerLinks.style.right = '8px';
+        }
+    }
+
+    const observer = new MutationObserver(mutations => {
+        let needsUpdate = false;
+        for (const mutation of mutations) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                needsUpdate = true;
+                break;
+            }
+        }
+        if (needsUpdate) {
+            updateBottomElements();
+        }
+    });
+
+    const observerConfig = { attributes: true, attributeFilter: ['class'] };
+    leftPanels.forEach(panel => observer.observe(panel, observerConfig));
+    observer.observe(rightPanel, observerConfig);
+
+    // Initial check
+    updateBottomElements();
 }
