@@ -2802,15 +2802,7 @@
                         calcPanel.style.transition = "none";
                         document.body.style.userSelect = "none";
                         document.body.style.webkitUserSelect = "none";
-                        if (calcToggleBtn) calcToggleBtn.style.transition = "none";
-                        const themeToggle = document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
-                        const newPanelToggle = document.getElementById("new-panel-toggle");
-                        if (themeToggle) themeToggle.style.transition = "none";
-                        if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "none";
-                        if (newPanelToggle) newPanelToggle.style.transition = "none";
-                        const searchContainer = document.getElementById("search-container");
-                        if (searchContainer) searchContainer.style.transition = "none";
+                        disableAllToggleTransitions();
                         e.preventDefault();
                     });
                 }
@@ -2836,6 +2828,46 @@
                 const contactToggle = document.getElementById("contact-toggle");
                 const newPanel = document.getElementById("new-panel");
                 const newPanelToggle = document.getElementById("new-panel-toggle");
+
+                function disableAllToggleTransitions() {
+                    const toggles = [
+                        tabToggle,
+                        studiesToggle,
+                        companiesToggle,
+                        quizToggle,
+                        contactToggle,
+                        newPanelToggle,
+                        document.getElementById("calc-toggle"),
+                        document.getElementById("theme-toggle"),
+                        document.getElementById("peptide-analysis-toggle")
+                    ];
+                    toggles.forEach(toggle => {
+                        if (toggle) toggle.style.transition = "none";
+                    });
+                    if (searchContainer) searchContainer.style.transition = "none";
+                    const logoContainer = document.querySelector(".logo-container");
+                    if (logoContainer) logoContainer.style.transition = "none";
+                }
+
+                function enableAllToggleTransitions() {
+                    const toggles = [
+                        tabToggle,
+                        studiesToggle,
+                        companiesToggle,
+                        quizToggle,
+                        contactToggle,
+                        newPanelToggle,
+                        document.getElementById("calc-toggle"),
+                        document.getElementById("theme-toggle"),
+                        document.getElementById("peptide-analysis-toggle")
+                    ];
+                    toggles.forEach(toggle => {
+                        if (toggle) toggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
+                    });
+                    if (searchContainer) searchContainer.style.transition = "left 0.3s ease-in-out";
+                    const logoContainer = document.querySelector(".logo-container");
+                    if (logoContainer) logoContainer.style.transition = "left 0.3s ease-in-out";
+                }
 
                 function computeBaseLeft() {
                     if (typeof getLeftControlBase === "function") {
@@ -2935,6 +2967,11 @@ width = Math.max(width, companiesPanel.offsetWidth);
                     if (peptideAnalysisToggle) {
                         peptideAnalysisToggle.style.left = `${baseLeft}px`;
                     }
+
+                    const logoContainer = document.querySelector(".logo-container");
+                    if (logoContainer) {
+                        logoContainer.style.left = `${baseLeft + 8}px`;
+                    }
                 }
 
                 function setPanelState(panel, toggle, open) {
@@ -3018,17 +3055,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         quizPanel.style.transition = "none";
                         document.body.style.userSelect = "none";
                         document.body.style.webkitUserSelect = "none";
-                        const calcToggle = document.getElementById("calc-toggle");
-                        const themeToggle = document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById(
-                            "peptide-analysis-toggle",
-                        );
-                        const newPanelToggle = document.getElementById("new-panel-toggle");
-                        if (calcToggle) calcToggle.style.transition = "none";
-                        if (themeToggle) themeToggle.style.transition = "none";
-                        if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "none";
-                        if (newPanelToggle) newPanelToggle.style.transition = "none";
-                        if (searchContainer) searchContainer.style.transition = "none";
+                        disableAllToggleTransitions();
                         e.preventDefault();
                     });
                 }
@@ -3047,18 +3074,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         companiesPanel.style.transition = "none";
                         document.body.style.userSelect = "none";
                         document.body.style.webkitUserSelect = "none";
-                        if (companiesToggle) companiesToggle.style.transition = "none";
-                        const calcToggle = document.getElementById("calc-toggle");
-                        const themeToggle = document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById(
-                            "peptide-analysis-toggle",
-                        );
-                        const newPanelToggle = document.getElementById("new-panel-toggle");
-                        if (calcToggle) calcToggle.style.transition = "none";
-                        if (themeToggle) themeToggle.style.transition = "none";
-                        if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "none";
-                        if (newPanelToggle) newPanelToggle.style.transition = "none";
-                        if (searchContainer) searchContainer.style.transition = "none";
+                        disableAllToggleTransitions();
                         e.preventDefault();
                     });
                 }
@@ -3077,18 +3093,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         contactPanel.style.transition = "none";
                         document.body.style.userSelect = "none";
                         document.body.style.webkitUserSelect = "none";
-                        if (contactToggle) contactToggle.style.transition = "none";
-                        const calcToggle = document.getElementById("calc-toggle");
-                        const themeToggle = document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById(
-                            "peptide-analysis-toggle",
-                        );
-                        const newPanelToggle = document.getElementById("new-panel-toggle");
-                        if (calcToggle) calcToggle.style.transition = "none";
-                        if (themeToggle) themeToggle.style.transition = "none";
-                        if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "none";
-                        if (newPanelToggle) newPanelToggle.style.transition = "none";
-                        if (searchContainer) searchContainer.style.transition = "none";
+                        disableAllToggleTransitions();
                         e.preventDefault();
                     });
                 }
@@ -3107,16 +3112,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         newPanel.style.transition = "none";
                         document.body.style.userSelect = "none";
                         document.body.style.webkitUserSelect = "none";
-                        if (newPanelToggle) newPanelToggle.style.transition = "none";
-                        const calcToggle = document.getElementById("calc-toggle");
-                        const themeToggle = document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById(
-                            "peptide-analysis-toggle",
-                        );
-                        if (calcToggle) calcToggle.style.transition = "none";
-                        if (themeToggle) themeToggle.style.transition = "none";
-                        if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "none";
-                        if (searchContainer) searchContainer.style.transition = "none";
+                        disableAllToggleTransitions();
                         e.preventDefault();
                     });
                 }
@@ -3201,25 +3197,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         tabPanel.style.transition = "none";
                         document.body.style.userSelect = "none";
                         document.body.style.webkitUserSelect = "none";
-                        if (tabToggle) {
-                            tabToggle.style.transition = "none";
-                        }
-                        const calcToggle =
-                            document.getElementById("calc-toggle");
-                        const themeToggle =
-                            document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById(
-                            "peptide-analysis-toggle",
-                        );
-                        const newPanelToggle = document.getElementById("new-panel-toggle");
-                        if (calcToggle) calcToggle.style.transition = "none";
-                        if (themeToggle) themeToggle.style.transition = "none";
-                        if (peptideAnalysisToggle)
-                            peptideAnalysisToggle.style.transition = "none";
-                        if (newPanelToggle)
-                            newPanelToggle.style.transition = "none";
-                        if (searchContainer)
-                            searchContainer.style.transition = "none";
+                        disableAllToggleTransitions();
                         e.preventDefault();
                     });
                 }
@@ -3239,25 +3217,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         studiesPanel.style.transition = "none";
                         document.body.style.userSelect = "none";
                         document.body.style.webkitUserSelect = "none";
-                        if (studiesToggle) {
-                            studiesToggle.style.transition = "none";
-                        }
-                        const calcToggle =
-                            document.getElementById("calc-toggle");
-                        const themeToggle =
-                            document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById(
-                            "peptide-analysis-toggle",
-                        );
-                        const newPanelToggle = document.getElementById("new-panel-toggle");
-                        if (calcToggle) calcToggle.style.transition = "none";
-                        if (themeToggle) themeToggle.style.transition = "none";
-                        if (peptideAnalysisToggle)
-                            peptideAnalysisToggle.style.transition = "none";
-                        if (newPanelToggle)
-                            newPanelToggle.style.transition = "none";
-                        if (searchContainer)
-                            searchContainer.style.transition = "none";
+                        disableAllToggleTransitions();
                         e.preventDefault();
                     });
                 }
@@ -3348,33 +3308,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                             "transform 0.3s ease-in-out";
                         document.body.style.userSelect = "";
                         document.body.style.webkitUserSelect = "";
-                        if (tabToggle) {
-                            tabToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        }
-                        const calcToggle =
-                            document.getElementById("calc-toggle");
-                        const themeToggle =
-                            document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById(
-                            "peptide-analysis-toggle",
-                        );
-                        const newPanelToggle = document.getElementById("new-panel-toggle");
-                        if (calcToggle)
-                            calcToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (themeToggle)
-                            themeToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (peptideAnalysisToggle)
-                            peptideAnalysisToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (newPanelToggle)
-                            newPanelToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (searchContainer)
-                            searchContainer.style.transition =
-                                "left 0.3s ease-in-out";
+                        enableAllToggleTransitions();
                         updateFloatingControls();
                     }
                     if (draggingStudies) {
@@ -3383,33 +3317,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                             "transform 0.3s ease-in-out";
                         document.body.style.userSelect = "";
                         document.body.style.webkitUserSelect = "";
-                        if (studiesToggle) {
-                            studiesToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        }
-                        const calcToggle =
-                            document.getElementById("calc-toggle");
-                        const themeToggle =
-                            document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById(
-                            "peptide-analysis-toggle",
-                        );
-                        const newPanelToggle = document.getElementById("new-panel-toggle");
-                        if (calcToggle)
-                            calcToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (themeToggle)
-                            themeToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (peptideAnalysisToggle)
-                            peptideAnalysisToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (newPanelToggle)
-                            newPanelToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (searchContainer)
-                            searchContainer.style.transition =
-                                "left 0.3s ease-in-out";
+                        enableAllToggleTransitions();
                         updateFloatingControls();
                     }
                     if (draggingQuiz) {
@@ -3418,32 +3326,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                             "transform 0.3s ease-in-out";
                         document.body.style.userSelect = "";
                         document.body.style.webkitUserSelect = "";
-                        const quizToggleBtn = document.getElementById("quiz-toggle");
-                        if (quizToggleBtn) {
-                            quizToggleBtn.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        }
-                        const calcToggle = document.getElementById("calc-toggle");
-                        const themeToggle = document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById(
-                            "peptide-analysis-toggle",
-                        );
-                        const newPanelToggle = document.getElementById("new-panel-toggle");
-                        if (calcToggle)
-                            calcToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (themeToggle)
-                            themeToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (peptideAnalysisToggle)
-                            peptideAnalysisToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (newPanelToggle)
-                            newPanelToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (searchContainer)
-                            searchContainer.style.transition =
-                                "left 0.3s ease-in-out";
+                        enableAllToggleTransitions();
                         updateFloatingControls();
                     }
                     if (draggingCompanies) {
@@ -3452,31 +3335,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                             "transform 0.3s ease-in-out";
                         document.body.style.userSelect = "";
                         document.body.style.webkitUserSelect = "";
-                        if (companiesToggle) {
-                            companiesToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        }
-                        const calcToggle = document.getElementById("calc-toggle");
-                        const themeToggle = document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById(
-                            "peptide-analysis-toggle",
-                        );
-                        const newPanelToggle = document.getElementById("new-panel-toggle");
-                        if (calcToggle)
-                            calcToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (themeToggle)
-                            themeToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (peptideAnalysisToggle)
-                            peptideAnalysisToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (newPanelToggle)
-                            newPanelToggle.style.transition =
-                                "left 0.3s ease-in-out, background 0.2s ease";
-                        if (searchContainer)
-                            searchContainer.style.transition =
-                                "left 0.3s ease-in-out";
+                        enableAllToggleTransitions();
                         updateFloatingControls();
                     }
                     if (draggingCalc) {
@@ -3484,16 +3343,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         calcPanel.style.transition = "transform 0.3s ease-in-out";
                         document.body.style.userSelect = "";
                         document.body.style.webkitUserSelect = "";
-                        if (calcToggleBtn) {
-                            calcToggleBtn.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
-                        }
-                        const themeToggle = document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
-                        const newPanelToggle = document.getElementById("new-panel-toggle");
-                        if (themeToggle) themeToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
-                        if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
-                        if (newPanelToggle) newPanelToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
-                        if (searchContainer) searchContainer.style.transition = "left 0.3s ease-in-out";
+                        enableAllToggleTransitions();
                         updateFloatingControls();
                     }
                     if (draggingContact) {
@@ -3501,14 +3351,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         contactPanel.style.transition = "transform 0.3s ease-in-out";
                         document.body.style.userSelect = "";
                         document.body.style.webkitUserSelect = "";
-                        if (contactToggle) {
-                            contactToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
-                        }
-                        const themeToggle = document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
-                        if (themeToggle) themeToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
-                        if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
-                        if (searchContainer) searchContainer.style.transition = "left 0.3s ease-in-out";
+                        enableAllToggleTransitions();
                         updateFloatingControls();
                     }
                     if (draggingNewPanel) {
@@ -3516,14 +3359,7 @@ width = Math.max(width, companiesPanel.offsetWidth);
                         newPanel.style.transition = "transform 0.3s ease-in-out";
                         document.body.style.userSelect = "";
                         document.body.style.webkitUserSelect = "";
-                        if (newPanelToggle) {
-                            newPanelToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
-                        }
-                        const themeToggle = document.getElementById("theme-toggle");
-                        const peptideAnalysisToggle = document.getElementById("peptide-analysis-toggle");
-                        if (themeToggle) themeToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
-                        if (peptideAnalysisToggle) peptideAnalysisToggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
-                        if (searchContainer) searchContainer.style.transition = "left 0.3s ease-in-out";
+                        enableAllToggleTransitions();
                         updateFloatingControls();
                     }
                 });
