@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://peptide-map.vercel.app/sitemap.xml
+
+# Disallow admin/private areas (if any)
+# Disallow: /php/
+# Disallow: /api/
+
