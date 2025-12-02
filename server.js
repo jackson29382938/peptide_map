@@ -30,13 +30,22 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Initialize SQLite database
+// Initialize SQLite databases
 const db = new sqlite3.Database('./analytics.db', (err) => {
     if (err) {
         console.error('❌ Error opening database:', err.message);
     } else {
         console.log('✅ Connected to SQLite database');
         initializeDatabase();
+    }
+});
+
+const studiesDb = new sqlite3.Database('./studies.db', (err) => {
+    if (err) {
+        console.error('❌ Error opening studies database:', err.message);
+    } else {
+        console.log('✅ Connected to studies database');
+        initializeStudiesDatabase();
     }
 });
 
@@ -194,6 +203,77 @@ function logSessionEvent({
     ], (err) => {
         if (err) {
             console.error('❌ Error logging session event:', err.message);
+        }
+    });
+}
+
+// Initialize studies database tables
+function initializeStudiesDatabase() {
+    studiesDb.run(`
+        CREATE TABLE IF NOT EXISTS studies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            study_id TEXT UNIQUE NOT NULL,
+            title TEXT,
+            doi TEXT,
+            pmid TEXT,
+            first_seen DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `, (err) => {
+        if (err) {
+            console.error('❌ Error creating studies table:', err.message);
+        } else {
+            console.log('✅ studies table ready');
+        }
+    });
+
+    studiesDb.run(`
+        CREATE TABLE IF NOT EXISTS study_votes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            study_id TEXT NOT NULL,
+            vote INTEGER NOT NULL,
+            ip_address TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (study_id) REFERENCES studies(study_id)
+        )
+    `, (err) => {
+        if (err) {
+            console.error('❌ Error creating study_votes table:', err.message);
+        } else {
+            console.log('✅ study_votes table ready');
+        }
+    });
+
+    studiesDb.run(`
+        CREATE TABLE IF NOT EXISTS study_comments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            study_id TEXT NOT NULL,
+            comment_text TEXT NOT NULL,
+            ip_address TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (study_id) REFERENCES studies(study_id)
+        )
+    `, (err) => {
+        if (err) {
+            console.error('❌ Error creating study_comments table:', err.message);
+        } else {
+            console.log('✅ study_comments table ready');
+            
+            // Create indexes after tables are created
+            studiesDb.run(`CREATE INDEX IF NOT EXISTS idx_study_votes_study_id ON study_votes(study_id)`, (err) => {
+                if (err) {
+                    console.error('❌ Error creating study_votes index:', err.message);
+                } else {
+                    console.log('✅ study_votes index ready');
+                }
+            });
+            
+            studiesDb.run(`CREATE INDEX IF NOT EXISTS idx_study_comments_study_id ON study_comments(study_id)`, (err) => {
+                if (err) {
+                    console.error('❌ Error creating study_comments index:', err.message);
+                } else {
+                    console.log('✅ study_comments index ready');
+                }
+            });
         }
     });
 }
@@ -665,6 +745,183 @@ This email was sent from the contact form on the Peptide Map website.`;
     }
 });
 
+// Study Interactions API Endpoints
+app.get('/api/study-interactions/:studyId', (req, res) => {
+    const { studyId } = req.params;
+    
+    const votesQuery = `
+        SELECT 
+            SUM(CASE WHEN vote = 1 THEN 1 ELSE 0 END) as upvotes,
+            SUM(CASE WHEN vote = -1 THEN 1 ELSE 0 END) as downvotes
+        FROM study_votes
+        WHERE study_id = ?
+    `;
+    
+    const commentsQuery = `
+        SELECT id, comment_text, timestamp as created_at
+        FROM study_comments
+        WHERE study_id = ?
+        ORDER BY timestamp DESC
+    `;
+    
+    studiesDb.get(votesQuery, [studyId], (err, votes) => {
+        if (err) {
+            console.error('Error fetching votes:', err);
+            return res.status(500).json({ error: 'Failed to fetch votes' });
+        }
+        
+        studiesDb.all(commentsQuery, [studyId], (err, comments) => {
+            if (err) {
+                console.error('Error fetching comments:', err);
+                return res.status(500).json({ error: 'Failed to fetch comments' });
+            }
+            
+            res.json({
+                upvotes: votes?.upvotes || 0,
+                downvotes: votes?.downvotes || 0,
+                comments: comments || []
+            });
+        });
+    });
+});
+
+app.post('/api/study-vote', (req, res) => {
+    const { study_id, vote, title, doi, pmid } = req.body;
+    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    
+    if (!study_id || (vote !== 1 && vote !== -1)) {
+        return res.status(400).json({ error: 'Invalid vote data' });
+    }
+    
+    // First, ensure study exists
+    studiesDb.run(
+        `INSERT OR IGNORE INTO studies (study_id, title, doi, pmid) VALUES (?, ?, ?, ?)`,
+        [study_id, title, doi, pmid],
+        (err) => {
+            if (err) {
+                console.error('Error inserting study:', err);
+                return res.status(500).json({ error: 'Failed to record study' });
+            }
+            
+            // Then add vote
+            studiesDb.run(
+                `INSERT INTO study_votes (study_id, vote, ip_address) VALUES (?, ?, ?)`,
+                [study_id, vote, ipAddress],
+                (err) => {
+                    if (err) {
+                        console.error('Error inserting vote:', err);
+                        return res.status(500).json({ error: 'Failed to record vote' });
+                    }
+                    
+                    res.json({ success: true });
+                }
+            );
+        }
+    );
+});
+
+app.post('/api/study-interactions-bulk', (req, res) => {
+    const { study_ids } = req.body;
+    
+    if (!study_ids || !Array.isArray(study_ids) || study_ids.length === 0) {
+        return res.status(400).json({ error: 'Invalid study IDs' });
+    }
+    
+    const placeholders = study_ids.map(() => '?').join(',');
+    
+    const votesQuery = `
+        SELECT 
+            study_id,
+            SUM(CASE WHEN vote = 1 THEN 1 ELSE 0 END) as upvotes,
+            SUM(CASE WHEN vote = -1 THEN 1 ELSE 0 END) as downvotes
+        FROM study_votes
+        WHERE study_id IN (${placeholders})
+        GROUP BY study_id
+    `;
+    
+    const commentsQuery = `
+        SELECT 
+            study_id,
+            COUNT(*) as comment_count
+        FROM study_comments
+        WHERE study_id IN (${placeholders})
+        GROUP BY study_id
+    `;
+    
+    studiesDb.all(votesQuery, study_ids, (err, votes) => {
+        if (err) {
+            console.error('Error fetching bulk votes:', err);
+            return res.status(500).json({ error: 'Failed to fetch votes' });
+        }
+        
+        studiesDb.all(commentsQuery, study_ids, (err, comments) => {
+            if (err) {
+                console.error('Error fetching bulk comments:', err);
+                return res.status(500).json({ error: 'Failed to fetch comments' });
+            }
+            
+            const votesMap = {};
+            votes.forEach(v => {
+                votesMap[v.study_id] = {
+                    upvotes: v.upvotes || 0,
+                    downvotes: v.downvotes || 0
+                };
+            });
+            
+            const commentsMap = {};
+            comments.forEach(c => {
+                commentsMap[c.study_id] = c.comment_count || 0;
+            });
+            
+            const results = {};
+            study_ids.forEach(id => {
+                results[id] = {
+                    upvotes: votesMap[id]?.upvotes || 0,
+                    downvotes: votesMap[id]?.downvotes || 0,
+                    comments: commentsMap[id] || 0
+                };
+            });
+            
+            res.json(results);
+        });
+    });
+});
+
+app.post('/api/study-comment', (req, res) => {
+    const { study_id, comment_text, title, doi, pmid } = req.body;
+    const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    
+    if (!study_id || !comment_text || comment_text.trim().length === 0) {
+        return res.status(400).json({ error: 'Invalid comment data' });
+    }
+    
+    // Ensure study exists
+    studiesDb.run(
+        `INSERT OR IGNORE INTO studies (study_id, title, doi, pmid) VALUES (?, ?, ?, ?)`,
+        [study_id, title, doi, pmid],
+        (err) => {
+            if (err) {
+                console.error('Error inserting study:', err);
+                return res.status(500).json({ error: 'Failed to record study' });
+            }
+            
+            // Then add comment
+            studiesDb.run(
+                `INSERT INTO study_comments (study_id, comment_text, ip_address) VALUES (?, ?, ?)`,
+                [study_id, comment_text.trim(), ipAddress],
+                (err) => {
+                    if (err) {
+                        console.error('Error inserting comment:', err);
+                        return res.status(500).json({ error: 'Failed to record comment' });
+                    }
+                    
+                    res.json({ success: true });
+                }
+            );
+        }
+    );
+});
+
 // Export for Vercel serverless functions
 module.exports = app;
 
@@ -681,10 +938,18 @@ process.on('SIGINT', () => {
     console.log('\n🛑 Shutting down server...');
     db.close((err) => {
         if (err) {
-            console.error('❌ Error closing database:', err.message);
+            console.error('❌ Error closing analytics database:', err.message);
         } else {
-            console.log('✅ Database connection closed');
+            console.log('✅ Analytics database connection closed');
         }
-        process.exit(0);
+        
+        studiesDb.close((err) => {
+            if (err) {
+                console.error('❌ Error closing studies database:', err.message);
+            } else {
+                console.log('✅ Studies database connection closed');
+            }
+            process.exit(0);
+        });
     });
 });

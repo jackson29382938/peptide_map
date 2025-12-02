@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peptide Research Search</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .search-box {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        .search-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .search-input:focus {
+            border-color: #667eea;
+        }
+        .search-button {
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .search-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .filter-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        .filter-group select:focus,
+        .filter-group input:focus {
+            border-color: #667eea;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .results {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .results-header {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .results-count {
+            font-size: 1.2em;
+            color: #333;
+            font-weight: 600;
+        }
+        .article {
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        .article:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        .article-title {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+        }
+        .article-title:hover {
+            text-decoration: underline;
+        }
+        .article-authors {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 8px;
+        }
+        .article-journal {
+            color: #888;
+            font-size: 0.9em;
+            font-style: italic;
+            margin-bottom: 12px;
+        }
+        .article-abstract {
+            color: #555;
+            line-height: 1.6;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        .article-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 12px;
+            font-size: 0.85em;
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            color: #888;
+        }
+        .meta-item strong {
+            color: #667eea;
+        }
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+        .no-results-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        .debug {
+            background: #f0f0f0;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow: auto;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .page-btn {
+            padding: 8px 16px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .page-btn:hover {
+            background: #e0e0e0;
+        }
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        .pagination span {
+            padding: 8px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 Peptide Research Search</h1>
+            <p>Search PubMed and Semantic Scholar for peptides and related topics</p>
+        </div>
+
+        <div class="search-box">
+            <form class="search-form" id="searchForm">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="searchQuery" 
+                    list="suggestions"
+                    placeholder="Enter peptides and terms (e.g., 'BPC-157 tendon healing', 'TB-500 OR Thymosin Beta-4')"
+                    required
+                >
+                <datalist id="suggestions"></datalist>
+                <button type="submit" class="search-button" id="searchBtn">Search</button>
+            </form>
+
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="maxResults">Results per page</label>
+                    <select id="maxResults">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="sortOrder">Sort by</label>
+                    <select id="sortOrder">
+                        <option value="relevance">Relevance</option>
+                        <option value="pub+date">Publication Date</option>
+                        <option value="citations">Citations</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="yearFrom">Year from</label>
+                    <input type="number" id="yearFrom" placeholder="e.g., 2020" min="1900" max="2025">
+                </div>
+                <div class="filter-group">
+                    <label for="yearTo">Year to</label>
+                    <input type="number" id="yearTo" placeholder="e.g., 2024" min="1900" max="2025">
+                </div>
+                <div class="filter-group">
+                    <label for="primaryTerms">Primary terms (title search)</label>
+                    <input type="text" id="primaryTerms" placeholder="comma separated">
+                </div>
+                <div class="filter-group">
+                    <label for="secondaryTerms">Secondary terms (full search)</label>
+                    <input type="text" id="secondaryTerms" placeholder="comma separated">
+                </div>
+            </div>
+        </div>
+
+        <div id="resultsContainer"></div>
+    </div>
+
+    <script>
+        const PUBMED_API_KEY = 'a91bf78556565d33e33d04fd28fe997f1e08';
+        const SEMANTIC_API_KEY = 'XVxzepJwOZ1lEgvUNLN7Ya3e5wabkmTG4BbTDheX';
+        const PUBMED_BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/';
+        const SEMANTIC_BASE_URL = 'https://api.semanticscholar.org/graph/v1/';
+
+        const peptideDatabase = {
+            '5-amino-1mq': ['5-Amino-1MQ', 'NNMT Inhibitor', '5-Amino-1-methylquinolinium'],
+            'aod9604': ['AOD', 'AOD9604', 'AOD-9604', 'Advanced Obesity Drug'],
+            'ara-290': ['ARA-290', 'Cibinetide', 'Erythropoietin-derived peptide'],
+            'bpc157': ['BPC', 'BPC-157', 'Body Protecting Compound'],
+            'bremelanotide': ['PT-141', 'Bremelanotide', 'PTMS', 'Melanotan metabolite'],
+            'cjc1295': ['CJC1295', 'CJC-1295', 'GHRH Analog', 'Growth Hormone Releasing Hormone'],
+            'cjc1295-ipamorelin': ['CJC1295/Ipamorelin', 'CJC-1295/Ipamorelin', 'GHRH/GHRP combo', 'Growth Hormone Stack'],
+            'dihexa': ['Dihexa', 'HGF mimetic', 'Cognitive enhancer'],
+            'dsip': ['DSIP', 'Delta Sleep Peptide', 'Sleep-inducing peptide', 'Delta Sleep-Inducing Peptide'],
+            'epithalon': ['Epithalon', 'Epitalon', 'Telomere peptide', 'Telomerase Activator'],
+            'exenatide': ['Exenatide', 'Byetta', 'Bydureon', 'GLP-1 analog'],
+            'ghk-cu': ['GHK-Cu', 'GHK', 'Copper peptide', 'Skin regenerative peptide'],
+            'glutathione': ['GSH', 'Glutathione', 'L-Glutathione', 'Master Antioxidant'],
+            'hexarelin': ['Hexarelin', 'Examorelin', 'GHRP-6 analog'],
+            'igf1-lr3': ['IGF-1 LR3', 'IGF1LR3', 'Long R3 IGF-1', 'Long R3 Insulin-like Growth Factor-1'],
+            'kisspeptin': ['Kisspeptin', 'Kisspeptin-10', 'Kp-10', 'Metastin', 'GnRH Secretagogue'],
+            'kpv': ['KPV', 'Lys-Pro-Val', 'Lysine-Proline-Valine', 'Anti-inflammatory peptide'],
+            'll-37': ['LL-37', 'Cathelicidin', 'Antimicrobial peptide', 'Human Cathelicidin'],
+            'melanotan-ii': ['MT-II', 'Melanotan', 'Melanotan II', 'Tanning peptide', 'Melanocortin Agonist'],
+            'mk-677': ['MK677', 'MK-677', 'Ibutamoren', 'Oral GHS', 'Growth hormone releaser'],
+            'mots-c': ['MOTS-C', 'Mitochondrial peptide', 'Exercise mimetic', 'Mitochondrial ORF'],
+            'nad': ['NAD+', 'NAD', 'Nicotinamide adenine dinucleotide', 'Nicotinamide Adenine Dinucleotide'],
+            'retatrutide': ['Retatrutide', 'LY3437943', 'Triple agonist', 'GLP-1/GIP/Glucagon'],
+            'selank': ['Selank', 'TP-7', 'Anxiolytic peptide', 'Russian peptide'],
+            'semaglutide': ['Semaglutide', 'Ozempic', 'Wegovy', 'Rybelsus', 'GLP-1 agonist', 'GLP-1 Analog'],
+            'semax': ['Semax', 'Nootropic peptide', 'Cognitive enhancer', 'Met-Glu-His-Phe-Pro-Gly-Pro'],
+            'sermorelin': ['Sermorelin', 'Sermorelin Acetate', 'GHRH 1-29', 'Growth hormone releaser'],
+            'ss-31': ['SS-31', 'Elamipretide', 'MTP-131', 'Mitochondrial peptide', 'Mitochondrial Protective Peptide'],
+            'tb-500': ['TB-500', 'TB500', 'Thymosin Beta-4', 'TB4', 'Healing peptide'],
+            'tesofensine': ['Tesofensine', 'NS2330', 'Weight loss compound', 'Triple Monoamine Reuptake Inhibitor'],
+            'tta': ['TTA', 'TTA-A', 'Tetradecyl', 'Tetradecyl Thioacetic Acid', 'Modified fatty acid'],
+            'thymosin-alpha-1': ['TA1', 'Thymalfasin', 'Thymosin α1', 'Thymosin Alpha-1', 'Immune peptide'],
+            'thymulin': ['Thymulin', 'FTS', 'Thymic hormone', 'Zinc thymulin', 'Facteur Thymique Serique'],
+            'tirzepatide': ['Tirzepatide', 'Mounjaro', 'Dual agonist', 'GIP/GLP-1', 'Dual GIP/GLP-1 Agonist']
+        };
+
+        const peptides = Object.values(peptideDatabase).flat();
+
+        const keywords = [
+            'human model', 'tissue recovery', 'metabolism', 'wound healing', 'anti-inflammatory', 
+            'muscle repair', 'gut healing', 'neuroprotection', 'anxiolytic', 'nootropic', 
+            'telomere', 'mitochondria', 'antioxidant', 'antimicrobial', 'immune boost', 
+            'fat loss', 'muscle growth', 'hormone release', 'sleep induction', 'erectile dysfunction', 
+            'skin rejuvenation', 'in vivo', 'in vitro', 'clinical trial', 'animal study'
+        ];
+
+        const suggestions = [...new Set([...peptides, ...keywords])];
+
+        const dataList = document.getElementById('suggestions');
+        suggestions.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s;
+            dataList.appendChild(option);
+        });
+
+        let currentPage = 1;
+
+        let lastDetectedPeptides = [];
+
+        function expandPeptideNames(query) {
+            const queryLower = query.toLowerCase();
+            const detectedPeptides = new Set();
+            lastDetectedPeptides = [];
+            
+            for (const [key, synonyms] of Object.entries(peptideDatabase)) {
+                for (const synonym of synonyms) {
+                    if (queryLower.includes(synonym.toLowerCase())) {
+                        detectedPeptides.add(key);
+                        lastDetectedPeptides.push({key, synonyms});
+                        break;
+                    }
+                }
+            }
+            
+            if (detectedPeptides.size === 0) {
+                return query;
+            }
+            
+            let expandedQuery = query;
+            for (const peptideKey of detectedPeptides) {
+                const synonyms = peptideDatabase[peptideKey];
+                const orClause = synonyms.map(s => `"${s}"`).join(' OR ');
+                expandedQuery += ` AND (${orClause})`;
+            }
+            
+            return expandedQuery;
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            currentPage = 1;
+            await performSearch();
+        });
+
+        async function performSearch() {
+            const queryValue = document.getElementById('searchQuery').value.trim();
+            const maxResultsStr = document.getElementById('maxResults').value;
+            const maxResults = parseInt(maxResultsStr);
+            const sortOrder = document.getElementById('sortOrder').value;
+            const yearFrom = document.getElementById('yearFrom').value;
+            const yearTo = document.getElementById('yearTo').value;
+            const primaryTermsInput = document.getElementById('primaryTerms').value;
+            const secondaryTermsInput = document.getElementById('secondaryTerms').value;
+
+            const primaryTerms = primaryTermsInput ? primaryTermsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+            const secondaryTerms = secondaryTermsInput ? secondaryTermsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+
+            if (!queryValue) return;
+
+            const expandedQuery = expandPeptideNames(queryValue);
+
+            const searchBtn = document.getElementById('searchBtn');
+            searchBtn.disabled = true;
+            searchBtn.textContent = 'Searching...';
+
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            let searchMessage = 'Searching databases...';
+            if (expandedQuery !== queryValue) {
+                searchMessage += '<br><small style="color: #667eea; margin-top: 10px; display: block;">Including alternative peptide names in search</small>';
+            }
+            
+            resultsContainer.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>${searchMessage}</p>
+                </div>
+            `;
+
+            const offset = (currentPage - 1) * maxResults;
+
+            try {
+                // Build year filter
+                let yearFilterPubMed = '';
+                let yearFilterSemantic = '';
+                if (yearFrom || yearTo) {
+                    const from = yearFrom || '1900';
+                    const to = yearTo || new Date().getFullYear();
+                    yearFilterPubMed = ` AND ${from}:${to}[dp]`;
+                    yearFilterSemantic = `&year=${yearFrom ? yearFrom : ''}-${yearTo ? yearTo : ''}`;
+                }
+
+                // Map sort for each API
+                let pubmedSort = sortOrder === 'citations' ? 'relevance' : sortOrder;
+                let semanticSort = '';
+                if (sortOrder === 'relevance') semanticSort = 'relevance';
+                else if (sortOrder === 'pub+date') semanticSort = 'publication-date';
+                else if (sortOrder === 'citations') semanticSort = 'papers-cited';
+
+                // Build PubMed query
+                let pubmedQuery = expandedQuery + yearFilterPubMed;
+                if (primaryTerms.length > 0) {
+                    const primaryPart = primaryTerms.map(t => `"${t}"[ti]`).join(' OR ');
+                    pubmedQuery += ` AND (${primaryPart})`;
+                }
+                if (secondaryTerms.length > 0) {
+                    const secondaryPart = secondaryTerms.map(t => `"${t}"`).join(' OR ');
+                    pubmedQuery += ` AND (${secondaryPart})`;
+                }
+
+                // Build Semantic query - keep it simple to avoid CORS issues
+                // We'll filter for alternative names client-side after fetching
+                let semanticQuery = queryValue;
+                if (secondaryTerms.length > 0) {
+                    const secondaryPart = secondaryTerms.map(t => `"${t}"`).join(' OR ');
+                    semanticQuery += ` AND (${secondaryPart})`;
+                }
+                const encodedSemanticQuery = encodeURIComponent(semanticQuery);
+
+                // Get totals - use simpler queries
+                const pubmedCountUrl = `${PUBMED_BASE_URL}esearch.fcgi?db=pubmed&term=${encodeURIComponent(pubmedQuery)}&retmax=0&retmode=json&api_key=${PUBMED_API_KEY}`;
+                const pubmedCountResponse = await fetch(pubmedCountUrl);
+                const pubmedCountData = await pubmedCountResponse.json();
+                let pubmedTotal = pubmedCountData.esearchresult?.count || 0;
+
+                let semanticTotal = 1000;
+                try {
+                    const semanticCountUrl = `${SEMANTIC_BASE_URL}paper/search?query=${encodedSemanticQuery}&limit=1&fields=title${yearFilterSemantic}`;
+                    const semanticCountResponse = await fetch(semanticCountUrl, {
+                        headers: { 'x-api-key': SEMANTIC_API_KEY }
+                    });
+                    if (semanticCountResponse.ok) {
+                        const semanticCountData = await semanticCountResponse.json();
+                        semanticTotal = semanticCountData.total || 0;
+                    }
+                } catch (e) {
+                    console.warn('Could not get Semantic Scholar count, using estimate:', e);
+                }
+
+                const MAX_FETCH = 1000;
+                const fetchLimit = Math.min(pubmedTotal, MAX_FETCH);
+                
+                const pubmedFullUrl = `${PUBMED_BASE_URL}esearch.fcgi?db=pubmed&term=${encodeURIComponent(pubmedQuery)}&retmax=${fetchLimit}&retstart=0&retmode=json&api_key=${PUBMED_API_KEY}`;
+                const pubmedFullResponse = await fetch(pubmedFullUrl);
+                const pubmedFullData = await pubmedFullResponse.json();
+                const pubmedIds = pubmedFullData.esearchresult?.idlist || [];
+
+                let pubmedPapers = [];
+                if (pubmedIds.length > 0) {
+                    const pubmedSummaryUrl = `${PUBMED_BASE_URL}esummary.fcgi?db=pubmed&id=${pubmedIds.join(',')}&retmode=json&api_key=${PUBMED_API_KEY}`;
+                    const pubmedSummaryResponse = await fetch(pubmedSummaryUrl);
+                    const pubmedSummaryData = await pubmedSummaryResponse.json();
+                    pubmedPapers = pubmedIds.map(id => pubmedSummaryData.result[id]).filter(Boolean);
+                }
+
+                const semanticFetchLimit = Math.min(semanticTotal, MAX_FETCH);
+                let semanticPapers = [];
+                
+                try {
+                    const semanticFullUrl = `${SEMANTIC_BASE_URL}paper/search?query=${encodedSemanticQuery}&limit=${semanticFetchLimit}&offset=0&fields=title,authors,year,citationCount,abstract,url,publicationDate,externalIds,venue${yearFilterSemantic}`;
+                    const semanticFullResponse = await fetch(semanticFullUrl, {
+                        headers: { 'x-api-key': SEMANTIC_API_KEY }
+                    });
+                    if (semanticFullResponse.ok) {
+                        const semanticFullData = await semanticFullResponse.json();
+                        semanticPapers = semanticFullData.data || [];
+
+                        if (primaryTerms.length > 0) {
+                            semanticPapers = semanticPapers.filter(p => primaryTerms.some(term => p.title.toLowerCase().includes(term.toLowerCase())));
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Semantic Scholar fetch failed, using PubMed only:', e);
+                }
+
+                const allPapers = [
+                    ...semanticPapers.map(p => toCommonPaper(p, 'semantic')),
+                    ...pubmedPapers.map(p => toCommonPaper(p, 'pubmed'))
+                ];
+
+                const paperMap = new Map();
+                for (let paper of allPapers) {
+                    let key = null;
+                    if (paper.doi) key = 'doi:' + paper.doi.toLowerCase();
+                    else if (paper.pmid) key = 'pmid:' + paper.pmid;
+                    else key = paper.title.toLowerCase() + '|' + paper.authors.sort().join('|').toLowerCase();
+
+                    if (paperMap.has(key)) {
+                        const existing = paperMap.get(key);
+                        if (!existing.abstract && paper.abstract) existing.abstract = paper.abstract;
+                        if (existing.citationCount === null && paper.citationCount !== null) existing.citationCount = paper.citationCount;
+                        if (existing.source !== paper.source) existing.source = 'both';
+                        if (!existing.journal && paper.journal) existing.journal = paper.journal;
+                        if (!existing.url && paper.url) existing.url = paper.url;
+                        if (!existing.year && paper.year) existing.year = paper.year;
+                        if (!existing.date && paper.date) existing.date = paper.date;
+                    } else {
+                        paperMap.set(key, paper);
+                    }
+                }
+                let uniquePapers = Array.from(paperMap.values());
+
+                const papersNeedingCitation = uniquePapers.filter(p => p.citationCount === null && p.pmid);
+                if (papersNeedingCitation.length > 0) {
+                    const promises = papersNeedingCitation.map(async (p) => {
+                        try {
+                            const res = await fetch(`${SEMANTIC_BASE_URL}paper/PMID:${p.pmid}?fields=citationCount`, {
+                                headers: { 'x-api-key': SEMANTIC_API_KEY }
+                            });
+                            if (res.ok) {
+                                const data = await res.json();
+                                p.citationCount = data.citationCount !== undefined ? data.citationCount : null;
+                            }
+                        } catch {}
+                    });
+                    await Promise.all(promises);
+                }
+
+                const papersNeedingAbstract = uniquePapers.filter(p => !p.abstract && p.pmid);
+                if (papersNeedingAbstract.length > 0) {
+                    const ids = papersNeedingAbstract.map(p => p.pmid).join(',');
+                    const res = await fetch(`${PUBMED_BASE_URL}efetch.fcgi?db=pubmed&id=${ids}&rettype=abstract&retmode=text&api_key=${PUBMED_API_KEY}`);
+                    if (res.ok) {
+                        const text = await res.text();
+                        const blocks = text.split(/\n{3,}/);
+                        blocks.forEach((block, i) => {
+                            if (i >= papersNeedingAbstract.length) return;
+                            const abstractMatch = block.match(/(?:Abstract|ABSTRACT)\s*\n([\s\S]*?)(?=\n\n[A-Z ]+:|$)/i);
+                            if (abstractMatch) {
+                                papersNeedingAbstract[i].abstract = abstractMatch[1].trim().replace(/\s+/g, ' ');
+                            }
+                        });
+                    }
+                }
+
+                const queryLower = expandedQuery.toLowerCase();
+                const searchedPeptides = peptides.filter(p => queryLower.includes(p.toLowerCase()));
+                if (searchedPeptides.length > 0) {
+                    uniquePapers = uniquePapers.filter(p => {
+                        const text = (p.title + ' ' + (p.abstract || '')).toLowerCase();
+                        return searchedPeptides.some(sp => text.includes(sp.toLowerCase()));
+                    });
+                }
+
+                if (sortOrder === 'pub+date') {
+                    uniquePapers.sort((a, b) => (b.date ? b.date.getTime() : 0) - (a.date ? a.date.getTime() : 0));
+                } else if (sortOrder === 'citations') {
+                    uniquePapers.sort((a, b) => (b.citationCount || 0) - (a.citationCount || 0));
+                }
+
+                const total = uniquePapers.length;
+                const paginatedPapers = uniquePapers.slice(offset, offset + maxResults);
+                displayResults(paginatedPapers, total);
+
+            } catch (error) {
+                console.error('Error:', error);
+                resultsContainer.innerHTML = `
+                    <div class="results">
+                        <div class="error">
+                            <strong>Error:</strong> ${error.message}
+                            <div class="debug">Check browser console for more details</div>
+                        </div>
+                    </div>
+                `;
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.textContent = 'Search';
+            }
+        }
+
+        function toCommonPaper(p, source) {
+            let date = null;
+            if (p.publicationDate) {
+                date = new Date(p.publicationDate);
+            } else if (p.pubdate) {
+                date = new Date(p.pubdate);
+            } else if (p.year) {
+                date = new Date(p.year, 0, 1);
+            }
+            return {
+                title: p.title || 'No title',
+                authors: p.authors ? p.authors.map(a => a.name) : [],
+                year: p.year || (p.pubdate ? parseInt(p.pubdate.split(' ')[0]) : null),
+                abstract: p.abstract || null,
+                citationCount: p.citationCount !== undefined ? p.citationCount : null,
+                url: source === 'semantic' ? (p.url || `https://www.semanticscholar.org/paper/${p.paperId}`) : `https://pubmed.ncbi.nlm.nih.gov/${p.uid}/`,
+                doi: source === 'semantic' ? p.externalIds?.DOI : p.articleids?.find(a => a.idtype === 'doi')?.value,
+                pmid: source === 'semantic' ? p.externalIds?.PubMed : p.uid,
+                journal: p.venue || p.fulljournalname || p.source || 'Unknown',
+                source: source,
+                date: date
+            };
+        }
+
+        function displayResults(papers, total) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            const totalPages = Math.ceil(total / document.getElementById('maxResults').value);
+
+            if (papers.length === 0) {
+                let html = `
+                    <div class="results">
+                        <div class="no-results">
+                            <div class="no-results-icon">🔍</div>
+                            <h3>No results found</h3>
+                            <p>Try different search terms or adjust your filters</p>
+                        </div>
+                    </div>
+                `;
+                if (currentPage > 1) {
+                    html = `
+                        <div class="results">
+                            <div class="results-header">
+                                <div class="results-count">No more results</div>
+                            </div>
+                            ${buildPagination(currentPage, totalPages)}
+                        </div>
+                    `;
+                }
+                resultsContainer.innerHTML = html;
+
+                if (currentPage > 1) {
+                    const pageBtns = document.querySelectorAll('.page-btn');
+                    pageBtns.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            currentPage = parseInt(btn.dataset.page);
+                            performSearch();
+                        });
+                    });
+                }
+                return;
+            }
+
+            const rangeStart = (currentPage - 1) * parseInt(document.getElementById('maxResults').value) + 1;
+            const rangeEnd = rangeStart + papers.length - 1;
+
+            let html = `
+                <div class="results">
+                    <div class="results-header">
+                        <div class="results-count">Showing ${rangeStart}-${rangeEnd} of ${total} results</div>
+                    </div>
+            `;
+
+            if (lastDetectedPeptides.length > 0) {
+                html += '<div style="background: #f0f7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea;">';
+                html += '<strong style="color: #667eea;">🔍 Search Enhanced:</strong> Including alternative names for: ';
+                html += lastDetectedPeptides.map(p => {
+                    const names = p.synonyms.slice(0, 3).join(', ') + (p.synonyms.length > 3 ? ` +${p.synonyms.length - 3} more` : '');
+                    return `<span style="color: #555;">${names}</span>`;
+                }).join(' | ');
+                html += '</div>';
+            }
+
+            papers.forEach(paper => {
+                const authorsStr = paper.authors.slice(0, 5).join(', ') + (paper.authors.length > 5 ? ' et al.' : '');
+                const abstractStr = paper.abstract ? paper.abstract.substring(0, 300) + (paper.abstract.length > 300 ? '...' : '') : 'No abstract available.';
+                html += `
+                    <div class="article">
+                        <a href="${paper.url}" target="_blank" class="article-title">${paper.title}</a>
+                        <div class="article-authors">${authorsStr || 'Unknown authors'}</div>
+                        <div class="article-journal">${paper.journal}</div>
+                        <div class="article-meta">
+                            <span class="meta-item"><strong>Year:</strong> ${paper.year || 'N/A'}</span>
+                            <span class="meta-item"><strong>Citations:</strong> ${paper.citationCount !== null ? paper.citationCount : 'N/A'}</span>
+                            <span class="meta-item"><strong>Source:</strong> ${paper.source.toUpperCase()}</span>
+                        </div>
+                        <div class="article-abstract">${abstractStr}</div>
+                    </div>
+                `;
+            });
+
+            if (totalPages > 1) {
+                html += buildPagination(currentPage, totalPages);
+            }
+
+            html += '</div>';
+            resultsContainer.innerHTML = html;
+
+            const pageBtns = document.querySelectorAll('.page-btn');
+            pageBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currentPage = parseInt(btn.dataset.page);
+                    performSearch();
+                });
+            });
+        }
+
+        function buildPagination(currentPage, totalPages) {
+            let html = '<div class="pagination">';
+            if (currentPage > 1) {
+                html += `<button class="page-btn" data-page="1">&lt;&lt;</button>`;
+                html += `<button class="page-btn" data-page="${currentPage - 1}">&lt;</button>`;
+            }
+            let start = Math.max(1, currentPage - 2);
+            let end = Math.min(totalPages, currentPage + 2);
+            if (start > 1) html += '<span>...</span>';
+            for (let i = start; i <= end; i++) {
+                html += `<button class="page-btn${i === currentPage ? ' active' : ''}" data-page="${i}">${i}</button>`;
+            }
+            if (end < totalPages) html += '<span>...</span>';
+            if (currentPage < totalPages) {
+                html += `<button class="page-btn" data-page="${currentPage + 1}">&gt;</button>`;
+                html += `<button class="page-btn" data-page="${totalPages}">&gt;&gt;</button>`;
+            }
+            html += '</div>';
+            return html;
+        }
+    </script>
+</body>
+</html>

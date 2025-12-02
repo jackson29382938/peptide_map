@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PubMed Search Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .search-box {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: #667eea;
+        }
+
+        .search-button {
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .search-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .filter-group select:focus,
+        .filter-group input:focus {
+            border-color: #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .results-header {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .results-count {
+            font-size: 1.2em;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .article {
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+
+        .article:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .article-title {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+        }
+
+        .article-title:hover {
+            text-decoration: underline;
+        }
+
+        .article-authors {
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 8px;
+        }
+
+        .article-journal {
+            color: #888;
+            font-size: 0.9em;
+            font-style: italic;
+            margin-bottom: 12px;
+        }
+
+        .article-abstract {
+            color: #555;
+            line-height: 1.6;
+            margin-top: 12px;
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 12px;
+            font-size: 0.85em;
+        }
+
+        .meta-item {
+            color: #888;
+        }
+
+        .meta-item strong {
+            color: #667eea;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+
+        .no-results-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .debug {
+            background: #f0f0f0;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 PubMed Search</h1>
+            <p>Search millions of biomedical literature citations</p>
+        </div>
+
+        <div class="search-box">
+            <form class="search-form" id="searchForm">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="searchQuery" 
+                    placeholder="Enter search terms (e.g., 'CRISPR gene editing', 'COVID-19 vaccine')"
+                    required
+                >
+                <button type="submit" class="search-button" id="searchBtn">Search</button>
+            </form>
+
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="maxResults">Results per page</label>
+                    <select id="maxResults">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="sortOrder">Sort by</label>
+                    <select id="sortOrder">
+                        <option value="relevance">Relevance</option>
+                        <option value="pub+date">Publication Date</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="yearFrom">Year from</label>
+                    <input type="number" id="yearFrom" placeholder="e.g., 2020" min="1900" max="2025">
+                </div>
+                <div class="filter-group">
+                    <label for="yearTo">Year to</label>
+                    <input type="number" id="yearTo" placeholder="e.g., 2024" min="1900" max="2025">
+                </div>
+            </div>
+        </div>
+
+        <div id="resultsContainer"></div>
+    </div>
+
+    <script>
+        const API_KEY = 'a91bf78556565d33e33d04fd28fe997f1e08';
+        const BASE_URL = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/';
+
+        document.getElementById('searchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await performSearch();
+        });
+
+        async function performSearch() {
+            const query = document.getElementById('searchQuery').value.trim();
+            const maxResults = document.getElementById('maxResults').value;
+            const sortOrder = document.getElementById('sortOrder').value;
+            const yearFrom = document.getElementById('yearFrom').value;
+            const yearTo = document.getElementById('yearTo').value;
+
+            if (!query) return;
+
+            const searchBtn = document.getElementById('searchBtn');
+            searchBtn.disabled = true;
+            searchBtn.textContent = 'Searching...';
+
+            const resultsContainer = document.getElementById('resultsContainer');
+            resultsContainer.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Searching PubMed database...</p>
+                </div>
+            `;
+
+            try {
+                // Build search query
+                let searchQuery = query;
+                if (yearFrom || yearTo) {
+                    const from = yearFrom || '1900';
+                    const to = yearTo || '2025';
+                    searchQuery += ` AND ${from}:${to}[dp]`;
+                }
+
+                console.log('Search Query:', searchQuery);
+
+                // Step 1: Search for PMIDs
+                const searchUrl = `${BASE_URL}esearch.fcgi?db=pubmed&term=${encodeURIComponent(searchQuery)}&retmax=${maxResults}&retmode=json&sort=${sortOrder}&api_key=${API_KEY}`;
+                console.log('Search URL:', searchUrl);
+
+                const searchResponse = await fetch(searchUrl);
+                const searchText = await searchResponse.text();
+                console.log('Search Response:', searchText);
+                
+                const searchData = JSON.parse(searchText);
+
+                if (!searchData.esearchresult || !searchData.esearchresult.idlist || searchData.esearchresult.idlist.length === 0) {
+                    resultsContainer.innerHTML = `
+                        <div class="results">
+                            <div class="no-results">
+                                <div class="no-results-icon">🔍</div>
+                                <h3>No results found</h3>
+                                <p>Try different search terms or adjust your filters</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const ids = searchData.esearchresult.idlist;
+                const totalCount = searchData.esearchresult.count;
+                console.log('Found IDs:', ids);
+
+                // Step 2: Fetch article summaries
+                const summaryUrl = `${BASE_URL}esummary.fcgi?db=pubmed&id=${ids.join(',')}&retmode=json&api_key=${API_KEY}`;
+                console.log('Summary URL:', summaryUrl);
+
+                const summaryResponse = await fetch(summaryUrl);
+                const summaryText = await summaryResponse.text();
+                console.log('Summary Response:', summaryText);
+                
+                const summaryData = JSON.parse(summaryText);
+
+                displayResults(summaryData.result, ids, totalCount);
+
+            } catch (error) {
+                console.error('Error:', error);
+                resultsContainer.innerHTML = `
+                    <div class="results">
+                        <div class="error">
+                            <strong>Error:</strong> ${error.message}
+                            <div class="debug">Check browser console for more details</div>
+                        </div>
+                    </div>
+                `;
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.textContent = 'Search';
+            }
+        }
+
+        function displayResults(results, ids, totalCount) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            let html = `
+                <div class="results">
+                    <div class="results-header">
+                        <div class="results-count">Found ${parseInt(totalCount).toLocaleString()} results (showing ${ids.length})</div>
+                    </div>
+            `;
+
+            ids.forEach(id => {
+                const article = results[id];
+                if (!article || article.error) {
+                    console.log('Skipping article:', id, article);
+                    return;
+                }
+
+                const authors = article.authors?.slice(0, 5).map(a => a.name).join(', ') || 'No authors listed';
+                const moreAuthors = article.authors?.length > 5 ? ` et al.` : '';
+                const journal = article.fulljournalname || article.source || 'Unknown journal';
+                const pubDate = article.pubdate || article.epubdate || 'Date unknown';
+                const pmid = article.uid || id;
+                const title = article.title || 'No title available';
+
+                html += `
+                    <div class="article">
+                        <a href="https://pubmed.ncbi.nlm.nih.gov/${pmid}/" target="_blank" class="article-title">
+                            ${title}
+                        </a>
+                        <div class="article-authors">${authors}${moreAuthors}</div>
+                        <div class="article-journal">${journal}</div>
+                        <div class="article-meta">
+                            <span class="meta-item"><strong>PMID:</strong> ${pmid}</span>
+                            <span class="meta-item"><strong>Published:</strong> ${pubDate}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            resultsContainer.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

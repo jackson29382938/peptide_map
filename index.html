@@ -170,6 +170,60 @@
             </div>
         </div>
 
+        <!-- Study Actions Modal -->
+        <div id="study-modal" class="study-modal">
+            <div class="study-modal-content">
+                <button class="study-modal-close" aria-label="Close">&times;</button>
+                <div id="study-modal-body">
+                    <h2 class="study-modal-title"></h2>
+                    <div class="study-modal-authors"></div>
+                    <div class="study-modal-journal"></div>
+                    
+                    <div class="study-modal-actions">
+                        <a id="study-open-link" href="#" target="_blank" rel="noopener noreferrer" class="study-action-btn study-btn-primary">
+                            📖 Open Study
+                        </a>
+                    </div>
+                    
+                    <div class="study-voting">
+                        <h3>Community Feedback</h3>
+                        <div class="study-vote-buttons">
+                            <button id="study-upvote-btn" class="study-vote-btn" data-vote="1">
+                                <span class="vote-icon">👍</span>
+                                <span class="vote-label">Helpful</span>
+                                <span class="vote-count" id="study-upvote-count">0</span>
+                            </button>
+                            <button id="study-downvote-btn" class="study-vote-btn" data-vote="-1">
+                                <span class="vote-icon">👎</span>
+                                <span class="vote-label">Not Helpful</span>
+                                <span class="vote-count" id="study-downvote-count">0</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="study-comments-section">
+                        <h3>Comments (<span id="study-comments-count">0</span>)</h3>
+                        
+                        <form id="study-comment-form" class="study-comment-form">
+                            <textarea 
+                                id="study-comment-input" 
+                                placeholder="Share your thoughts about this study..."
+                                rows="3"
+                                maxlength="1000"
+                                required
+                            ></textarea>
+                            <div class="study-comment-actions">
+                                <span class="study-char-count"><span id="study-char-count">0</span>/1000</span>
+                                <button type="submit" class="study-action-btn study-btn-secondary">Post Comment</button>
+                            </div>
+                        </form>
+                        
+                        <div id="study-comments-list" class="study-comments-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Search Bar -->
         <div id="search-container" class="collapsed">
             <button id="search-toggle" class="left-toggle" title="Search injuries and body parts">
@@ -2358,23 +2412,67 @@
                 title="Drag to adjust panel width"
             ></div>
             <div class="studies-header">
-                <h2 class="studies-title">📚 Research Evidence Library</h2>
-                <div class="studies-filter">
-                    <input
-                        type="text"
-                        id="studies-filter"
-                        placeholder="Filter by keyword, peptide, or outcome..."
-                        autocomplete="off"
-                    />
-                    <button id="studies-clear-filter" title="Clear filter">
-                        ✕
-                    </button>
-                </div>
+                <h2 class="studies-title">📚 Research Studies Search</h2>
                 <div class="studies-meta">
-                    <span id="studies-count">0 studies</span>
+                    <span>Search PubMed and Semantic Scholar for peptide research</span>
                 </div>
             </div>
-            <div id="studies-list" class="studies-list"></div>
+            <div class="studies-list">
+                <form id="research-search-form" class="research-search-form">
+                    <input 
+                        type="text" 
+                        id="research-query" 
+                        class="research-input"
+                        list="research-peptide-suggestions"
+                        placeholder="Enter peptides and terms (e.g., 'BPC-157 tendon healing')"
+                        autocomplete="off"
+                        required
+                    />
+                    <datalist id="research-peptide-suggestions"></datalist>
+                    <button type="submit" id="research-search-btn" class="research-search-btn">Search</button>
+                </form>
+                
+                <button id="research-filters-toggle" class="research-filters-toggle">▶ Show Filters</button>
+                
+                <div id="research-filters-content" class="research-filters-content" style="display: none;">
+                    <div class="research-filter-group">
+                        <label for="research-max-results">Results per page</label>
+                        <select id="research-max-results">
+                            <option value="10">10</option>
+                            <option value="20" selected>20</option>
+                            <option value="50">50</option>
+                        </select>
+                    </div>
+                    <div class="research-filter-group">
+                        <label for="research-sort">Sort by</label>
+                        <select id="research-sort">
+                            <option value="relevance">Relevance</option>
+                            <option value="pub+date">Publication Date</option>
+                            <option value="citations">Citations</option>
+                            <option value="likes">Likes</option>
+                        </select>
+                    </div>
+                    <div class="research-filter-group">
+                        <label for="research-year-from">Year from</label>
+                        <input type="number" id="research-year-from" placeholder="e.g., 2020" min="1900" max="2025">
+                    </div>
+                    <div class="research-filter-group">
+                        <label for="research-year-to">Year to</label>
+                        <input type="number" id="research-year-to" placeholder="e.g., 2024" min="1900" max="2025">
+                    </div>
+                    <div class="research-filter-group">
+                        <label for="research-primary-terms">Primary terms (title)</label>
+                        <input type="text" id="research-primary-terms" list="research-keyword-suggestions" placeholder="comma separated">
+                    </div>
+                    <div class="research-filter-group">
+                        <label for="research-secondary-terms">Secondary terms</label>
+                        <input type="text" id="research-secondary-terms" list="research-keyword-suggestions" placeholder="comma separated">
+                    </div>
+                </div>
+                <datalist id="research-keyword-suggestions"></datalist>
+                
+                <div id="research-results" class="research-results"></div>
+            </div>
         </div>
 
         <!-- Title Card removed - was covering the 3D canvas -->
@@ -2753,7 +2851,8 @@
         <script src="js/calculator.js"></script>
         <script src="js/peptide-analysis.js"></script>
         <script src="js/utils.js"></script>
-        <script src="js/studies.js"></script>
+        <script src="js/config.js"></script>
+        <script src="js/research-studies.js"></script>
         <script src="js/peptides-panel.js"></script>
         <script src="js/keyboard-nav.js"></script>
         <script src="js/analytics.js"></script>
