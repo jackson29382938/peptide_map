@@ -34,16 +34,16 @@
     },
     height: {
       id: 'height',
-      label: 'Height (cm)',
+      label: 'Height',
       type: 'number',
-      min: 120, max: 230, step: 1,
+      min: 48, max: 84, step: 1,
       required: true
     },
     weight: {
       id: 'weight',
-      label: 'Weight (kg)',
+      label: 'Weight',
       type: 'number',
-      min: 35, max: 250, step: 0.1,
+      min: 100, max: 500, step: 1,
       required: true
     },
     goal: {
@@ -264,13 +264,30 @@
 
   function renderQuestion(q){
     const block = el('div', {class:'q-block mb-4 p-3 rounded bg-gray-800 border border-gray-700'});
-    block.appendChild(el('div', {class:'text-white font-semibold mb-2', text:q.label}));
+    const labelDiv = el('div', {class:'text-white font-semibold mb-2', text:q.label});
+    block.appendChild(labelDiv);
     let control;
     if (q.type==='select') control = renderSelect(q);
     else if (q.type==='multiselect') control = renderMulti(q);
     else if (q.type==='number') control = renderNumber(q);
     control && control.setAttribute('id', `q-${q.id}`);
     block.appendChild(control);
+    
+    if (window.UnitConverter && q.id === 'weight') {
+      setTimeout(() => {
+        if (window.UnitConverter.attachUnitToggle) {
+          window.UnitConverter.attachUnitToggle(labelDiv, `q-${q.id}`, 'weight');
+        }
+      }, 50);
+    }
+    if (window.UnitConverter && q.id === 'height') {
+      setTimeout(() => {
+        if (window.UnitConverter.attachUnitToggle) {
+          window.UnitConverter.attachUnitToggle(labelDiv, `q-${q.id}`, 'height');
+        }
+      }, 50);
+    }
+    
     return block;
   }
 
@@ -287,10 +304,15 @@
   }
 
   function computeBMI(){
-    const h = parseFloat(state.answers.height || 0)/100;
-    const w = parseFloat(state.answers.weight || 0);
-    if (!h || !w) return null;
-    return +(w/(h*h)).toFixed(1);
+    const heightValue = parseFloat(state.answers.height || 0);
+    const weightValue = parseFloat(state.answers.weight || 0);
+    if (!heightValue || !weightValue) return null;
+    
+    const heightCm = window.UnitConverter ? window.UnitConverter.getHeightInCm(heightValue) : heightValue;
+    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
+    
+    const h = heightCm / 100;
+    return +(weightKg/(h*h)).toFixed(1);
   }
 
   function dosageBase(){
@@ -307,9 +329,9 @@
   }
 
   function weightFactor(){
-    const w = parseFloat(state.answers.weight || 70);
-    // Normalize around 75kg
-    return +(w/75).toFixed(2);
+    const weightValue = parseFloat(state.answers.weight || 165);
+    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
+    return +(weightKg/75).toFixed(2);
   }
 
   function ageMult(){

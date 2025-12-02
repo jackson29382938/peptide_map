@@ -1052,13 +1052,13 @@
                                 💊 BPC-157 Dosing Calculator
                             </h4>
                             <div class="calc-row">
-                                <label>Weight (kg):</label>
+                                <label for="bpc-weight">Weight:</label>
                                 <input
                                     type="number"
                                     id="bpc-weight"
-                                    value="80"
-                                    min="40"
-                                    max="200"
+                                    value="200"
+                                    min="100"
+                                    max="500"
                                     step="1"
                                 />
                             </div>
@@ -1289,13 +1289,13 @@
                                 💊 GHS Dosing Calculator
                             </h4>
                             <div class="calc-row">
-                                <label>Weight (kg):</label>
+                                <label for="ghs-weight">Weight:</label>
                                 <input
                                     type="number"
                                     id="ghs-weight"
-                                    value="85"
-                                    min="40"
-                                    max="200"
+                                    value="200"
+                                    min="100"
+                                    max="500"
                                     step="1"
                                 />
                             </div>
@@ -1429,13 +1429,13 @@
                                 💊 GLP-1 Dosing Calculator
                             </h4>
                             <div class="calc-row">
-                                <label>Weight (kg):</label>
+                                <label for="glp1-weight">Weight:</label>
                                 <input
                                     type="number"
                                     id="glp1-weight"
-                                    value="90"
-                                    min="40"
-                                    max="200"
+                                    value="200"
+                                    min="100"
+                                    max="500"
                                     step="1"
                                 />
                             </div>
@@ -1662,24 +1662,24 @@
                                 💊 Advanced Dosing Calculator
                             </h4>
                             <div class="calc-row">
-                                <label>Weight (kg):</label>
+                                <label for="adv-weight">Weight:</label>
                                 <input
                                     type="number"
                                     id="adv-weight"
-                                    value="80"
-                                    min="40"
-                                    max="200"
+                                    value="200"
+                                    min="100"
+                                    max="500"
                                     step="1"
                                 />
                             </div>
                             <div class="calc-row">
-                                <label>Height (cm):</label>
+                                <label for="adv-height">Height:</label>
                                 <input
                                     type="number"
                                     id="adv-height"
-                                    value="180"
-                                    min="140"
-                                    max="220"
+                                    value="70"
+                                    min="48"
+                                    max="84"
                                     step="1"
                                 />
                             </div>
@@ -2864,6 +2864,7 @@
         <script src="js/three-deps.js"></script>
 
         <!-- Application modules (order matters) -->
+        <script src="js/unit-converter.js"></script>
         <script src="js/theme.js"></script>
         <script src="js/regions.js"></script>
         <script src="js/injection-points.js"></script>
@@ -2885,6 +2886,12 @@
             // Wait for both window load and Three.js dependencies
             function startApplication() {
                 console.log("🚀 Starting application initialization...");
+
+                // Initialize unit converter first
+                if (window.UnitConverter && window.UnitConverter.init) {
+                    window.UnitConverter.init();
+                    console.log("✅ Unit converter initialized");
+                }
 
                 // Initialize scene first
                 initScene();

@@ -56,14 +56,16 @@ function initBPC157Calculator() {
   if (!weightInput || !calculateBtn) return;
 
   calculateBtn.addEventListener("click", () => {
-    const weight = parseFloat(weightInput.value);
+    const weightValue = parseFloat(weightInput.value);
     const severity = parseInt(severityInput.value);
     const condition = conditionInput.value;
 
-    if (isNaN(weight) || weight <= 0) {
+    if (isNaN(weightValue) || weightValue <= 0) {
       alert("Please enter a valid weight");
       return;
     }
+
+    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
 
     let baseDosePerKg = 6;
 
@@ -76,7 +78,7 @@ function initBPC157Calculator() {
       baseDosePerKg = 7;
     }
 
-    const singleDose = Math.round(weight * baseDosePerKg);
+    const singleDose = Math.round(weightKg * baseDosePerKg);
     const dailyDose = singleDose * 2;
     const injectionVolume = (singleDose / 1000).toFixed(2);
 
@@ -125,15 +127,17 @@ function initGHSCalculator() {
   if (!weightInput || !calculateBtn) return;
 
   calculateBtn.addEventListener("click", () => {
-    const weight = parseFloat(weightInput.value);
+    const weightValue = parseFloat(weightInput.value);
     const age = parseInt(ageInput.value);
     const experience = parseInt(expInput.value);
     const goal = goalInput.value;
 
-    if (isNaN(weight) || weight <= 0 || isNaN(age) || age <= 0) {
+    if (isNaN(weightValue) || weightValue <= 0 || isNaN(age) || age <= 0) {
       alert("Please enter valid weight and age");
       return;
     }
+
+    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
 
     const goalMultipliers = {
       muscle_growth: 1.2,
@@ -152,7 +156,7 @@ function initGHSCalculator() {
       experienceAdj[experience] *
       ageAdj;
 
-    const singleDose = Math.round(weight * adjustedDose);
+    const singleDose = Math.round(weightKg * adjustedDose);
     const frequency = goal === "anti_aging" ? 2 : 3;
     const dailyDose = singleDose * frequency;
 
@@ -202,15 +206,17 @@ function initGLP1Calculator() {
   if (!weightInput || !calculateBtn) return;
 
   calculateBtn.addEventListener("click", () => {
-    const weight = parseFloat(weightInput.value);
+    const weightValue = parseFloat(weightInput.value);
     const bmi = parseFloat(bmiInput.value);
     const diabetes = diabetesInput.value;
     const tolerance = toleranceInput.value;
 
-    if (isNaN(weight) || weight <= 0 || isNaN(bmi) || bmi <= 0) {
+    if (isNaN(weightValue) || weightValue <= 0 || isNaN(bmi) || bmi <= 0) {
       alert("Please enter valid weight and BMI");
       return;
     }
+
+    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
 
     const baseDoses = {
       semaglutide: 0.25,
@@ -279,21 +285,23 @@ function initAdvancedDosing() {
   if (!weightInput || !calculateBtn) return;
 
   calculateBtn.addEventListener("click", () => {
-    const weight = parseFloat(weightInput.value);
-    const height = parseFloat(heightInput.value);
+    const weightValue = parseFloat(weightInput.value);
+    const heightValue = parseFloat(heightInput.value);
     const age = parseInt(ageInput.value);
     const bodyFat = parseFloat(bfInput.value);
     const activity = parseInt(activityInput.value);
     const peptide = peptideInput.value;
     const condition = conditionInput.value;
 
-    if (isNaN(weight) || isNaN(height) || isNaN(age)) {
+    if (isNaN(weightValue) || isNaN(heightValue) || isNaN(age)) {
       alert("Please enter valid values");
       return;
     }
 
-    // Calculate Lean Body Mass (Boer formula for men)
-    const lbm = 0.407 * weight + 0.267 * height - 19.2;
+    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
+    const heightCm = window.UnitConverter ? window.UnitConverter.getHeightInCm(heightValue) : heightValue;
+
+    const lbm = 0.407 * weightKg + 0.267 * heightCm - 19.2;
 
     const activityFactor = { 1: 0.9, 2: 1.0, 3: 1.1, 4: 1.2, 5: 1.3 };
     const ageFactor = Math.max(0.7, 1.0 - (Math.max(age, 30) - 30) * 0.01);
@@ -333,7 +341,7 @@ function initAdvancedDosing() {
                         </div>
                         <div class="result-item">
                             <span class="result-label">LBM % OF TOTAL:</span>
-                            <span class="result-value">${Math.round((lbm / weight) * 100)}%</span>
+                            <span class="result-value">${Math.round((lbm / weightKg) * 100)}%</span>
                         </div>
                     </div>
                 </div>
