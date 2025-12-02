@@ -536,6 +536,12 @@ app.get('/sitemap.xml', (req, res) => {
   res.sendFile(path.join(__dirname, 'sitemap.xml'));
 });
 
+// Serve robots.txt
+app.get('/robots.txt', (req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
+  res.sendFile(path.join(__dirname, 'robots.txt'));
+});
+
 // Contact form endpoint (for local development)
 // In Vercel, this is handled by /api/contact.js serverless function
 app.post('/api/contact', async (req, res) => {
