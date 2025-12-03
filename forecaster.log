@@ -791,3 +791,834 @@ ExpSmoothing      1.740951  1.329192 -2.994503  76.767241
 2025-11-28 13:28:58,795 - INFO - ============================================================
 2025-11-28 13:28:58,795 - INFO - Generating comprehensive report...
 2025-11-28 13:28:58,797 - INFO - Comprehensive report saved: BPC-157_report.html
+2025-12-02 22:00:21,390 - INFO - Loading cached data from bpc-157_raw_data.csv
+2025-12-02 22:00:22,121 - INFO - Data cached to bpc-157_raw_data.csv
+2025-12-02 22:00:22,121 - INFO - Total data points: 72
+2025-12-02 22:00:22,121 - INFO - Engineering advanced features...
+2025-12-02 22:00:22,146 - INFO - Features engineered. Shape: (47, 34) (dropped 25 rows with NaN)
+2025-12-02 22:00:22,146 - INFO - Using 1 features
+2025-12-02 22:00:22,150 - INFO - Prepared 35 sequences
+2025-12-02 22:00:22,158 - INFO - Using 30 features
+2025-12-02 22:00:22,160 - INFO - Prepared 35 sequences
+2025-12-02 22:00:22,160 - INFO - Training advanced model ensemble...
+2025-12-02 22:00:22,160 - INFO - Training Attention LSTM...
+2025-12-02 22:00:23,716 - INFO - Early stopping at epoch 61
+2025-12-02 22:00:23,716 - INFO - Training Transformer...
+2025-12-02 22:00:24,970 - INFO - Early stopping at epoch 49
+2025-12-02 22:00:24,970 - INFO - Training Deep MLP...
+2025-12-02 22:00:25,538 - INFO - Early stopping at epoch 85
+2025-12-02 22:00:25,538 - INFO - Training Random Forest...
+2025-12-02 22:00:25,664 - INFO - Training Gradient Boosting...
+2025-12-02 22:00:25,974 - INFO - Training Extra Trees...
+2025-12-02 22:00:26,049 - INFO - Training ARIMA...
+2025-12-02 22:00:26,427 - INFO - Best ARIMA order: (2, 0, 2), AIC: 167.89
+2025-12-02 22:00:26,427 - INFO - Training Exponential Smoothing...
+2025-12-02 22:00:26,457 - INFO - Trained 8 models successfully
+2025-12-02 22:00:26,457 - INFO - Evaluating models with time series cross-validation...
+2025-12-02 22:00:26,457 - INFO - Evaluating Attention_LSTM...
+2025-12-02 22:00:26,465 - INFO - Attention_LSTM - RMSE: 1.17, MAE: 1.02, R²: -1.400, MAPE: 72.11%
+2025-12-02 22:00:26,465 - INFO - Evaluating Transformer...
+2025-12-02 22:00:26,475 - INFO - Transformer - RMSE: 1.28, MAE: 1.14, R²: -2.631, MAPE: 88.46%
+2025-12-02 22:00:26,475 - INFO - Evaluating Deep_MLP...
+2025-12-02 22:00:26,481 - INFO - Deep_MLP - RMSE: 0.65, MAE: 0.54, R²: 0.467, MAPE: 33.55%
+2025-12-02 22:00:26,481 - INFO - Evaluating RandomForest...
+2025-12-02 22:00:27,065 - INFO - RandomForest - RMSE: 1.31, MAE: 1.11, R²: -3.001, MAPE: 75.40%
+2025-12-02 22:00:27,065 - INFO - Evaluating GradientBoosting...
+2025-12-02 22:00:27,962 - INFO - GradientBoosting - RMSE: 1.54, MAE: 1.34, R²: -6.661, MAPE: 99.14%
+2025-12-02 22:00:27,963 - INFO - Evaluating ExtraTrees...
+2025-12-02 22:00:28,393 - INFO - ExtraTrees - RMSE: 1.65, MAE: 1.44, R²: -9.115, MAPE: 109.23%
+2025-12-02 22:00:28,393 - INFO - Evaluating ARIMA...
+2025-12-02 22:00:28,695 - INFO - Best ARIMA order: (0, 0, 0), AIC: 85.76
+2025-12-02 22:00:28,972 - INFO - Best ARIMA order: (0, 1, 1), AIC: 102.54
+2025-12-02 22:00:29,261 - INFO - Best ARIMA order: (0, 1, 1), AIC: 118.58
+2025-12-02 22:00:29,550 - INFO - Best ARIMA order: (0, 1, 1), AIC: 132.31
+2025-12-02 22:00:29,865 - INFO - Best ARIMA order: (0, 1, 1), AIC: 148.07
+2025-12-02 22:00:29,867 - INFO - ARIMA - RMSE: 1.29, MAE: 1.10, R²: -2.272, MAPE: 72.93%
+2025-12-02 22:00:29,867 - INFO - Evaluating ExpSmoothing...
+2025-12-02 22:00:29,867 - WARNING - Fold 0 failed for ExpSmoothing: Cannot compute initial seasonals using heuristic method with less than two full seasonal cycles in the data.
+2025-12-02 22:00:29,990 - INFO - ExpSmoothing - RMSE: 1.77, MAE: 1.41, R²: -3.130, MAPE: 78.34%
+2025-12-02 22:00:29,990 - INFO - Generating predictions from all models...
+2025-12-02 22:00:29,991 - INFO - Applying growth bias: inf% per year
+2025-12-02 22:00:29,991 - INFO - Predicting with Attention_LSTM...
+2025-12-02 22:00:30,008 - INFO - Predicting with Transformer...
+2025-12-02 22:00:30,040 - INFO - Predicting with Deep_MLP...
+2025-12-02 22:00:30,047 - INFO - Predicting with RandomForest...
+2025-12-02 22:00:30,880 - INFO - Predicting with GradientBoosting...
+2025-12-02 22:00:30,886 - INFO - Predicting with ExtraTrees...
+2025-12-02 22:00:31,774 - INFO - Predicting with ARIMA...
+2025-12-02 22:00:31,777 - INFO - Predicting with ExpSmoothing...
+2025-12-02 22:00:31,778 - INFO - Ensemble predictions generated: Mean=inf, Std=nan, Growth=nan%
+2025-12-02 22:00:31,778 - INFO - Generating visualizations...
+2025-12-02 22:00:32,019 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-12-02 22:00:32,019 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-12-02 22:00:32,582 - INFO - Beautiful static plot saved: bpc-157_comprehensive_analysis.png
+2025-12-02 22:00:32,706 - INFO - Interactive dashboard saved: bpc-157_interactive_dashboard.html
+2025-12-02 22:00:32,706 - INFO - Exporting data...
+2025-12-02 22:00:32,713 - INFO - 
+============================================================
+2025-12-02 22:00:32,713 - INFO - MODEL PERFORMANCE SUMMARY
+2025-12-02 22:00:32,713 - INFO - ============================================================
+2025-12-02 22:00:32,714 - INFO -                       rmse       mae        r2        mape
+Attention_LSTM    1.170108  1.022035 -1.400454   72.112420
+Transformer       1.280599  1.141640 -2.630728   88.457574
+Deep_MLP          0.645167  0.538439  0.466955   33.552011
+RandomForest      1.306858  1.113071 -3.001480   75.404034
+GradientBoosting  1.539706  1.342165 -6.660744   99.136331
+ExtraTrees        1.653662  1.441183 -9.114796  109.228501
+ARIMA             1.292961  1.100414 -2.271905   72.925951
+ExpSmoothing      1.773942  1.405953 -3.130271   78.335168
+2025-12-02 22:00:32,714 - INFO - ============================================================
+2025-12-02 22:00:32,714 - INFO - 
+============================================================
+2025-12-02 22:00:32,715 - INFO - FEATURE IMPORTANCE (Random Forest)
+2025-12-02 22:00:32,715 - INFO - ============================================================
+2025-12-02 22:00:32,753 - INFO -             Feature  Importance
+29         Residual    0.199362
+28         Seasonal    0.125169
+9            Lag_12    0.109788
+25            EMA_3    0.079995
+18  Rolling_Mean_12    0.046830
+15    Rolling_Std_6    0.045770
+19   Rolling_Std_12    0.045287
+8             Lag_6    0.043295
+14   Rolling_Mean_6    0.036469
+27            Trend    0.035193
+10   Rolling_Mean_3    0.032694
+26           EMA_12    0.031937
+11    Rolling_Std_3    0.023407
+24       Momentum_6    0.019968
+22      Momentum_12    0.019175
+12    Rolling_Min_3    0.013693
+23       YoY_Growth    0.012088
+7             Lag_3    0.011391
+3       Sin_Quarter    0.011240
+6             Lag_2    0.011174
+2         Cos_Month    0.011153
+13    Rolling_Max_3    0.008649
+1         Sin_Month    0.006152
+5             Lag_1    0.006099
+17    Rolling_Max_6    0.003896
+4       Cos_Quarter    0.003345
+0             Count    0.003208
+21   Rolling_Max_12    0.002911
+16    Rolling_Min_6    0.000345
+20   Rolling_Min_12    0.000317
+2025-12-02 22:00:32,754 - INFO - ============================================================
+2025-12-02 22:00:32,754 - INFO - 
+============================================================
+2025-12-02 22:00:32,754 - INFO - FEATURE IMPORTANCE (Gradient Boosting)
+2025-12-02 22:00:32,754 - INFO - ============================================================
+2025-12-02 22:00:32,756 - INFO -             Feature  Importance
+9            Lag_12    0.251972
+28         Seasonal    0.169404
+29         Residual    0.147396
+25            EMA_3    0.069085
+8             Lag_6    0.052342
+27            Trend    0.051098
+19   Rolling_Std_12    0.042805
+14   Rolling_Mean_6    0.027205
+11    Rolling_Std_3    0.021402
+10   Rolling_Mean_3    0.019591
+7             Lag_3    0.017863
+26           EMA_12    0.017392
+22      Momentum_12    0.016419
+17    Rolling_Max_6    0.013162
+15    Rolling_Std_6    0.012288
+2         Cos_Month    0.011470
+1         Sin_Month    0.009136
+5             Lag_1    0.008767
+24       Momentum_6    0.008297
+23       YoY_Growth    0.007568
+13    Rolling_Max_3    0.007510
+18  Rolling_Mean_12    0.006070
+3       Sin_Quarter    0.005143
+6             Lag_2    0.003188
+12    Rolling_Min_3    0.001092
+21   Rolling_Max_12    0.000734
+20   Rolling_Min_12    0.000715
+4       Cos_Quarter    0.000484
+0             Count    0.000205
+16    Rolling_Min_6    0.000195
+2025-12-02 22:00:32,758 - INFO - ============================================================
+2025-12-02 22:00:32,758 - INFO - Generating comprehensive report...
+2025-12-02 22:00:32,760 - INFO - Comprehensive report saved: bpc-157_report.html
+2025-12-02 22:05:19,391 - INFO - Loading cached data from BPC-157_raw_data.csv
+2025-12-02 22:05:19,419 - INFO - Data cached to BPC-157_raw_data.csv
+2025-12-02 22:05:19,419 - INFO - Total data points: 72
+2025-12-02 22:05:19,420 - INFO - Engineering advanced features...
+2025-12-02 22:05:19,443 - INFO - Features engineered. Shape: (47, 34) (dropped 25 rows with NaN)
+2025-12-02 22:05:19,443 - INFO - Using 1 features
+2025-12-02 22:05:19,446 - INFO - Prepared 35 sequences
+2025-12-02 22:05:19,452 - INFO - Using 30 features
+2025-12-02 22:05:19,454 - INFO - Prepared 35 sequences
+2025-12-02 22:05:19,454 - INFO - Training advanced model ensemble...
+2025-12-02 22:05:19,454 - INFO - Training Attention LSTM...
+2025-12-02 22:05:20,569 - INFO - Early stopping at epoch 31
+2025-12-02 22:05:20,569 - INFO - Training Transformer...
+2025-12-02 22:05:22,134 - INFO - Early stopping at epoch 61
+2025-12-02 22:05:22,134 - INFO - Training Deep MLP...
+2025-12-02 22:05:22,731 - INFO - Early stopping at epoch 73
+2025-12-02 22:05:22,731 - INFO - Training Random Forest...
+2025-12-02 22:05:22,895 - INFO - Training Gradient Boosting...
+2025-12-02 22:05:23,245 - INFO - Training Extra Trees...
+2025-12-02 22:05:23,400 - INFO - Training ARIMA...
+2025-12-02 22:05:23,826 - INFO - Best ARIMA order: (2, 0, 2), AIC: 167.89
+2025-12-02 22:05:23,826 - INFO - Training Exponential Smoothing...
+2025-12-02 22:05:23,856 - INFO - Trained 8 models successfully
+2025-12-02 22:05:23,856 - INFO - Evaluating models with time series cross-validation...
+2025-12-02 22:05:23,856 - INFO - Evaluating Attention_LSTM...
+2025-12-02 22:05:23,864 - INFO - Attention_LSTM - RMSE: 1.15, MAE: 0.99, R²: -1.160, MAPE: 67.69%
+2025-12-02 22:05:23,864 - INFO - Evaluating Transformer...
+2025-12-02 22:05:23,875 - INFO - Transformer - RMSE: 1.24, MAE: 1.10, R²: -2.128, MAPE: 81.33%
+2025-12-02 22:05:23,875 - INFO - Evaluating Deep_MLP...
+2025-12-02 22:05:23,880 - INFO - Deep_MLP - RMSE: 0.69, MAE: 0.57, R²: -0.151, MAPE: 44.16%
+2025-12-02 22:05:23,880 - INFO - Evaluating RandomForest...
+2025-12-02 22:05:24,498 - INFO - RandomForest - RMSE: 1.29, MAE: 1.11, R²: -2.776, MAPE: 76.06%
+2025-12-02 22:05:24,498 - INFO - Evaluating GradientBoosting...
+2025-12-02 22:05:25,388 - INFO - GradientBoosting - RMSE: 1.47, MAE: 1.22, R²: -3.832, MAPE: 80.04%
+2025-12-02 22:05:25,389 - INFO - Evaluating ExtraTrees...
+2025-12-02 22:05:25,901 - INFO - ExtraTrees - RMSE: 1.64, MAE: 1.42, R²: -8.584, MAPE: 107.63%
+2025-12-02 22:05:25,901 - INFO - Evaluating ARIMA...
+2025-12-02 22:05:26,239 - INFO - Best ARIMA order: (0, 0, 0), AIC: 85.76
+2025-12-02 22:05:26,582 - INFO - Best ARIMA order: (0, 1, 1), AIC: 102.54
+2025-12-02 22:05:26,935 - INFO - Best ARIMA order: (0, 1, 1), AIC: 118.58
+2025-12-02 22:05:27,269 - INFO - Best ARIMA order: (0, 1, 1), AIC: 132.31
+2025-12-02 22:05:27,630 - INFO - Best ARIMA order: (0, 1, 1), AIC: 148.07
+2025-12-02 22:05:27,631 - INFO - ARIMA - RMSE: 1.29, MAE: 1.10, R²: -2.272, MAPE: 72.93%
+2025-12-02 22:05:27,631 - INFO - Evaluating ExpSmoothing...
+2025-12-02 22:05:27,632 - WARNING - Fold 0 failed for ExpSmoothing: Cannot compute initial seasonals using heuristic method with less than two full seasonal cycles in the data.
+2025-12-02 22:05:27,753 - INFO - ExpSmoothing - RMSE: 1.77, MAE: 1.41, R²: -3.130, MAPE: 78.34%
+2025-12-02 22:05:27,754 - INFO - Generating predictions from all models...
+2025-12-02 22:05:27,755 - INFO - Applying growth bias: inf% per year
+2025-12-02 22:05:27,755 - INFO - Predicting with Attention_LSTM...
+2025-12-02 22:05:27,773 - INFO - Predicting with Transformer...
+2025-12-02 22:05:27,811 - INFO - Predicting with Deep_MLP...
+2025-12-02 22:05:27,825 - INFO - Predicting with RandomForest...
+2025-12-02 22:05:28,692 - INFO - Predicting with GradientBoosting...
+2025-12-02 22:05:28,698 - INFO - Predicting with ExtraTrees...
+2025-12-02 22:05:29,566 - INFO - Predicting with ARIMA...
+2025-12-02 22:05:29,568 - INFO - Predicting with ExpSmoothing...
+2025-12-02 22:05:29,570 - INFO - Ensemble predictions generated: Mean=inf, Std=nan, Growth=nan%
+2025-12-02 22:05:29,570 - INFO - Generating visualizations...
+2025-12-02 22:05:29,805 - ERROR - Failed to process BPC-157: cannot convert float infinity to integer
+Traceback (most recent call last):
+  File "/Users/a2938/Library/CloudStorage/OneDrive-JohnsHopkins/peptide_map/test.py", line 1447, in main
+    forecaster.plot_and_export(metrics)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/a2938/Library/CloudStorage/OneDrive-JohnsHopkins/peptide_map/test.py", line 1086, in plot_and_export
+    create_beautiful_static_plots(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        df_for_plot, self.ensemble_preds, self.parameter,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.future_months
+        ^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/a2938/Library/CloudStorage/OneDrive-JohnsHopkins/peptide_map/test.py", line 283, in create_beautiful_static_plots
+    f'{int(height)}', ha='center', va='bottom', fontsize=9, color='#A23B72', fontweight='bold')
+       ~~~^^^^^^^^
+OverflowError: cannot convert float infinity to integer
+2025-12-02 22:06:21,342 - INFO - Loading cached data from BPC-157_raw_data.csv
+2025-12-02 22:06:21,362 - INFO - Data cached to BPC-157_raw_data.csv
+2025-12-02 22:06:21,362 - INFO - Total data points: 72
+2025-12-02 22:06:21,363 - INFO - Engineering advanced features...
+2025-12-02 22:06:21,376 - INFO - Features engineered. Shape: (47, 34) (dropped 25 rows with NaN)
+2025-12-02 22:06:21,377 - INFO - Using 1 features
+2025-12-02 22:06:21,381 - INFO - Prepared 35 sequences
+2025-12-02 22:06:21,388 - INFO - Using 30 features
+2025-12-02 22:06:21,390 - INFO - Prepared 35 sequences
+2025-12-02 22:06:21,390 - INFO - Training advanced model ensemble...
+2025-12-02 22:06:21,390 - INFO - Training Attention LSTM...
+2025-12-02 22:06:22,706 - INFO - Early stopping at epoch 50
+2025-12-02 22:06:22,706 - INFO - Training Transformer...
+2025-12-02 22:06:23,597 - INFO - Early stopping at epoch 34
+2025-12-02 22:06:23,597 - INFO - Training Deep MLP...
+2025-12-02 22:06:24,211 - INFO - Early stopping at epoch 82
+2025-12-02 22:06:24,211 - INFO - Training Random Forest...
+2025-12-02 22:06:24,351 - INFO - Training Gradient Boosting...
+2025-12-02 22:06:24,755 - INFO - Training Extra Trees...
+2025-12-02 22:06:24,832 - INFO - Training ARIMA...
+2025-12-02 22:06:25,260 - INFO - Best ARIMA order: (2, 0, 2), AIC: 167.89
+2025-12-02 22:06:25,260 - INFO - Training Exponential Smoothing...
+2025-12-02 22:06:25,290 - INFO - Trained 8 models successfully
+2025-12-02 22:06:25,290 - INFO - Evaluating models with time series cross-validation...
+2025-12-02 22:06:25,290 - INFO - Evaluating Attention_LSTM...
+2025-12-02 22:06:25,298 - INFO - Attention_LSTM - RMSE: 1.17, MAE: 1.02, R²: -1.402, MAPE: 72.19%
+2025-12-02 22:06:25,299 - INFO - Evaluating Transformer...
+2025-12-02 22:06:25,309 - INFO - Transformer - RMSE: 1.19, MAE: 1.05, R²: -1.602, MAPE: 74.65%
+2025-12-02 22:06:25,309 - INFO - Evaluating Deep_MLP...
+2025-12-02 22:06:25,314 - INFO - Deep_MLP - RMSE: 0.72, MAE: 0.61, R²: -0.102, MAPE: 44.03%
+2025-12-02 22:06:25,314 - INFO - Evaluating RandomForest...
+2025-12-02 22:06:25,976 - INFO - RandomForest - RMSE: 1.35, MAE: 1.17, R²: -3.758, MAPE: 82.27%
+2025-12-02 22:06:25,976 - INFO - Evaluating GradientBoosting...
+2025-12-02 22:06:26,905 - INFO - GradientBoosting - RMSE: 1.40, MAE: 1.20, R²: -4.605, MAPE: 86.11%
+2025-12-02 22:06:26,905 - INFO - Evaluating ExtraTrees...
+2025-12-02 22:06:27,382 - INFO - ExtraTrees - RMSE: 1.63, MAE: 1.42, R²: -8.580, MAPE: 107.81%
+2025-12-02 22:06:27,382 - INFO - Evaluating ARIMA...
+2025-12-02 22:06:27,786 - INFO - Best ARIMA order: (0, 0, 0), AIC: 85.76
+2025-12-02 22:06:28,133 - INFO - Best ARIMA order: (0, 1, 1), AIC: 102.54
+2025-12-02 22:06:28,553 - INFO - Best ARIMA order: (0, 1, 1), AIC: 118.58
+2025-12-02 22:06:29,300 - INFO - Best ARIMA order: (0, 1, 1), AIC: 132.31
+2025-12-02 22:06:29,741 - INFO - Best ARIMA order: (0, 1, 1), AIC: 148.07
+2025-12-02 22:06:29,742 - INFO - ARIMA - RMSE: 1.29, MAE: 1.10, R²: -2.272, MAPE: 72.93%
+2025-12-02 22:06:29,743 - INFO - Evaluating ExpSmoothing...
+2025-12-02 22:06:29,743 - WARNING - Fold 0 failed for ExpSmoothing: Cannot compute initial seasonals using heuristic method with less than two full seasonal cycles in the data.
+2025-12-02 22:06:29,953 - INFO - ExpSmoothing - RMSE: 1.77, MAE: 1.41, R²: -3.130, MAPE: 78.34%
+2025-12-02 22:06:29,953 - INFO - Generating predictions from all models...
+2025-12-02 22:06:29,956 - INFO - Applying growth bias: inf% per year
+2025-12-02 22:06:29,956 - INFO - Predicting with Attention_LSTM...
+2025-12-02 22:06:29,988 - INFO - Predicting with Transformer...
+2025-12-02 22:06:30,024 - INFO - Predicting with Deep_MLP...
+2025-12-02 22:06:30,032 - INFO - Predicting with RandomForest...
+2025-12-02 22:06:31,035 - INFO - Predicting with GradientBoosting...
+2025-12-02 22:06:31,041 - INFO - Predicting with ExtraTrees...
+2025-12-02 22:06:32,028 - INFO - Predicting with ARIMA...
+2025-12-02 22:06:32,031 - INFO - Predicting with ExpSmoothing...
+2025-12-02 22:06:32,033 - INFO - Ensemble predictions generated: Mean=inf, Std=nan, Growth=nan%
+2025-12-02 22:06:32,033 - INFO - Generating visualizations...
+2025-12-02 22:06:32,314 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-12-02 22:06:32,315 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-12-02 22:06:32,933 - INFO - Beautiful static plot saved: BPC-157_comprehensive_analysis.png
+2025-12-02 22:06:33,054 - INFO - Interactive dashboard saved: BPC-157_interactive_dashboard.html
+2025-12-02 22:06:33,055 - INFO - Exporting data...
+2025-12-02 22:06:33,061 - INFO - 
+============================================================
+2025-12-02 22:06:33,061 - INFO - MODEL PERFORMANCE SUMMARY
+2025-12-02 22:06:33,061 - INFO - ============================================================
+2025-12-02 22:06:33,062 - INFO -                       rmse       mae        r2        mape
+Attention_LSTM    1.170794  1.022718 -1.402294   72.186197
+Transformer       1.190855  1.048120 -1.602442   74.649252
+Deep_MLP          0.717776  0.614067 -0.102445   44.033837
+RandomForest      1.345460  1.167293 -3.757744   82.270663
+GradientBoosting  1.401159  1.195794 -4.604697   86.106805
+ExtraTrees        1.630732  1.422483 -8.579821  107.812556
+ARIMA             1.292961  1.100414 -2.271905   72.925951
+ExpSmoothing      1.773942  1.405953 -3.130271   78.335168
+2025-12-02 22:06:33,062 - INFO - ============================================================
+2025-12-02 22:06:33,062 - INFO - 
+============================================================
+2025-12-02 22:06:33,062 - INFO - FEATURE IMPORTANCE (Random Forest)
+2025-12-02 22:06:33,062 - INFO - ============================================================
+2025-12-02 22:06:33,096 - INFO -             Feature  Importance
+29         Residual    0.222576
+9            Lag_12    0.128206
+28         Seasonal    0.091294
+25            EMA_3    0.084196
+18  Rolling_Mean_12    0.055863
+19   Rolling_Std_12    0.055000
+15    Rolling_Std_6    0.048333
+11    Rolling_Std_3    0.039779
+10   Rolling_Mean_3    0.039480
+26           EMA_12    0.027908
+27            Trend    0.026758
+22      Momentum_12    0.018770
+8             Lag_6    0.018610
+14   Rolling_Mean_6    0.016158
+12    Rolling_Min_3    0.013488
+7             Lag_3    0.011586
+3       Sin_Quarter    0.011447
+24       Momentum_6    0.010795
+2         Cos_Month    0.010179
+23       YoY_Growth    0.009867
+6             Lag_2    0.008849
+5             Lag_1    0.008828
+13    Rolling_Max_3    0.008746
+1         Sin_Month    0.008005
+21   Rolling_Max_12    0.007948
+17    Rolling_Max_6    0.007703
+4       Cos_Quarter    0.004121
+0             Count    0.003957
+16    Rolling_Min_6    0.001280
+20   Rolling_Min_12    0.000270
+2025-12-02 22:06:33,097 - INFO - ============================================================
+2025-12-02 22:06:33,097 - INFO - 
+============================================================
+2025-12-02 22:06:33,097 - INFO - FEATURE IMPORTANCE (Gradient Boosting)
+2025-12-02 22:06:33,097 - INFO - ============================================================
+2025-12-02 22:06:33,099 - INFO -             Feature  Importance
+9            Lag_12    0.200005
+29         Residual    0.160158
+10   Rolling_Mean_3    0.082041
+25            EMA_3    0.077979
+19   Rolling_Std_12    0.065399
+18  Rolling_Mean_12    0.062759
+27            Trend    0.049534
+28         Seasonal    0.040927
+15    Rolling_Std_6    0.039248
+21   Rolling_Max_12    0.028072
+8             Lag_6    0.025928
+14   Rolling_Mean_6    0.025817
+26           EMA_12    0.016280
+24       Momentum_6    0.016202
+11    Rolling_Std_3    0.015937
+22      Momentum_12    0.015828
+2         Cos_Month    0.014317
+23       YoY_Growth    0.013670
+13    Rolling_Max_3    0.012681
+6             Lag_2    0.008566
+7             Lag_3    0.007041
+5             Lag_1    0.006321
+16    Rolling_Min_6    0.004894
+17    Rolling_Max_6    0.003827
+0             Count    0.003507
+4       Cos_Quarter    0.001756
+1         Sin_Month    0.000917
+12    Rolling_Min_3    0.000322
+3       Sin_Quarter    0.000062
+20   Rolling_Min_12    0.000006
+2025-12-02 22:06:33,100 - INFO - ============================================================
+2025-12-02 22:06:33,100 - INFO - Generating comprehensive report...
+2025-12-02 22:06:33,102 - INFO - Comprehensive report saved: BPC-157_report.html
+2025-12-02 22:07:07,597 - INFO - Loading cached data from BPC-157_raw_data.csv
+2025-12-02 22:07:07,614 - INFO - Data cached to BPC-157_raw_data.csv
+2025-12-02 22:07:07,614 - INFO - Total data points: 72
+2025-12-02 22:07:07,614 - INFO - Engineering advanced features...
+2025-12-02 22:07:07,627 - INFO - Features engineered. Shape: (47, 34) (dropped 25 rows with NaN)
+2025-12-02 22:07:07,627 - INFO - Using 1 features
+2025-12-02 22:07:07,630 - INFO - Prepared 35 sequences
+2025-12-02 22:07:07,635 - INFO - Using 30 features
+2025-12-02 22:07:07,637 - INFO - Prepared 35 sequences
+2025-12-02 22:07:07,637 - INFO - Training advanced model ensemble...
+2025-12-02 22:07:07,637 - INFO - Training Attention LSTM...
+2025-12-02 22:07:08,742 - INFO - Early stopping at epoch 27
+2025-12-02 22:07:08,742 - INFO - Training Transformer...
+2025-12-02 22:07:10,059 - INFO - Early stopping at epoch 53
+2025-12-02 22:07:10,059 - INFO - Training Deep MLP...
+2025-12-02 22:07:10,906 - INFO - Early stopping at epoch 116
+2025-12-02 22:07:10,907 - INFO - Training Random Forest...
+2025-12-02 22:07:11,030 - INFO - Training Gradient Boosting...
+2025-12-02 22:07:11,365 - INFO - Training Extra Trees...
+2025-12-02 22:07:11,442 - INFO - Training ARIMA...
+2025-12-02 22:07:11,840 - INFO - Best ARIMA order: (2, 0, 2), AIC: 167.89
+2025-12-02 22:07:11,840 - INFO - Training Exponential Smoothing...
+2025-12-02 22:07:11,869 - INFO - Trained 8 models successfully
+2025-12-02 22:07:11,869 - INFO - Evaluating models with time series cross-validation...
+2025-12-02 22:07:11,869 - INFO - Evaluating Attention_LSTM...
+2025-12-02 22:07:11,877 - INFO - Attention_LSTM - RMSE: 1.17, MAE: 1.03, R²: -1.444, MAPE: 72.89%
+2025-12-02 22:07:11,877 - INFO - Evaluating Transformer...
+2025-12-02 22:07:11,885 - INFO - Transformer - RMSE: 1.20, MAE: 1.06, R²: -1.656, MAPE: 74.89%
+2025-12-02 22:07:11,885 - INFO - Evaluating Deep_MLP...
+2025-12-02 22:07:11,891 - INFO - Deep_MLP - RMSE: 0.70, MAE: 0.63, R²: -0.200, MAPE: 48.01%
+2025-12-02 22:07:11,891 - INFO - Evaluating RandomForest...
+2025-12-02 22:07:12,487 - INFO - RandomForest - RMSE: 1.36, MAE: 1.16, R²: -3.616, MAPE: 79.25%
+2025-12-02 22:07:12,487 - INFO - Evaluating GradientBoosting...
+2025-12-02 22:07:13,371 - INFO - GradientBoosting - RMSE: 1.63, MAE: 1.43, R²: -8.108, MAPE: 107.88%
+2025-12-02 22:07:13,371 - INFO - Evaluating ExtraTrees...
+2025-12-02 22:07:13,825 - INFO - ExtraTrees - RMSE: 1.59, MAE: 1.38, R²: -7.915, MAPE: 105.20%
+2025-12-02 22:07:13,825 - INFO - Evaluating ARIMA...
+2025-12-02 22:07:14,182 - INFO - Best ARIMA order: (0, 0, 0), AIC: 85.76
+2025-12-02 22:07:14,484 - INFO - Best ARIMA order: (0, 1, 1), AIC: 102.54
+2025-12-02 22:07:14,808 - INFO - Best ARIMA order: (0, 1, 1), AIC: 118.58
+2025-12-02 22:07:15,137 - INFO - Best ARIMA order: (0, 1, 1), AIC: 132.31
+2025-12-02 22:07:15,480 - INFO - Best ARIMA order: (0, 1, 1), AIC: 148.07
+2025-12-02 22:07:15,481 - INFO - ARIMA - RMSE: 1.29, MAE: 1.10, R²: -2.272, MAPE: 72.93%
+2025-12-02 22:07:15,481 - INFO - Evaluating ExpSmoothing...
+2025-12-02 22:07:15,481 - WARNING - Fold 0 failed for ExpSmoothing: Cannot compute initial seasonals using heuristic method with less than two full seasonal cycles in the data.
+2025-12-02 22:07:15,602 - INFO - ExpSmoothing - RMSE: 1.77, MAE: 1.41, R²: -3.130, MAPE: 78.34%
+2025-12-02 22:07:15,603 - INFO - Generating predictions from all models...
+2025-12-02 22:07:15,604 - INFO - Applying growth bias: inf% per year
+2025-12-02 22:07:15,604 - INFO - Predicting with Attention_LSTM...
+2025-12-02 22:07:15,621 - INFO - Predicting with Transformer...
+2025-12-02 22:07:15,663 - INFO - Predicting with Deep_MLP...
+2025-12-02 22:07:15,688 - INFO - Predicting with RandomForest...
+2025-12-02 22:07:16,516 - INFO - Predicting with GradientBoosting...
+2025-12-02 22:07:16,522 - INFO - Predicting with ExtraTrees...
+2025-12-02 22:07:17,358 - INFO - Predicting with ARIMA...
+2025-12-02 22:07:17,359 - INFO - Predicting with ExpSmoothing...
+2025-12-02 22:07:17,361 - INFO - Ensemble predictions generated: Mean=inf, Std=nan, Growth=nan%
+2025-12-02 22:07:17,361 - INFO - Generating visualizations...
+2025-12-02 22:07:17,587 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-12-02 22:07:17,588 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-12-02 22:07:18,211 - INFO - Beautiful static plot saved: BPC-157_comprehensive_analysis.png
+2025-12-02 22:07:18,344 - INFO - Interactive dashboard saved: BPC-157_interactive_dashboard.html
+2025-12-02 22:07:18,345 - INFO - Exporting data...
+2025-12-02 22:07:18,350 - INFO - 
+============================================================
+2025-12-02 22:07:18,350 - INFO - MODEL PERFORMANCE SUMMARY
+2025-12-02 22:07:18,350 - INFO - ============================================================
+2025-12-02 22:07:18,352 - INFO -                       rmse       mae        r2        mape
+Attention_LSTM    1.174231  1.027121 -1.444176   72.889940
+Transformer       1.200315  1.056225 -1.655708   74.885760
+Deep_MLP          0.702095  0.625910 -0.199662   48.005133
+RandomForest      1.356220  1.156336 -3.616197   79.252653
+GradientBoosting  1.634780  1.433497 -8.107634  107.876365
+ExtraTrees        1.592060  1.381800 -7.915007  105.203001
+ARIMA             1.292961  1.100414 -2.271905   72.925951
+ExpSmoothing      1.773942  1.405953 -3.130271   78.335168
+2025-12-02 22:07:18,352 - INFO - ============================================================
+2025-12-02 22:07:18,352 - INFO - 
+============================================================
+2025-12-02 22:07:18,352 - INFO - FEATURE IMPORTANCE (Random Forest)
+2025-12-02 22:07:18,352 - INFO - ============================================================
+2025-12-02 22:07:18,383 - INFO -             Feature  Importance
+29         Residual    0.180055
+9            Lag_12    0.102669
+28         Seasonal    0.101893
+25            EMA_3    0.080824
+18  Rolling_Mean_12    0.074364
+19   Rolling_Std_12    0.051647
+10   Rolling_Mean_3    0.048373
+14   Rolling_Mean_6    0.040381
+8             Lag_6    0.037819
+15    Rolling_Std_6    0.037712
+26           EMA_12    0.033073
+11    Rolling_Std_3    0.030386
+12    Rolling_Min_3    0.021679
+27            Trend    0.019724
+1         Sin_Month    0.017869
+22      Momentum_12    0.017017
+7             Lag_3    0.014319
+13    Rolling_Max_3    0.013842
+23       YoY_Growth    0.013366
+24       Momentum_6    0.012023
+2         Cos_Month    0.011525
+6             Lag_2    0.009183
+5             Lag_1    0.007019
+4       Cos_Quarter    0.006378
+21   Rolling_Max_12    0.004843
+3       Sin_Quarter    0.003654
+0             Count    0.003567
+17    Rolling_Max_6    0.002880
+20   Rolling_Min_12    0.001024
+16    Rolling_Min_6    0.000894
+2025-12-02 22:07:18,384 - INFO - ============================================================
+2025-12-02 22:07:18,384 - INFO - 
+============================================================
+2025-12-02 22:07:18,384 - INFO - FEATURE IMPORTANCE (Gradient Boosting)
+2025-12-02 22:07:18,384 - INFO - ============================================================
+2025-12-02 22:07:18,385 - INFO -             Feature  Importance
+29         Residual    0.138968
+25            EMA_3    0.128596
+28         Seasonal    0.107927
+18  Rolling_Mean_12    0.105801
+9            Lag_12    0.098646
+11    Rolling_Std_3    0.056699
+1         Sin_Month    0.049466
+27            Trend    0.034971
+8             Lag_6    0.033539
+10   Rolling_Mean_3    0.031883
+15    Rolling_Std_6    0.031218
+13    Rolling_Max_3    0.028495
+4       Cos_Quarter    0.019228
+26           EMA_12    0.019110
+19   Rolling_Std_12    0.017675
+14   Rolling_Mean_6    0.017053
+22      Momentum_12    0.012930
+17    Rolling_Max_6    0.012727
+7             Lag_3    0.010937
+24       Momentum_6    0.009769
+23       YoY_Growth    0.008893
+0             Count    0.007076
+5             Lag_1    0.006190
+2         Cos_Month    0.003023
+6             Lag_2    0.002859
+21   Rolling_Max_12    0.002781
+3       Sin_Quarter    0.002460
+12    Rolling_Min_3    0.001023
+16    Rolling_Min_6    0.000046
+20   Rolling_Min_12    0.000012
+2025-12-02 22:07:18,386 - INFO - ============================================================
+2025-12-02 22:07:18,386 - INFO - Generating comprehensive report...
+2025-12-02 22:07:18,387 - INFO - Comprehensive report saved: BPC-157_report.html
+2025-12-02 22:20:26,580 - INFO - Loading cached data from BPC-157_raw_data.csv
+2025-12-02 22:20:26,630 - INFO - Data cached to BPC-157_raw_data.csv
+2025-12-02 22:20:26,630 - INFO - Total data points: 72
+2025-12-02 22:20:26,631 - INFO - Engineering advanced features...
+2025-12-02 22:20:26,649 - INFO - Features engineered. Shape: (47, 34) (dropped 25 rows with NaN)
+2025-12-02 22:20:26,649 - INFO - Using 1 features
+2025-12-02 22:20:26,663 - INFO - Prepared 35 sequences
+2025-12-02 22:20:26,670 - INFO - Using 30 features
+2025-12-02 22:20:26,672 - INFO - Prepared 35 sequences
+2025-12-02 22:20:26,673 - INFO - Training advanced model ensemble...
+2025-12-02 22:20:26,673 - INFO - Training Attention LSTM...
+2025-12-02 22:20:28,066 - INFO - Early stopping at epoch 27
+2025-12-02 22:20:28,067 - INFO - Training Transformer...
+2025-12-02 22:20:29,079 - INFO - Early stopping at epoch 32
+2025-12-02 22:20:29,079 - INFO - Training Deep MLP...
+2025-12-02 22:20:29,615 - INFO - Early stopping at epoch 60
+2025-12-02 22:20:29,615 - INFO - Training Random Forest...
+2025-12-02 22:20:29,785 - INFO - Training Gradient Boosting...
+2025-12-02 22:20:30,290 - INFO - Training Extra Trees...
+2025-12-02 22:20:30,384 - INFO - Training ARIMA...
+2025-12-02 22:20:30,918 - INFO - Best ARIMA order: (2, 0, 2), AIC: 167.89
+2025-12-02 22:20:30,919 - INFO - Training Exponential Smoothing...
+2025-12-02 22:20:30,956 - INFO - Trained 8 models successfully
+2025-12-02 22:20:30,956 - INFO - Evaluating models with time series cross-validation...
+2025-12-02 22:20:30,956 - INFO - Evaluating Attention_LSTM...
+2025-12-02 22:20:30,966 - INFO - Attention_LSTM - RMSE: 1.18, MAE: 1.03, R²: -1.515, MAPE: 74.07%
+2025-12-02 22:20:30,967 - INFO - Evaluating Transformer...
+2025-12-02 22:20:30,980 - INFO - Transformer - RMSE: 1.16, MAE: 1.00, R²: -1.222, MAPE: 67.89%
+2025-12-02 22:20:30,980 - INFO - Evaluating Deep_MLP...
+2025-12-02 22:20:30,986 - INFO - Deep_MLP - RMSE: 0.59, MAE: 0.50, R²: 0.210, MAPE: 40.25%
+2025-12-02 22:20:30,986 - INFO - Evaluating RandomForest...
+2025-12-02 22:20:31,862 - INFO - RandomForest - RMSE: 1.35, MAE: 1.15, R²: -3.477, MAPE: 79.75%
+2025-12-02 22:20:31,862 - INFO - Evaluating GradientBoosting...
+2025-12-02 22:20:33,048 - INFO - GradientBoosting - RMSE: 1.62, MAE: 1.38, R²: -6.648, MAPE: 96.44%
+2025-12-02 22:20:33,048 - INFO - Evaluating ExtraTrees...
+2025-12-02 22:20:33,616 - INFO - ExtraTrees - RMSE: 1.60, MAE: 1.39, R²: -7.851, MAPE: 105.02%
+2025-12-02 22:20:33,617 - INFO - Evaluating ARIMA...
+2025-12-02 22:20:34,055 - INFO - Best ARIMA order: (0, 0, 0), AIC: 85.76
+2025-12-02 22:20:34,482 - INFO - Best ARIMA order: (0, 1, 1), AIC: 102.54
+2025-12-02 22:20:34,918 - INFO - Best ARIMA order: (0, 1, 1), AIC: 118.58
+2025-12-02 22:20:35,355 - INFO - Best ARIMA order: (0, 1, 1), AIC: 132.31
+2025-12-02 22:20:35,836 - INFO - Best ARIMA order: (0, 1, 1), AIC: 148.07
+2025-12-02 22:20:35,838 - INFO - ARIMA - RMSE: 1.29, MAE: 1.10, R²: -2.272, MAPE: 72.93%
+2025-12-02 22:20:35,838 - INFO - Evaluating ExpSmoothing...
+2025-12-02 22:20:35,839 - WARNING - Fold 0 failed for ExpSmoothing: Cannot compute initial seasonals using heuristic method with less than two full seasonal cycles in the data.
+2025-12-02 22:20:36,003 - INFO - ExpSmoothing - RMSE: 1.77, MAE: 1.41, R²: -3.130, MAPE: 78.34%
+2025-12-02 22:20:36,004 - INFO - Generating predictions from all models...
+2025-12-02 22:20:36,007 - INFO - Applying simulated boom scenario (Base growth: 112.5%)
+2025-12-02 22:20:36,008 - INFO - Predicting with Attention_LSTM...
+2025-12-02 22:20:36,056 - INFO - Predicting with Transformer...
+2025-12-02 22:20:36,100 - INFO - Predicting with Deep_MLP...
+2025-12-02 22:20:36,113 - INFO - Predicting with RandomForest...
+2025-12-02 22:20:37,109 - INFO - Predicting with GradientBoosting...
+2025-12-02 22:20:37,117 - INFO - Predicting with ExtraTrees...
+2025-12-02 22:20:38,099 - INFO - Predicting with ARIMA...
+2025-12-02 22:20:38,102 - INFO - Predicting with ExpSmoothing...
+2025-12-02 22:20:38,103 - INFO - Ensemble predictions generated: Mean=41.7, Std=56.2, Growth=12026.3%
+2025-12-02 22:20:38,103 - INFO - Generating visualizations...
+2025-12-02 22:20:38,459 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-12-02 22:20:38,460 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-12-02 22:20:39,258 - INFO - Beautiful static plot saved: BPC-157_comprehensive_analysis.png
+2025-12-02 22:20:39,470 - INFO - Interactive dashboard saved: BPC-157_interactive_dashboard.html
+2025-12-02 22:20:39,470 - INFO - Exporting data...
+2025-12-02 22:20:39,482 - INFO - 
+============================================================
+2025-12-02 22:20:39,482 - INFO - MODEL PERFORMANCE SUMMARY
+2025-12-02 22:20:39,482 - INFO - ============================================================
+2025-12-02 22:20:39,484 - INFO -                       rmse       mae        r2        mape
+Attention_LSTM    1.180264  1.034656 -1.515153   74.071713
+Transformer       1.160039  1.004321 -1.222263   67.890844
+Deep_MLP          0.588564  0.501156  0.209809   40.253631
+RandomForest      1.352879  1.154036 -3.476650   79.746547
+GradientBoosting  1.619023  1.378820 -6.647609   96.435371
+ExtraTrees        1.596744  1.391017 -7.851016  105.015445
+ARIMA             1.292961  1.100414 -2.271905   72.925951
+ExpSmoothing      1.773942  1.405953 -3.130271   78.335168
+2025-12-02 22:20:39,484 - INFO - ============================================================
+2025-12-02 22:20:39,484 - INFO - 
+============================================================
+2025-12-02 22:20:39,484 - INFO - FEATURE IMPORTANCE (Random Forest)
+2025-12-02 22:20:39,484 - INFO - ============================================================
+2025-12-02 22:20:39,499 - INFO -             Feature  Importance
+29         Residual    0.211054
+28         Seasonal    0.117622
+9            Lag_12    0.096577
+18  Rolling_Mean_12    0.081246
+25            EMA_3    0.065652
+15    Rolling_Std_6    0.043162
+19   Rolling_Std_12    0.041985
+11    Rolling_Std_3    0.040301
+10   Rolling_Mean_3    0.036540
+26           EMA_12    0.036161
+8             Lag_6    0.035212
+14   Rolling_Mean_6    0.032522
+27            Trend    0.025457
+12    Rolling_Min_3    0.019336
+7             Lag_3    0.016988
+22      Momentum_12    0.015234
+24       Momentum_6    0.013741
+13    Rolling_Max_3    0.011506
+1         Sin_Month    0.010297
+2         Cos_Month    0.010046
+5             Lag_1    0.007402
+6             Lag_2    0.006980
+23       YoY_Growth    0.005994
+3       Sin_Quarter    0.005569
+0             Count    0.004250
+17    Rolling_Max_6    0.003372
+20   Rolling_Min_12    0.002685
+21   Rolling_Max_12    0.001699
+4       Cos_Quarter    0.001410
+16    Rolling_Min_6    0.000000
+2025-12-02 22:20:39,500 - INFO - ============================================================
+2025-12-02 22:20:39,500 - INFO - 
+============================================================
+2025-12-02 22:20:39,500 - INFO - FEATURE IMPORTANCE (Gradient Boosting)
+2025-12-02 22:20:39,500 - INFO - ============================================================
+2025-12-02 22:20:39,502 - INFO -             Feature  Importance
+29         Residual    0.184383
+28         Seasonal    0.148443
+9            Lag_12    0.142501
+27            Trend    0.089813
+18  Rolling_Mean_12    0.060349
+19   Rolling_Std_12    0.050707
+25            EMA_3    0.049258
+8             Lag_6    0.040821
+22      Momentum_12    0.039767
+11    Rolling_Std_3    0.030547
+6             Lag_2    0.023118
+26           EMA_12    0.019120
+10   Rolling_Mean_3    0.015558
+1         Sin_Month    0.013236
+15    Rolling_Std_6    0.011450
+12    Rolling_Min_3    0.010664
+14   Rolling_Mean_6    0.010375
+24       Momentum_6    0.010189
+7             Lag_3    0.009363
+17    Rolling_Max_6    0.008961
+21   Rolling_Max_12    0.006336
+2         Cos_Month    0.005591
+0             Count    0.005421
+23       YoY_Growth    0.004605
+13    Rolling_Max_3    0.004416
+5             Lag_1    0.002581
+4       Cos_Quarter    0.001859
+3       Sin_Quarter    0.000456
+16    Rolling_Min_6    0.000067
+20   Rolling_Min_12    0.000043
+2025-12-02 22:20:39,503 - INFO - ============================================================
+2025-12-02 22:20:39,503 - INFO - Generating comprehensive report...
+2025-12-02 22:20:39,505 - INFO - Comprehensive report saved: BPC-157_report.html
+2025-12-03 07:08:19,859 - INFO - Loading cached data from BPC-157_raw_data.csv
+2025-12-03 07:08:19,932 - INFO - Data cached to BPC-157_raw_data.csv
+2025-12-03 07:08:19,932 - INFO - Total data points: 72
+2025-12-03 07:08:19,932 - INFO - Engineering advanced features...
+2025-12-03 07:08:19,993 - INFO - Features engineered. Shape: (47, 34) (dropped 25 rows with NaN)
+2025-12-03 07:08:19,994 - INFO - Using 1 features
+2025-12-03 07:08:19,997 - INFO - Prepared 35 sequences
+2025-12-03 07:08:20,003 - INFO - Using 30 features
+2025-12-03 07:08:20,005 - INFO - Prepared 35 sequences
+2025-12-03 07:08:20,005 - INFO - Training advanced model ensemble...
+2025-12-03 07:08:20,005 - INFO - Training Attention LSTM...
+2025-12-03 07:08:21,385 - INFO - Early stopping at epoch 29
+2025-12-03 07:08:21,385 - INFO - Training Transformer...
+2025-12-03 07:08:23,852 - INFO - Early stopping at epoch 72
+2025-12-03 07:08:23,853 - INFO - Training Deep MLP...
+2025-12-03 07:08:25,324 - INFO - Early stopping at epoch 93
+2025-12-03 07:08:25,324 - INFO - Training Random Forest...
+2025-12-03 07:08:25,657 - INFO - Training Gradient Boosting...
+2025-12-03 07:08:26,245 - INFO - Training Extra Trees...
+2025-12-03 07:08:26,347 - INFO - Training ARIMA...
+2025-12-03 07:08:26,943 - INFO - Best ARIMA order: (2, 0, 2), AIC: 167.89
+2025-12-03 07:08:26,943 - INFO - Training Exponential Smoothing...
+2025-12-03 07:08:26,995 - INFO - Trained 8 models successfully
+2025-12-03 07:08:26,996 - INFO - Evaluating models with time series cross-validation...
+2025-12-03 07:08:26,996 - INFO - Evaluating Attention_LSTM...
+2025-12-03 07:08:27,014 - INFO - Attention_LSTM - RMSE: 1.18, MAE: 1.03, R²: -1.489, MAPE: 73.67%
+2025-12-03 07:08:27,014 - INFO - Evaluating Transformer...
+2025-12-03 07:08:27,032 - INFO - Transformer - RMSE: 1.25, MAE: 1.11, R²: -2.148, MAPE: 80.93%
+2025-12-03 07:08:27,032 - INFO - Evaluating Deep_MLP...
+2025-12-03 07:08:27,042 - INFO - Deep_MLP - RMSE: 0.67, MAE: 0.53, R²: 0.200, MAPE: 32.39%
+2025-12-03 07:08:27,042 - INFO - Evaluating RandomForest...
+2025-12-03 07:08:28,174 - INFO - RandomForest - RMSE: 1.36, MAE: 1.16, R²: -3.675, MAPE: 80.60%
+2025-12-03 07:08:28,175 - INFO - Evaluating GradientBoosting...
+2025-12-03 07:08:29,525 - INFO - GradientBoosting - RMSE: 1.42, MAE: 1.20, R²: -4.341, MAPE: 87.30%
+2025-12-03 07:08:29,525 - INFO - Evaluating ExtraTrees...
+2025-12-03 07:08:30,228 - INFO - ExtraTrees - RMSE: 1.60, MAE: 1.40, R²: -8.226, MAPE: 106.16%
+2025-12-03 07:08:30,228 - INFO - Evaluating ARIMA...
+2025-12-03 07:08:30,782 - INFO - Best ARIMA order: (0, 0, 0), AIC: 85.76
+2025-12-03 07:08:31,205 - INFO - Best ARIMA order: (0, 1, 1), AIC: 102.54
+2025-12-03 07:08:31,779 - INFO - Best ARIMA order: (0, 1, 1), AIC: 118.58
+2025-12-03 07:08:32,264 - INFO - Best ARIMA order: (0, 1, 1), AIC: 132.31
+2025-12-03 07:08:32,730 - INFO - Best ARIMA order: (0, 1, 1), AIC: 148.07
+2025-12-03 07:08:32,732 - INFO - ARIMA - RMSE: 1.29, MAE: 1.10, R²: -2.272, MAPE: 72.93%
+2025-12-03 07:08:32,732 - INFO - Evaluating ExpSmoothing...
+2025-12-03 07:08:32,733 - WARNING - Fold 0 failed for ExpSmoothing: Cannot compute initial seasonals using heuristic method with less than two full seasonal cycles in the data.
+2025-12-03 07:08:32,941 - INFO - ExpSmoothing - RMSE: 1.77, MAE: 1.41, R²: -3.130, MAPE: 78.34%
+2025-12-03 07:08:32,941 - INFO - Generating predictions from all models...
+2025-12-03 07:08:32,945 - INFO - Applying simulated boom scenario (Base growth: 112.5%)
+2025-12-03 07:08:32,945 - INFO - Predicting with Attention_LSTM...
+2025-12-03 07:08:32,976 - INFO - Predicting with Transformer...
+2025-12-03 07:08:33,019 - INFO - Predicting with Deep_MLP...
+2025-12-03 07:08:33,029 - INFO - Predicting with RandomForest...
+2025-12-03 07:08:33,986 - INFO - Predicting with GradientBoosting...
+2025-12-03 07:08:33,997 - INFO - Predicting with ExtraTrees...
+2025-12-03 07:08:35,099 - INFO - Predicting with ARIMA...
+2025-12-03 07:08:35,102 - INFO - Predicting with ExpSmoothing...
+2025-12-03 07:08:35,103 - INFO - Ensemble predictions generated: Mean=41.8, Std=53.7, Growth=10131.2%
+2025-12-03 07:08:35,103 - INFO - Generating visualizations...
+2025-12-03 07:08:35,505 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-12-03 07:08:35,506 - INFO - Using categorical units to plot a list of strings that are all parsable as floats or dates. If these strings should be plotted as numbers, cast to the appropriate data type before plotting.
+2025-12-03 07:08:36,297 - INFO - Beautiful static plot saved: BPC-157_comprehensive_analysis.png
+2025-12-03 07:08:36,477 - INFO - Interactive dashboard saved: BPC-157_interactive_dashboard.html
+2025-12-03 07:08:36,478 - INFO - Exporting data...
+2025-12-03 07:08:36,494 - INFO - 
+============================================================
+2025-12-03 07:08:36,494 - INFO - MODEL PERFORMANCE SUMMARY
+2025-12-03 07:08:36,494 - INFO - ============================================================
+2025-12-03 07:08:36,496 - INFO -                       rmse       mae        r2        mape
+Attention_LSTM    1.178348  1.032154 -1.489277   73.669067
+Transformer       1.249584  1.107794 -2.147772   80.934485
+Deep_MLP          0.670018  0.529081  0.199765   32.390277
+RandomForest      1.358777  1.163636 -3.674592   80.600251
+GradientBoosting  1.417016  1.197548 -4.341389   87.299904
+ExtraTrees        1.600506  1.397617 -8.226279  106.163334
+ARIMA             1.292961  1.100414 -2.271905   72.925951
+ExpSmoothing      1.773942  1.405953 -3.130271   78.335168
+2025-12-03 07:08:36,496 - INFO - ============================================================
+2025-12-03 07:08:36,496 - INFO - 
+============================================================
+2025-12-03 07:08:36,496 - INFO - FEATURE IMPORTANCE (Random Forest)
+2025-12-03 07:08:36,496 - INFO - ============================================================
+2025-12-03 07:08:36,542 - INFO -             Feature  Importance
+29         Residual    0.214133
+28         Seasonal    0.136342
+9            Lag_12    0.108884
+25            EMA_3    0.080003
+10   Rolling_Mean_3    0.049695
+18  Rolling_Mean_12    0.046423
+15    Rolling_Std_6    0.045696
+8             Lag_6    0.038581
+11    Rolling_Std_3    0.038327
+27            Trend    0.037071
+19   Rolling_Std_12    0.032836
+26           EMA_12    0.024829
+14   Rolling_Mean_6    0.022553
+23       YoY_Growth    0.013836
+2         Cos_Month    0.013696
+24       Momentum_6    0.012345
+22      Momentum_12    0.011312
+12    Rolling_Min_3    0.010131
+6             Lag_2    0.010106
+7             Lag_3    0.009749
+13    Rolling_Max_3    0.008544
+1         Sin_Month    0.006937
+5             Lag_1    0.006937
+4       Cos_Quarter    0.006340
+3       Sin_Quarter    0.005324
+17    Rolling_Max_6    0.003122
+16    Rolling_Min_6    0.003089
+0             Count    0.002240
+21   Rolling_Max_12    0.000921
+20   Rolling_Min_12    0.000000
+2025-12-03 07:08:36,543 - INFO - ============================================================
+2025-12-03 07:08:36,543 - INFO - 
+============================================================
+2025-12-03 07:08:36,543 - INFO - FEATURE IMPORTANCE (Gradient Boosting)
+2025-12-03 07:08:36,543 - INFO - ============================================================
+2025-12-03 07:08:36,545 - INFO -             Feature  Importance
+29         Residual    0.198373
+11    Rolling_Std_3    0.110914
+18  Rolling_Mean_12    0.104908
+25            EMA_3    0.091797
+26           EMA_12    0.064838
+8             Lag_6    0.057446
+9            Lag_12    0.053532
+2         Cos_Month    0.033004
+3       Sin_Quarter    0.029777
+1         Sin_Month    0.029677
+15    Rolling_Std_6    0.028056
+19   Rolling_Std_12    0.027053
+28         Seasonal    0.024720
+6             Lag_2    0.019288
+7             Lag_3    0.019030
+27            Trend    0.017462
+14   Rolling_Mean_6    0.015110
+17    Rolling_Max_6    0.014691
+23       YoY_Growth    0.011979
+10   Rolling_Mean_3    0.011520
+5             Lag_1    0.009160
+22      Momentum_12    0.006212
+24       Momentum_6    0.005940
+21   Rolling_Max_12    0.005558
+12    Rolling_Min_3    0.004085
+13    Rolling_Max_3    0.002947
+4       Cos_Quarter    0.001894
+0             Count    0.000868
+16    Rolling_Min_6    0.000104
+20   Rolling_Min_12    0.000055
+2025-12-03 07:08:36,546 - INFO - ============================================================
+2025-12-03 07:08:36,546 - INFO - Generating comprehensive report...
+2025-12-03 07:08:36,548 - INFO - Comprehensive report saved: BPC-157_report.html

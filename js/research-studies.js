@@ -62,6 +62,185 @@
     let lastSearchResults = [];
     let currentStudy = null;
 
+    const CACHE_VERSION = '1.0';
+    const CACHE_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
+    const CACHE_KEY_PREFIX = 'peptide_research_cache_';
+    const CACHE_INDEX_KEY = 'peptide_research_cache_index';
+
+    const CacheManager = {
+        generateKey(queryParams) {
+            const normalized = {
+                query: queryParams.query.trim().toLowerCase(),
+                yearFrom: queryParams.yearFrom || '',
+                yearTo: queryParams.yearTo || '',
+                primaryTerms: (queryParams.primaryTerms || []).sort().join(','),
+                secondaryTerms: (queryParams.secondaryTerms || []).sort().join(',')
+            };
+            return CACHE_KEY_PREFIX + btoa(JSON.stringify(normalized)).replace(/[^a-zA-Z0-9]/g, '');
+        },
+
+        get(cacheKey) {
+            try {
+                const cached = localStorage.getItem(cacheKey);
+                if (!cached) return null;
+
+                const data = JSON.parse(cached);
+                if (!data.version || data.version !== CACHE_VERSION) {
+                    this.delete(cacheKey);
+                    return null;
+                }
+
+                const age = Date.now() - data.timestamp;
+                if (age > CACHE_EXPIRY_MS) {
+                    this.delete(cacheKey);
+                    return null;
+                }
+
+                data.papers = data.papers.map(p => ({
+                    ...p,
+                    date: p.date ? new Date(p.date) : null
+                }));
+
+                return {
+                    papers: data.papers,
+                    timestamp: data.timestamp,
+                    isStale: age > (7 * 24 * 60 * 60 * 1000)
+                };
+            } catch (e) {
+                console.warn('Cache read error:', e);
+                return null;
+            }
+        },
+
+        set(cacheKey, papers) {
+            try {
+                const data = {
+                    version: CACHE_VERSION,
+                    timestamp: Date.now(),
+                    papers: papers
+                };
+
+                localStorage.setItem(cacheKey, JSON.stringify(data));
+                this.updateIndex(cacheKey);
+                this.cleanup();
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    console.warn('LocalStorage quota exceeded, clearing old cache entries');
+                    this.clearOldest(5);
+                    try {
+                        localStorage.setItem(cacheKey, JSON.stringify(data));
+                        this.updateIndex(cacheKey);
+                    } catch (e2) {
+                        console.error('Failed to cache even after cleanup:', e2);
+                    }
+                }
+            }
+        },
+
+        delete(cacheKey) {
+            localStorage.removeItem(cacheKey);
+            this.removeFromIndex(cacheKey);
+        },
+
+        updateIndex(cacheKey) {
+            try {
+                const index = JSON.parse(localStorage.getItem(CACHE_INDEX_KEY) || '[]');
+                const entry = { key: cacheKey, timestamp: Date.now() };
+                const filtered = index.filter(e => e.key !== cacheKey);
+                filtered.push(entry);
+                localStorage.setItem(CACHE_INDEX_KEY, JSON.stringify(filtered));
+            } catch (e) {
+                console.warn('Failed to update cache index:', e);
+            }
+        },
+
+        removeFromIndex(cacheKey) {
+            try {
+                const index = JSON.parse(localStorage.getItem(CACHE_INDEX_KEY) || '[]');
+                const filtered = index.filter(e => e.key !== cacheKey);
+                localStorage.setItem(CACHE_INDEX_KEY, JSON.stringify(filtered));
+            } catch (e) {
+                console.warn('Failed to update cache index:', e);
+            }
+        },
+
+        cleanup() {
+            try {
+                const index = JSON.parse(localStorage.getItem(CACHE_INDEX_KEY) || '[]');
+                const now = Date.now();
+                const validEntries = [];
+
+                for (const entry of index) {
+                    const cached = localStorage.getItem(entry.key);
+                    if (cached) {
+                        const data = JSON.parse(cached);
+                        if (now - data.timestamp < CACHE_EXPIRY_MS) {
+                            validEntries.push(entry);
+                            continue;
+                        }
+                    }
+                    localStorage.removeItem(entry.key);
+                }
+
+                localStorage.setItem(CACHE_INDEX_KEY, JSON.stringify(validEntries));
+            } catch (e) {
+                console.warn('Cache cleanup failed:', e);
+            }
+        },
+
+        clearOldest(count) {
+            try {
+                const index = JSON.parse(localStorage.getItem(CACHE_INDEX_KEY) || '[]');
+                index.sort((a, b) => a.timestamp - b.timestamp);
+                
+                for (let i = 0; i < Math.min(count, index.length); i++) {
+                    localStorage.removeItem(index[i].key);
+                }
+
+                const remaining = index.slice(count);
+                localStorage.setItem(CACHE_INDEX_KEY, JSON.stringify(remaining));
+            } catch (e) {
+                console.warn('Failed to clear oldest cache entries:', e);
+            }
+        },
+
+        clearAll() {
+            try {
+                const index = JSON.parse(localStorage.getItem(CACHE_INDEX_KEY) || '[]');
+                for (const entry of index) {
+                    localStorage.removeItem(entry.key);
+                }
+                localStorage.removeItem(CACHE_INDEX_KEY);
+            } catch (e) {
+                console.warn('Failed to clear all cache:', e);
+            }
+        },
+
+        getStats() {
+            try {
+                const index = JSON.parse(localStorage.getItem(CACHE_INDEX_KEY) || '[]');
+                let totalSize = 0;
+                let validCount = 0;
+
+                for (const entry of index) {
+                    const cached = localStorage.getItem(entry.key);
+                    if (cached) {
+                        totalSize += cached.length;
+                        validCount++;
+                    }
+                }
+
+                return {
+                    count: validCount,
+                    size: (totalSize / 1024).toFixed(2) + ' KB',
+                    sizeBytes: totalSize
+                };
+            } catch (e) {
+                return { count: 0, size: '0 KB', sizeBytes: 0 };
+            }
+        }
+    };
+
     function expandPeptideNames(query) {
         const queryLower = query.toLowerCase();
         const detectedPeptides = new Set();
@@ -115,7 +294,7 @@
         };
     }
 
-    async function performSearch() {
+    async function performSearch(forceRefresh = false) {
         const queryValue = document.getElementById('research-query').value.trim();
         const maxResults = parseInt(document.getElementById('research-max-results').value);
         const sortOrder = document.getElementById('research-sort').value;
@@ -132,6 +311,73 @@
         const expandedQuery = expandPeptideNames(queryValue);
         const searchBtn = document.getElementById('research-search-btn');
         const resultsContainer = document.getElementById('research-results');
+
+        const queryParams = {
+            query: queryValue,
+            yearFrom,
+            yearTo,
+            primaryTerms,
+            secondaryTerms
+        };
+        const cacheKey = CacheManager.generateKey(queryParams);
+
+        if (!forceRefresh) {
+            const cached = CacheManager.get(cacheKey);
+            if (cached) {
+                console.log('Loading results from local cache');
+                lastSearchResults = cached.papers;
+                const offset = (currentPage - 1) * maxResults;
+
+                if (sortOrder === 'likes') {
+                    await fetchAndSortByLikes(lastSearchResults);
+                } else if (sortOrder === 'pub+date') {
+                    lastSearchResults.sort((a, b) => (b.date ? b.date.getTime() : 0) - (a.date ? a.date.getTime() : 0));
+                } else if (sortOrder === 'citations') {
+                    lastSearchResults.sort((a, b) => (b.citationCount || 0) - (a.citationCount || 0));
+                }
+
+                const paginatedPapers = lastSearchResults.slice(offset, offset + maxResults);
+                await displayResults(paginatedPapers, lastSearchResults.length, true, cached.timestamp);
+
+                if (cached.isStale) {
+                    console.log('Cache is stale, refreshing in background');
+                    performSearchFromAPI(queryValue, expandedQuery, maxResults, sortOrder, yearFrom, yearTo, primaryTerms, secondaryTerms, cacheKey, queryValue, true);
+                }
+                return;
+            }
+
+            try {
+                const serverCacheResponse = await fetch(`/api/research-cache/${encodeURIComponent(cacheKey)}`);
+                if (serverCacheResponse.ok) {
+                    const serverCache = await serverCacheResponse.json();
+                    console.log('Loading results from server cache (search count: ' + serverCache.searchCount + ')');
+                    
+                    CacheManager.set(cacheKey, serverCache.results);
+                    updateCacheStats();
+                    
+                    lastSearchResults = serverCache.results.map(p => ({
+                        ...p,
+                        date: p.date ? new Date(p.date) : null
+                    }));
+                    
+                    const offset = (currentPage - 1) * maxResults;
+
+                    if (sortOrder === 'likes') {
+                        await fetchAndSortByLikes(lastSearchResults);
+                    } else if (sortOrder === 'pub+date') {
+                        lastSearchResults.sort((a, b) => (b.date ? b.date.getTime() : 0) - (a.date ? a.date.getTime() : 0));
+                    } else if (sortOrder === 'citations') {
+                        lastSearchResults.sort((a, b) => (b.citationCount || 0) - (a.citationCount || 0));
+                    }
+
+                    const paginatedPapers = lastSearchResults.slice(offset, offset + maxResults);
+                    await displayResults(paginatedPapers, lastSearchResults.length, true, serverCache.timestamp);
+                    return;
+                }
+            } catch (e) {
+                console.log('Server cache miss, fetching from APIs');
+            }
+        }
         
         searchBtn.disabled = true;
         searchBtn.textContent = 'Searching...';
@@ -148,6 +394,12 @@
             </div>
         `;
 
+        await performSearchFromAPI(queryValue, expandedQuery, maxResults, sortOrder, yearFrom, yearTo, primaryTerms, secondaryTerms, cacheKey, queryValue, false);
+    }
+
+    async function performSearchFromAPI(queryValueRaw, expandedQuery, maxResults, sortOrder, yearFrom, yearTo, primaryTerms, secondaryTerms, cacheKey, queryText, isBackgroundRefresh) {
+        const searchBtn = document.getElementById('research-search-btn');
+        const resultsContainer = document.getElementById('research-results');
         const offset = (currentPage - 1) * maxResults;
 
         try {
@@ -176,7 +428,7 @@
                 pubmedQuery += ` AND (${secondaryPart})`;
             }
 
-            let semanticQuery = queryValue;
+            let semanticQuery = queryValueRaw;
             if (secondaryTerms.length > 0) {
                 const secondaryPart = secondaryTerms.map(t => `"${t}"`).join(' OR ');
                 semanticQuery += ` AND (${secondaryPart})`;
@@ -316,24 +568,48 @@
             }
 
             lastSearchResults = uniquePapers;
+            CacheManager.set(cacheKey, uniquePapers);
+            
+            if (!isBackgroundRefresh) {
+                updateCacheStats();
+            }
+            
+            try {
+                await fetch('/api/research-cache', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cacheKey: cacheKey,
+                        queryText: queryText,
+                        results: uniquePapers
+                    })
+                });
+            } catch (e) {
+                console.warn('Failed to save to server cache:', e);
+            }
+            
             const total = uniquePapers.length;
             const paginatedPapers = uniquePapers.slice(offset, offset + maxResults);
-            await displayResults(paginatedPapers, total);
+            await displayResults(paginatedPapers, total, false, Date.now());
 
         } catch (error) {
             console.error('Error:', error);
-            resultsContainer.innerHTML = `
-                <div class="research-error">
-                    <strong>Error:</strong> ${error.message}
-                </div>
-            `;
+            if (!isBackgroundRefresh) {
+                resultsContainer.innerHTML = `
+                    <div class="research-error">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+            }
         } finally {
-            searchBtn.disabled = false;
-            searchBtn.textContent = 'Search';
+            if (!isBackgroundRefresh) {
+                searchBtn.disabled = false;
+                searchBtn.textContent = 'Search';
+            }
         }
     }
 
-    async function displayResults(papers, total) {
+    async function displayResults(papers, total, fromCache = false, cacheTimestamp = null) {
         const resultsContainer = document.getElementById('research-results');
         const maxResults = parseInt(document.getElementById('research-max-results').value);
         const totalPages = Math.ceil(total / maxResults);
@@ -370,10 +646,27 @@
         const rangeStart = (currentPage - 1) * maxResults + 1;
         const rangeEnd = rangeStart + papers.length - 1;
 
+        let cacheInfo = '';
+        if (fromCache && cacheTimestamp) {
+            const age = Date.now() - cacheTimestamp;
+            const ageHours = Math.floor(age / (60 * 60 * 1000));
+            const ageDays = Math.floor(age / (24 * 60 * 60 * 1000));
+            let ageText = '';
+            if (ageDays > 0) {
+                ageText = `${ageDays} day${ageDays > 1 ? 's' : ''} ago`;
+            } else if (ageHours > 0) {
+                ageText = `${ageHours} hour${ageHours > 1 ? 's' : ''} ago`;
+            } else {
+                ageText = 'just now';
+            }
+            cacheInfo = `<div class="research-cache-notice">⚡ Loaded from cache (cached ${ageText})</div>`;
+        }
+
         let html = `
             <div class="research-results-header">
                 <div class="research-results-count">Showing ${rangeStart}-${rangeEnd} of ${total} results</div>
             </div>
+            ${cacheInfo}
         `;
 
         if (lastDetectedPeptides.length > 0) {
@@ -678,8 +971,18 @@
         }
     }
 
+    function updateCacheStats() {
+        const stats = CacheManager.getStats();
+        const cacheInfo = document.getElementById('research-cache-info');
+        if (cacheInfo) {
+            cacheInfo.textContent = `Cache: ${stats.count} search${stats.count !== 1 ? 'es' : ''}, ${stats.size}`;
+        }
+    }
+
     function initResearchPanel() {
         populateAutocomplete();
+        updateCacheStats();
+        
         const searchForm = document.getElementById('research-search-form');
         if (searchForm) {
             searchForm.addEventListener('submit', (e) => {
@@ -692,6 +995,17 @@
         const filtersToggle = document.getElementById('research-filters-toggle');
         if (filtersToggle) {
             filtersToggle.addEventListener('click', toggleFilters);
+        }
+
+        const clearCacheBtn = document.getElementById('research-clear-cache-btn');
+        if (clearCacheBtn) {
+            clearCacheBtn.addEventListener('click', () => {
+                if (confirm('Clear all cached research searches? This cannot be undone.')) {
+                    CacheManager.clearAll();
+                    updateCacheStats();
+                    alert('Cache cleared successfully');
+                }
+            });
         }
         
         const modalClose = document.querySelector('.study-modal-close');

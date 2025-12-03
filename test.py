@@ -243,21 +243,45 @@ def create_beautiful_static_plots(df, preds, parameter, future_months, confidenc
     
     # Year-over-year growth
     ax2 = fig.add_subplot(gs[2, 0])
+    
+    # Historical yearly data
     yearly_data = df.groupby(df['Date'].dt.year)['Count'].sum()
-    colors = plt.cm.viridis(np.linspace(0.3, 0.9, len(yearly_data)))
-    bars = ax2.bar(yearly_data.index, yearly_data.values, color=colors, 
-                   edgecolor='black', linewidth=1.5, alpha=0.8)
-    ax2.set_title('Annual Publication Volume', fontsize=14, fontweight='bold')
+    
+    # Predicted yearly data
+    pred_df = pd.DataFrame({'Date': future_dates, 'Count': preds})
+    yearly_preds = pred_df.groupby(pred_df['Date'].dt.year)['Count'].sum()
+    
+    # Combine for x-axis range but plot separately
+    all_years = sorted(list(set(yearly_data.index) | set(yearly_preds.index)))
+    
+    # Plot historical
+    colors_hist = plt.cm.viridis(np.linspace(0.3, 0.9, len(yearly_data)))
+    bars_hist = ax2.bar(yearly_data.index, yearly_data.values, color=colors_hist, 
+                   edgecolor='black', linewidth=1.5, alpha=0.8, label='Historical')
+                   
+    # Plot predicted
+    # Use a distinct color for predictions (e.g., the forecast color used in main plot)
+    bars_pred = ax2.bar(yearly_preds.index, yearly_preds.values, color='#A23B72', 
+                   edgecolor='black', linewidth=1.5, alpha=0.6, hatch='//', label='Forecast')
+    
+    ax2.set_title('Annual Publication Volume (Historical & Forecast)', fontsize=14, fontweight='bold')
     ax2.set_xlabel('Year', fontsize=12, fontweight='bold')
     ax2.set_ylabel('Total Publications', fontsize=12, fontweight='bold')
     ax2.grid(True, alpha=0.3, axis='y')
     ax2.set_facecolor('#F8F9FA')
+    ax2.legend()
     
     # Add value labels on bars
-    for bar in bars:
+    for bar in bars_hist:
         height = bar.get_height()
         ax2.text(bar.get_x() + bar.get_width()/2., height,
                 f'{int(height)}', ha='center', va='bottom', fontsize=9)
+                
+    for bar in bars_pred:
+        height = bar.get_height()
+        if np.isfinite(height):
+            ax2.text(bar.get_x() + bar.get_width()/2., height,
+                    f'{int(height)}', ha='center', va='bottom', fontsize=9, color='#A23B72', fontweight='bold')
     
     # Monthly distribution heatmap
     ax3 = fig.add_subplot(gs[2, 1])
@@ -891,7 +915,7 @@ class PubMedForecaster:
         return results
 
     def predict(self, X_uni, uni_scaler, X_multi, multi_scaler):
-        """Generate predictions from all models with growth bias and volatility"""
+        """Generate predictions from all models with simulated boom, volatility, and seasonality"""
         if X_uni is None:
             mean_count = self.df['Count'].mean()
             self.ensemble_preds = np.full(self.future_months, mean_count)
@@ -905,12 +929,21 @@ class PubMedForecaster:
             dtype=torch.float32
         )
         
-        # Calculate historical growth rate for bias
+        # Calculate historical growth rate for bias - SAFE CALCULATION
         recent_data = self.df_full['Count'].tail(24) if len(self.df_full) >= 24 else self.df_full['Count']
-        historical_growth_rate = recent_data.pct_change(12).mean()
-        growth_multiplier = 1.0 + max(historical_growth_rate, 0.05)  # At least 5% growth bias
+        # Avoid division by zero or inf
+        try:
+            historical_growth_rate = recent_data.pct_change(12).replace([np.inf, -np.inf], np.nan).mean()
+            if np.isnan(historical_growth_rate):
+                historical_growth_rate = 0.05
+        except:
+            historical_growth_rate = 0.05
+            
+        # Force a "Boom" scenario as requested
+        # Start with historical growth but accelerate it
+        base_growth = max(historical_growth_rate, 0.10) # Minimum 10% base growth
         
-        logging.info(f"Applying growth bias: {(growth_multiplier - 1) * 100:.1f}% per year")
+        logging.info(f"Applying simulated boom scenario (Base growth: {base_growth*100:.1f}%)")
         
         for name, model in self.models.items():
             try:
@@ -935,21 +968,38 @@ class PubMedForecaster:
                         model, X_multi, multi_scaler, self.future_months
                     )
                 
-                # Apply growth bias - compound growth over time
+                # --- APPLY SYNTHETIC FLUCTUATIONS (Boom, Volatility, Seasonality) ---
+                
+                # 1. Simulated Boom (Exponential Growth)
+                # Scale up significantly over time
                 for i in range(len(preds)):
                     months_ahead = i + 1
                     years_ahead = months_ahead / 12
-                    preds[i] = preds[i] * (growth_multiplier ** years_ahead)
+                    
+                    # Boom factor: accelerates over time
+                    # Year 1: ~1.2x, Year 5: ~2.5x
+                    boom_factor = (1 + base_growth) ** years_ahead
+                    
+                    # Add an extra "viral spike" component that kicks in after year 1
+                    if years_ahead > 1:
+                        viral_factor = 1.0 + (years_ahead - 1) * 0.2
+                        boom_factor *= viral_factor
+                        
+                    preds[i] = preds[i] * boom_factor
                 
-                # Add model-specific volatility
-                volatility = np.std(self.df_full['Count'].tail(12))
-                noise = np.random.normal(0, volatility * 0.3, len(preds))
+                # 2. Strong Seasonality
+                # Add a sine wave that grows with the magnitude of the data
+                # Peak in summer (approx month 6-7)
+                seasonal_amplitude = 0.3  # 30% swing
+                seasonality = preds * seasonal_amplitude * np.sin(2 * np.pi * (np.arange(len(preds)) - 6) / 12)
+                preds = preds + seasonality
                 
-                # Create trends and cycles for more realistic volatility
-                trend_component = np.linspace(0, volatility * 0.2, len(preds))
-                seasonal_component = volatility * 0.15 * np.sin(2 * np.pi * np.arange(len(preds)) / 12)
+                # 3. High Volatility (Random Noise)
+                # Add random noise proportional to the value
+                volatility_level = 0.25 # 25% random fluctuation
+                noise = np.random.normal(0, volatility_level, len(preds)) * preds
+                preds = preds + noise
                 
-                preds = preds + noise + trend_component + seasonal_component
                 preds = np.maximum(preds, 0)  # No negative predictions
                 
                 self.model_predictions[name] = preds
@@ -957,40 +1007,22 @@ class PubMedForecaster:
             except Exception as e:
                 logging.error(f"Prediction failed for {name}: {str(e)}")
         
-        # Ensemble predictions with growth bias
+        # Ensemble predictions
         if self.model_predictions:
             all_preds = np.array(list(self.model_predictions.values()))
             
-            # Weighted ensemble - favor models that predict higher growth
-            weights = []
-            for preds in all_preds:
-                # Models that predict more growth get higher weight
-                growth_score = (preds[-1] - preds[0]) / max(preds[0], 1)
-                weight = 1.0 + max(0, growth_score)  # Positive growth gets bonus weight
-                weights.append(weight)
+            # Simple average for ensemble to capture all variations
+            self.ensemble_preds = np.mean(all_preds, axis=0)
             
-            weights = np.array(weights) / np.sum(weights)
-            self.ensemble_preds = np.average(all_preds, axis=0, weights=weights)
-            
-            # Add final volatility layer to ensemble
-            ensemble_volatility = np.std(self.df_full['Count'].tail(12))
-            ensemble_noise = np.random.normal(0, ensemble_volatility * 0.2, len(self.ensemble_preds))
-            self.ensemble_preds += ensemble_noise
-            
-            # Apply minimum growth constraint
-            min_growth_rate = 0.03  # 3% annual minimum growth
-            for i in range(1, len(self.ensemble_preds)):
-                months_ahead = i
-                years_ahead = months_ahead / 12
-                min_value = self.df_full['Count'].iloc[-1] * ((1 + min_growth_rate) ** years_ahead)
-                self.ensemble_preds[i] = max(self.ensemble_preds[i], min_value)
-            
-            self.ensemble_preds = np.maximum(self.ensemble_preds, 0)
+            # Ensure minimum values (don't let it drop back to 0 completely)
+            # If we are booming, we shouldn't crash to zero
+            min_floor = np.linspace(1, 5, len(self.ensemble_preds)) # Floor rises from 1 to 5
+            self.ensemble_preds = np.maximum(self.ensemble_preds, min_floor)
             
             logging.info(f"Ensemble predictions generated: "
                         f"Mean={self.ensemble_preds.mean():.1f}, "
                         f"Std={self.ensemble_preds.std():.1f}, "
-                        f"Growth={(self.ensemble_preds[-1] / self.ensemble_preds[0] - 1) * 100:.1f}%")
+                        f"Growth={(self.ensemble_preds[-1] / max(self.ensemble_preds[0], 0.1) - 1) * 100:.1f}%")
 
     def _predict_future_dl(self, model, last_seq, scaler, steps):
         """Predict future values with deep learning model - with growth and volatility"""

@@ -934,6 +934,130 @@ app.post('/api/study-comment', (req, res) => {
     );
 });
 
+// Research cache endpoints for popular searches
+const researchCacheDb = new sqlite3.Database('./research_cache.db', (err) => {
+    if (err) {
+        console.error('❌ Error opening research cache database:', err.message);
+    } else {
+        console.log('✅ Connected to research cache database');
+        initializeResearchCacheDatabase();
+    }
+});
+
+function initializeResearchCacheDatabase() {
+    researchCacheDb.run(`
+        CREATE TABLE IF NOT EXISTS research_cache (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cache_key TEXT UNIQUE NOT NULL,
+            query_text TEXT,
+            results_data TEXT NOT NULL,
+            search_count INTEGER DEFAULT 1,
+            last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    `, (err) => {
+        if (err) {
+            console.error('❌ Error creating research_cache table:', err.message);
+        } else {
+            console.log('✅ research_cache table ready');
+            
+            researchCacheDb.run(`CREATE INDEX IF NOT EXISTS idx_cache_key ON research_cache(cache_key)`, (err) => {
+                if (err) {
+                    console.error('❌ Error creating cache_key index:', err.message);
+                } else {
+                    console.log('✅ cache_key index ready');
+                }
+            });
+        }
+    });
+}
+
+// Get cached research results
+app.get('/api/research-cache/:cacheKey', (req, res) => {
+    const { cacheKey } = req.params;
+    
+    researchCacheDb.get(
+        `SELECT results_data, last_updated, search_count FROM research_cache WHERE cache_key = ?`,
+        [cacheKey],
+        (err, row) => {
+            if (err) {
+                console.error('Error fetching research cache:', err);
+                return res.status(500).json({ error: 'Failed to fetch cache' });
+            }
+            
+            if (!row) {
+                return res.status(404).json({ error: 'Cache not found' });
+            }
+            
+            // Increment search count
+            researchCacheDb.run(
+                `UPDATE research_cache SET search_count = search_count + 1 WHERE cache_key = ?`,
+                [cacheKey],
+                (err) => {
+                    if (err) console.error('Error updating search count:', err);
+                }
+            );
+            
+            res.json({
+                results: JSON.parse(row.results_data),
+                timestamp: new Date(row.last_updated).getTime(),
+                searchCount: row.search_count + 1
+            });
+        }
+    );
+});
+
+// Store research results in server cache
+app.post('/api/research-cache', (req, res) => {
+    const { cacheKey, queryText, results } = req.body;
+    
+    if (!cacheKey || !results) {
+        return res.status(400).json({ error: 'Invalid cache data' });
+    }
+    
+    const resultsJson = JSON.stringify(results);
+    
+    researchCacheDb.run(
+        `INSERT INTO research_cache (cache_key, query_text, results_data, last_updated)
+         VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+         ON CONFLICT(cache_key) DO UPDATE SET
+            results_data = excluded.results_data,
+            last_updated = CURRENT_TIMESTAMP,
+            search_count = search_count + 1`,
+        [cacheKey, queryText, resultsJson],
+        (err) => {
+            if (err) {
+                console.error('Error storing research cache:', err);
+                return res.status(500).json({ error: 'Failed to store cache' });
+            }
+            
+            res.json({ success: true });
+        }
+    );
+});
+
+// Get popular research queries
+app.get('/api/research-cache/popular', (req, res) => {
+    const limit = parseInt(req.query.limit) || 10;
+    
+    researchCacheDb.all(
+        `SELECT query_text, search_count, last_updated 
+         FROM research_cache 
+         WHERE query_text IS NOT NULL
+         ORDER BY search_count DESC 
+         LIMIT ?`,
+        [limit],
+        (err, rows) => {
+            if (err) {
+                console.error('Error fetching popular queries:', err);
+                return res.status(500).json({ error: 'Failed to fetch popular queries' });
+            }
+            
+            res.json({ queries: rows });
+        }
+    );
+});
+
 // Export for Vercel serverless functions
 module.exports = app;
 
@@ -961,7 +1085,15 @@ process.on('SIGINT', () => {
             } else {
                 console.log('✅ Studies database connection closed');
             }
-            process.exit(0);
+            
+            researchCacheDb.close((err) => {
+                if (err) {
+                    console.error('❌ Error closing research cache database:', err.message);
+                } else {
+                    console.log('✅ Research cache database connection closed');
+                }
+                process.exit(0);
+            });
         });
     });
 });
