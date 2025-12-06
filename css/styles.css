@@ -1360,6 +1360,83 @@ body.bg-black {
     padding: 20px;
 }
 
+/* BPC-157 Dashboard Panel Styles */
+#bpc157-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 50vw;
+    min-width: 400px;
+    max-width: 900px;
+    height: 100vh;
+    background: var(--bg-panel);
+    box-shadow: 4px 0 12px var(--shadow-sm);
+    border-right: 1px solid var(--border-primary);
+    z-index: 11;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition:
+        transform 0.3s ease-in-out,
+        background 0.3s ease;
+}
+
+#bpc157-panel.collapsed {
+    transform: translateX(-100%);
+}
+
+#bpc157-drag-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    cursor: ew-resize;
+    background: rgba(59, 130, 246, 0.25);
+    transition: background 0.2s ease;
+    z-index: 50;
+    pointer-events: auto;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+#bpc157-drag-handle:hover {
+    background: rgba(59, 130, 246, 0.45);
+}
+
+#bpc157-toggle {
+    position: fixed;
+    top: 510px;
+    left: 20px;
+    width: 40px;
+    height: 40px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    color: var(--text-accent);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    z-index: 20;
+    box-shadow: 0 4px 12px var(--shadow-sm);
+    transition:
+        left 0.3s ease-in-out,
+        background 0.2s ease;
+}
+
+#bpc157-toggle:hover {
+    background: var(--bg-hover);
+}
+
+#bpc157-container {
+    flex: 1;
+    overflow: hidden;
+}
+
 #contact-submit:disabled {
     opacity: 0.6;
     cursor: not-allowed;
