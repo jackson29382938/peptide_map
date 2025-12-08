@@ -262,23 +262,70 @@
         tabButtons[newIndex]?.click();
     }
 
-    // Display keyboard shortcuts help
+    // Display keyboard shortcuts help in a modal
     function showKeyboardHelp() {
         const shortcuts = [
             { key: '/', action: 'Open search' },
             { key: 'Esc', action: 'Close modals/panels or clear selection' },
-            { key: 't', action: 'Toggle theme' },
+            { key: '?', action: 'Show this help modal' },
+            { key: 't', action: 'Toggle theme (dark/light)' },
             { key: 'm', action: 'Toggle menu panel' },
-            { key: '↑↓', action: 'Navigate search results' },
+            { key: '↑ ↓', action: 'Navigate search results' },
             { key: 'Enter', action: 'Select highlighted result' },
-            { key: '←→', action: 'Switch tabs (when panel open)' },
-            { key: 'Tab', action: 'Navigate between interactive elements' },
+            { key: '← →', action: 'Switch tabs (when panel open)' },
+            { key: 'Tab', action: 'Navigate between elements' },
         ];
 
-        console.log('⌨️  Keyboard Shortcuts:');
-        shortcuts.forEach(({ key, action }) => {
-            console.log(`  ${key.padEnd(10)} - ${action}`);
+        // Check if modal already exists
+        let modal = document.getElementById('keyboard-shortcuts-modal');
+
+        if (!modal) {
+            // Create the modal
+            modal = document.createElement('div');
+            modal.id = 'keyboard-shortcuts-modal';
+            modal.className = 'keyboard-shortcuts-modal';
+            modal.innerHTML = `
+                <div class="shortcuts-content">
+                    <div class="shortcuts-header">
+                        <h2>⌨️ Keyboard Shortcuts</h2>
+                        <button class="shortcuts-close" aria-label="Close">✕</button>
+                    </div>
+                    <div class="shortcuts-body">
+                        ${shortcuts.map(s => `
+                            <div class="shortcut-row">
+                                <span class="shortcut-key">
+                                    ${s.key.split(' ').map(k => `<kbd>${k}</kbd>`).join(' ')}
+                                </span>
+                                <span class="shortcut-action">${s.action}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            // Close button
+            modal.querySelector('.shortcuts-close').addEventListener('click', hideKeyboardHelp);
+
+            // Click outside to close
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    hideKeyboardHelp();
+                }
+            });
+        }
+
+        // Show the modal
+        requestAnimationFrame(() => {
+            modal.classList.add('visible');
         });
+    }
+
+    function hideKeyboardHelp() {
+        const modal = document.getElementById('keyboard-shortcuts-modal');
+        if (modal) {
+            modal.classList.remove('visible');
+        }
     }
 
     // Reset search index when search is closed

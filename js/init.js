@@ -31,32 +31,32 @@ function checkReadiness() {
         hasRegionInjuries: typeof regionInjuries !== 'undefined',
         hasInteractiveObjects: interactiveObjects.length > 0
     };
-    
-    const ready = checks.sceneReady && 
-                  checks.modelLoaded && 
-                  checks.regionsReady &&
-                  checks.hasRegions &&
-                  checks.hasRegionInjuries &&
-                  checks.hasInteractiveObjects;
-    
+
+    const ready = checks.sceneReady &&
+        checks.modelLoaded &&
+        checks.regionsReady &&
+        checks.hasRegions &&
+        checks.hasRegionInjuries &&
+        checks.hasInteractiveObjects;
+
     // Log detailed status for debugging - show which conditions are failing
     if (!ready) {
         const missing = Object.entries(checks)
             .filter(([key, value]) => !value)
             .map(([key]) => key);
-        
+
         console.log('🔍 Readiness check - NOT READY:', {
             ...checks,
             interactiveObjectsCount: interactiveObjects.length,
             missingConditions: missing.length > 0 ? missing : 'none (should be ready!)'
         });
-        
+
         // Log specific missing conditions
         if (missing.length > 0) {
             console.warn('❌ Missing conditions:', missing.join(', '));
         }
     }
-    
+
     if (ready && !initState.allReady) {
         initState.allReady = true;
         console.log('✅ All systems ready - interactions enabled', checks);
@@ -64,7 +64,7 @@ function checkReadiness() {
         // Dispatch custom event to signal readiness
         window.dispatchEvent(new CustomEvent('appReady'));
     }
-    
+
     return ready;
 }
 
@@ -74,7 +74,7 @@ function initScene() {
         console.error('❌ Container element not found');
         return;
     }
-    
+
     const width = container.clientWidth;
     const height = container.clientHeight;
 
@@ -84,10 +84,10 @@ function initScene() {
     const initialTheme = document.documentElement.getAttribute('data-theme') || 'dark';
     const bgColor = initialTheme === 'light' ? 0xf9fafb : 0x1f2937;
     scene.background = new THREE.Color(bgColor);
-    
+
     // Body background is transparent - canvas shows through
     document.body.style.backgroundColor = 'transparent';
-    
+
     // Listen for theme changes and update scene background
     window.addEventListener('themeChanged', (e) => {
         const theme = e.detail.theme;
@@ -102,7 +102,7 @@ function initScene() {
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(width, height);
-    
+
     // Ensure canvas is visible with explicit styles (no !important)
     const canvas = renderer.domElement;
     canvas.style.cssText = `
@@ -116,7 +116,7 @@ function initScene() {
         opacity: 1;
         pointer-events: auto;
     `;
-    
+
     // Also set container styles explicitly - proper layout element (no !important)
     container.style.cssText = `
         position: fixed;
@@ -129,24 +129,24 @@ function initScene() {
         pointer-events: auto;
         display: block;
     `;
-    
+
     container.appendChild(canvas);
-    
+
     // Verify canvas is actually in the DOM
     if (!container.contains(canvas)) {
         console.error('❌ Canvas was not added to container! Re-adding...');
         container.appendChild(canvas);
     }
-    
+
     // Update global references after creation
     window.scene = scene;
     window.camera = camera;
     window.renderer = renderer;
-    
+
     // Store canvas reference globally for debugging
     window.canvas = canvas;
     window.container = container;
-    
+
     // FORCE REFLOW IMMEDIATELY - This is the key fix!
     // Read layout properties to trigger browser reflow/paint
     void canvas.offsetHeight;
@@ -157,10 +157,10 @@ function initScene() {
     void container.offsetWidth;
     void container.clientHeight;
     void container.clientWidth;
-    
+
     // Force immediate render
     renderer.render(scene, camera);
-    
+
     // CRITICAL: Wait for updateFloatingControls to be defined, then call it
     // This is what makes the canvas visible when calculator panel opens
     const waitForFloatingControls = setInterval(() => {
@@ -171,14 +171,14 @@ function initScene() {
             // Force render after reflow
             renderer.render(scene, camera);
             console.log('✅ Called updateFloatingControls immediately after it was defined');
-            
+
             // Also force another render in the next frame
             requestAnimationFrame(() => {
                 renderer.render(scene, camera);
             });
         }
     }, 10); // Check every 10ms
-    
+
     // Also listen for when startApplication completes (updateFloatingControls is defined there)
     window.addEventListener('appReady', () => {
         if (typeof window.updateFloatingControls === 'function') {
@@ -189,15 +189,15 @@ function initScene() {
             console.log('✅ Called updateFloatingControls on appReady event');
         }
     }, { once: true });
-    
+
     // Also trigger another reflow after a microtask
     Promise.resolve().then(() => {
         void canvas.offsetHeight;
         renderer.render(scene, camera);
     });
-    
+
     console.log('✅ Canvas added and reflow forced immediately');
-    
+
     // Verify canvas is in DOM and visible
     setTimeout(() => {
         const computedStyle = window.getComputedStyle(canvas);
@@ -222,7 +222,7 @@ function initScene() {
             width: containerStyle.width,
             height: containerStyle.height
         });
-        
+
         // Force a render to ensure canvas is visible
         if (renderer && scene && camera) {
             renderer.render(scene, camera);
@@ -232,17 +232,17 @@ function initScene() {
     // Lights - store references for theme adjustments
     ambientLight = new THREE.AmbientLight(0x404040, 5);
     scene.add(ambientLight);
-    
+
     // Directional light positioned in world space (not attached to camera)
     directionalLight = new THREE.DirectionalLight(0xffffff, 3);
     directionalLight.position.set(10, 10, 10); // Position in world space
     scene.add(directionalLight);
-    
+
     // Add a second directional light from the opposite side for better illumination
     const directionalLight2 = new THREE.DirectionalLight(0xffffff, 1.5);
     directionalLight2.position.set(-10, 5, -10);
     scene.add(directionalLight2);
-    
+
     // Function to update lighting based on theme
     function updateLightingForTheme(theme) {
         if (theme === 'light') {
@@ -255,10 +255,10 @@ function initScene() {
             directionalLight.intensity = 3;
         }
     }
-    
+
     // Set initial lighting (reuse initialTheme from above)
     updateLightingForTheme(initialTheme);
-    
+
     // Listen for theme changes
     window.addEventListener('themeChanged', (e) => {
         updateLightingForTheme(e.detail.theme);
@@ -269,7 +269,7 @@ function initScene() {
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.screenSpacePanning = true;
-    
+
     // Update global reference after controls creation
     window.controls = controls;
 
@@ -279,31 +279,31 @@ function initScene() {
 
     initState.sceneReady = true;
     console.log('✅ Scene initialized');
-    
+
     // Setup visibility observer to resize when container becomes visible
     if (typeof window.setupContainerVisibilityObserver === 'function') {
         window.setupContainerVisibilityObserver();
     }
-    
+
     // FORCE REFLOW AND RENDER IMMEDIATELY - Multiple times to ensure it works
     if (renderer && scene && camera && canvas) {
         // Get actual container dimensions
         const actualWidth = container.clientWidth || window.innerWidth;
         const actualHeight = container.clientHeight || window.innerHeight;
-        
+
         // Resize renderer to match container
         renderer.setSize(actualWidth, actualHeight);
         camera.aspect = actualWidth / actualHeight;
         camera.updateProjectionMatrix();
-        
+
         // Force reflow by reading layout properties
         void canvas.offsetHeight;
         void container.offsetHeight;
-        
+
         // Force render
         renderer.render(scene, camera);
         console.log(`✅ Initial render forced - size: ${actualWidth}x${actualHeight}`);
-        
+
         // Force another reflow and render after a tiny delay
         requestAnimationFrame(() => {
             void canvas.offsetHeight;
@@ -312,7 +312,7 @@ function initScene() {
             console.log('✅ Second render in requestAnimationFrame');
         });
     }
-    
+
     // Force a resize to ensure canvas is properly sized
     setTimeout(() => {
         if (window.onWindowResize) {
@@ -328,27 +328,27 @@ function initScene() {
             }
         }
     }, 100);
-    
+
     // Check if regions are already loaded (they should be, but just in case)
     if (typeof regions !== 'undefined' && typeof regionInjuries !== 'undefined') {
         initState.regionsReady = true;
         console.log('✅ Regions data ready');
         checkReadiness(); // Check immediately if regions are ready
     }
-    
+
     // Also listen for regions ready event
     window.addEventListener('regionsReady', () => {
         initState.regionsReady = true;
         checkReadiness();
     }, { once: true });
-    
+
     loadModel();               // defined in model.js
-    
+
     // Check readiness after a delay to allow everything to load
     setTimeout(() => {
         checkReadiness();
     }, 200);
-    
+
     // Periodic readiness check - check every 500ms until ready
     const readinessInterval = setInterval(() => {
         if (initState.allReady) {
@@ -357,7 +357,7 @@ function initScene() {
         }
         checkReadiness();
     }, 500);
-    
+
     // Fallback: If after 5 seconds things aren't ready, log a warning
     setTimeout(() => {
         clearInterval(readinessInterval);
@@ -374,10 +374,10 @@ function initScene() {
             checkReadiness();
         }
     }, 5000);
-    
+
     // AGGRESSIVE REFLOW FORCING - Multiple attempts at different times
     // This simulates what happens when calculator panel opens
-    
+
     // Immediate reflow (right after scene init)
     requestAnimationFrame(() => {
         if (canvas && container && renderer && scene && camera) {
@@ -387,7 +387,7 @@ function initScene() {
             console.log('✅ Reflow #1 in requestAnimationFrame');
         }
     });
-    
+
     // Reflow after a short delay
     setTimeout(() => {
         if (canvas && container && renderer && scene && camera) {
@@ -396,16 +396,16 @@ function initScene() {
             void canvas.offsetWidth;
             void container.offsetHeight;
             void container.offsetWidth;
-            
+
             // Trigger resize event
             window.dispatchEvent(new Event('resize'));
-            
+
             // Force render
             renderer.render(scene, camera);
             console.log('✅ Reflow #2 after 100ms');
         }
     }, 100);
-    
+
     // Reflow after medium delay (when updateFloatingControls would run)
     setTimeout(() => {
         if (canvas && container && renderer && scene && camera) {
@@ -413,17 +413,17 @@ function initScene() {
             if (typeof window.updateFloatingControls === 'function') {
                 window.updateFloatingControls();
             }
-            
+
             // Force more reflows
             void canvas.offsetHeight;
             void container.offsetHeight;
-            
+
             // Force render
             renderer.render(scene, camera);
             console.log('✅ Reflow #3 after 300ms (with updateFloatingControls)');
         }
     }, 300);
-    
+
     // Final reflow after longer delay
     setTimeout(() => {
         if (canvas && container && renderer && scene && camera) {
@@ -432,26 +432,26 @@ function initScene() {
             const canvasWidth = canvas.offsetWidth;
             const containerHeight = container.offsetHeight;
             const containerWidth = container.offsetWidth;
-            
+
             // Trigger resize
             window.dispatchEvent(new Event('resize'));
-            
+
             // Force multiple renders
             for (let i = 0; i < 3; i++) {
                 renderer.render(scene, camera);
             }
-            
+
             console.log('✅ Reflow #4 after 500ms - Final attempt', {
                 canvasSize: `${canvasWidth}x${canvasHeight}`,
                 containerSize: `${containerWidth}x${containerHeight}`
             });
         }
     }, 500);
-    
+
     // Also wrap updateFloatingControls to force render after it runs
     const originalUpdateFloatingControls = window.updateFloatingControls;
     if (typeof originalUpdateFloatingControls === 'function') {
-        window.updateFloatingControls = function() {
+        window.updateFloatingControls = function () {
             const result = originalUpdateFloatingControls.apply(this, arguments);
             // After floating controls update, force canvas render
             setTimeout(() => {
@@ -463,52 +463,7 @@ function initScene() {
         };
     }
 
-    // Logo and Disclaimer panel shift logic
-    const logoContainer = document.querySelector('.logo-container');
-    const disclaimerLinks = document.querySelector('.disclaimer-links');
-    const leftPanels = document.querySelectorAll('#quiz-panel, #companies-panel, #contact-panel, #new-panel, #tab-panel');
-    const rightPanel = document.querySelector('#side-panel');
-
-    function updateBottomElements() {
-        let leftPanelOpen = false;
-        let leftPanelWidth = 0;
-        leftPanels.forEach(panel => {
-            if (!panel.classList.contains('collapsed')) {
-                leftPanelOpen = true;
-                leftPanelWidth = Math.max(leftPanelWidth, panel.offsetWidth);
-            }
-        });
-
-        if (leftPanelOpen) {
-            logoContainer.style.left = `${leftPanelWidth + 20}px`;
-        } else {
-            logoContainer.style.left = '8px';
-        }
-
-        if (rightPanel.classList.contains('active')) {
-            disclaimerLinks.style.right = `${rightPanel.offsetWidth + 20}px`;
-        } else {
-            disclaimerLinks.style.right = '8px';
-        }
-    }
-
-    const observer = new MutationObserver(mutations => {
-        let needsUpdate = false;
-        for (const mutation of mutations) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                needsUpdate = true;
-                break;
-            }
-        }
-        if (needsUpdate) {
-            updateBottomElements();
-        }
-    });
-
-    const observerConfig = { attributes: true, attributeFilter: ['class'] };
-    leftPanels.forEach(panel => observer.observe(panel, observerConfig));
-    observer.observe(rightPanel, observerConfig);
-
-    // Initial check
-    updateBottomElements();
+    // Logo and Disclaimer panel shift logic is handled by updateFloatingControls in index.html
+    // The previous implementation here was incomplete and conflicted with the main logic.
+    // We remove the MutationObserver here to allow the main controller to manage layout.
 }

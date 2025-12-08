@@ -38,6 +38,7 @@
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/onboarding.css" />
 </head>
 
 <body>
@@ -168,6 +169,8 @@
             <iframe src="BPC-157_interactive_dashboard.html" style="width: 100%; height: 100%; border: none;"></iframe>
         </div>
     </div>
+
+
 
     <!-- Injection Point Tooltip -->
     <div id="injection-tooltip">
@@ -316,9 +319,29 @@
     <button id="new-panel-toggle" class="left-toggle" data-closed-icon="💊" data-open-icon="✕"
         title="Toggle peptides database">💊</button>
 
+    <!-- Analytics Panel Toggle Button -->
+    <button id="analytics-toggle" class="left-toggle" data-closed-icon="📈" data-open-icon="✕"
+        title="Toggle public analytics">📈</button>
+
     <!-- BPC-157 Dashboard Toggle Button -->
     <button id="bpc157-toggle" class="left-toggle" data-closed-icon="📊" data-open-icon="✕"
         title="Toggle BPC-157 research dashboard">📊</button>
+
+    <!-- Saved Locations Toggle (Top Right) -->
+    <button id="saved-toggle" class="right-toggle" data-closed-icon="📍" data-open-icon="✕"
+        title="Saved Locations">📍</button>
+
+    <!-- Compare Panel Toggle Button -->
+    <button id="compare-toggle" class="left-toggle" data-closed-icon="⚖️" data-open-icon="✕"
+        title="Compare peptides">⚖️</button>
+
+    <!-- Journal Panel Toggle Button -->
+    <button id="journal-toggle" class="left-toggle" data-closed-icon="📓" data-open-icon="✕"
+        title="Peptide user journal">📓</button>
+
+    <!-- Chat Panel Toggle Button -->
+    <button id="chat-toggle" class="left-toggle" data-closed-icon="🤖" data-open-icon="✕"
+        title="AI Peptide Q&A">🤖</button>
 
     <!-- Toggle Button for Tab Panel -->
     <button id="tab-toggle" class="left-toggle" data-closed-icon="☰" data-open-icon="✕"
@@ -2333,6 +2356,8 @@
         <h2 id="panel-title" class="text-xl font-bold mb-3 text-white"></h2>
         <p id="panel-portion" class="text-gray-300 mb-3"></p>
 
+        <!-- Mark injury was removed from here to move to saved-locations-panel -->
+
         <!-- Common Injuries Section -->
         <div class="mb-4">
             <p class="text-gray-300 font-semibold mb-1">Common Injuries:</p>
@@ -2379,11 +2404,36 @@
                 <span class="field-label">Notes:</span>
                 <span id="proc-notes" class="field-value"></span>
             </div>
+
+            <div class="mt-4">
+                <img id="panel-image" src="assets/injection types.jpg" alt="Injection Types"
+                    class="w-full rounded-lg shadow-md" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Saved Locations Panel (Right) -->
+    <div id="saved-locations-panel" class="side-panel-right collapsed">
+        <div class="studies-header">
+            <h2 class="studies-title">📍 Saved Locations</h2>
+            <div class="studies-meta">
+                <span>Your marked injury spots</span>
+            </div>
         </div>
 
-        <img id="panel-image" src="assets/injection types.jpg" alt="Injection Types"
-            class="w-full rounded-lg shadow-md" />
+        <div class="saved-actions" style="padding: 0 16px 16px 16px; border-bottom: 1px solid var(--border-secondary);">
+            <button id="save-current-spot-btn" class="action-btn primary" disabled>
+                ➕ Save Selected Spot
+            </button>
+        </div>
+
+        <div id="saved-list" class="studies-list">
+            <!-- Items added via JS -->
+            <div class="no-results">No locations saved yet. Click a muscle interactive area then click 'Save Selected
+                Spot'.</div>
+        </div>
     </div>
+
 
     <!-- Calculator Panel (Left) -->
     <div id="calc-panel" class="collapsed">
@@ -2576,6 +2626,8 @@
         <script src="js/three-deps.js"></script>
 
         <!-- Application modules (order matters) -->
+        <script src="js/loading-states.js"></script>
+        <script src="js/onboarding.js"></script>
         <script src="js/unit-converter.js"></script>
         <script src="js/theme.js"></script>
         <script src="js/regions.js"></script>
@@ -2592,1400 +2644,277 @@
         <script src="js/peptides-panel.js"></script>
         <script src="js/keyboard-nav.js"></script>
         <script src="js/analytics.js"></script>
-
-        <!-- Bootstrap -->
+        <script src="js/peptide-compare.js"></script>
+        <script src="js/peptide-journal.js"></script>
+        <script src="js/peptide-chat.js"></script>
+        <script src="js/saved-locations.js"></script>
         <script>
-            // Wait for both window load and Three.js dependencies
+            // Global error handler
+            window.onerror = function (msg, url, lineNo, columnNo, error) {
+                console.error("Global error caught:", { msg, url, lineNo, columnNo, error });
+                return false;
+            };
+
+            // Main Application Initialization
             function startApplication() {
                 console.log("🚀 Starting application initialization...");
 
                 // Initialize unit converter first
                 if (window.UnitConverter && window.UnitConverter.init) {
                     window.UnitConverter.init();
-                    console.log("✅ Unit converter initialized");
                 }
 
                 // Initialize scene first
-                initScene();
-                animate();
+                if (typeof initScene === 'function') {
+                    initScene();
+                    animate();
+                } else {
+                    console.error("❌ initScene not found!");
+                }
 
-                // Initialize calculator and peptide analysis (they may wait for dependencies)
-                initializeCalculator();
-                initializePeptideAnalysis();
+                // Initialize calculator and peptide analysis
+                if (typeof initializeCalculator === 'function') initializeCalculator();
+                if (typeof initializePeptideAnalysis === 'function') initializePeptideAnalysis();
 
                 // Set up window resize handler
                 window.addEventListener("resize", onWindowResize);
 
-                // Set up click handler - but it will check readiness internally
+                // Set up click handler
                 const container = document.getElementById("container");
                 if (container) {
                     container.addEventListener("click", onMouseClick);
                     container.addEventListener("mousemove", onMouseMove);
-                } else {
-                    console.error(
-                        "❌ Container element not found for click handler",
-                    );
                 }
 
-                // Calculator drag handle
-                const calcDragHandle = document.getElementById("calc-drag-handle");
-                const calcPanel = document.getElementById("calc-panel");
-                const calcToggleBtn = document.getElementById("calc-toggle");
-                let draggingCalc = false;
-                let calcStartX = 0;
-                let calcStartWidth = 0;
-
-                if (calcDragHandle && calcPanel) {
-                    calcDragHandle.addEventListener("mousedown", (e) => {
-                        draggingCalc = true;
-                        calcStartX = e.clientX;
-                        calcStartWidth = calcPanel.offsetWidth;
-                        calcPanel.style.transition = "none";
-                        document.body.style.userSelect = "none";
-                        document.body.style.webkitUserSelect = "none";
-                        disableAllToggleTransitions();
-                        e.preventDefault();
-                    });
-                }
-
-                // Also listen for app ready event as backup
-                window.addEventListener("appReady", () => {
-                    console.log(
-                        "✅ App ready event received - all systems operational",
-                    );
-                });
-
-                const tabToggle = document.getElementById("tab-toggle");
-                const tabPanel = document.getElementById("tab-panel");
-                const studiesToggle = document.getElementById("studies-toggle");
-                const studiesPanel = document.getElementById("studies-panel");
-                const searchContainer =
-                    document.getElementById("search-container");
-                const companiesPanel = document.getElementById("companies-panel");
-                const companiesToggle = document.getElementById("companies-toggle");
-                const quizPanel = document.getElementById("quiz-panel");
-                const quizToggle = document.getElementById("quiz-toggle");
-                const contactPanel = document.getElementById("contact-panel");
-                const contactToggle = document.getElementById("contact-toggle");
-                const newPanel = document.getElementById("new-panel");
-                const newPanelToggle = document.getElementById("new-panel-toggle");
-
-                function disableAllToggleTransitions() {
-                    const toggles = [
-                        tabToggle,
-                        studiesToggle,
-                        companiesToggle,
-                        quizToggle,
-                        contactToggle,
-                        newPanelToggle,
-                        document.getElementById("calc-toggle"),
-                        document.getElementById("theme-toggle"),
-                        document.getElementById("peptide-analysis-toggle")
-                    ];
-                    toggles.forEach(toggle => {
-                        if (toggle) toggle.style.transition = "none";
-                    });
-                    if (searchContainer) searchContainer.style.transition = "none";
-                    const logoContainer = document.querySelector(".logo-container");
-                    if (logoContainer) logoContainer.style.transition = "none";
-                }
-
-                function enableAllToggleTransitions() {
-                    const toggles = [
-                        tabToggle,
-                        studiesToggle,
-                        companiesToggle,
-                        quizToggle,
-                        contactToggle,
-                        newPanelToggle,
-                        document.getElementById("calc-toggle"),
-                        document.getElementById("theme-toggle"),
-                        document.getElementById("peptide-analysis-toggle"),
-                        document.getElementById("bpc157-toggle")
-                    ];
-                    toggles.forEach(toggle => {
-                        if (toggle) toggle.style.transition = "left 0.3s ease-in-out, background 0.2s ease";
-                    });
-                    if (searchContainer) searchContainer.style.transition = "left 0.3s ease-in-out";
-                    const logoContainer = document.querySelector(".logo-container");
-                    if (logoContainer) logoContainer.style.transition = "left 0.3s ease-in-out";
-                }
-
-                function computeBaseLeft() {
-                    if (typeof getLeftControlBase === "function") {
-                        return getLeftControlBase();
-                    }
-                    let width = 0;
-                    const companiesPanel = document.getElementById("companies-panel");
-                    const quizPanel = document.getElementById("quiz-panel");
-                    const calcPanel = document.getElementById("calc-panel");
-                    const contactPanel = document.getElementById("contact-panel");
-                    const newPanel = document.getElementById("new-panel");
-                    if (tabPanel && !tabPanel.classList.contains("collapsed")) {
-                        width = Math.max(width, tabPanel.offsetWidth);
-                    }
-                    if (
-                        studiesPanel &&
-                        !studiesPanel.classList.contains("collapsed")
-                    ) {
-                        width = Math.max(width, studiesPanel.offsetWidth);
-                    }
-                    if (
-                        companiesPanel &&
-                        !companiesPanel.classList.contains("collapsed")
-                    ) {
-                        width = Math.max(width, companiesPanel.offsetWidth);
-                    }
-                    if (quizPanel && !quizPanel.classList.contains("collapsed")) {
-                        width = Math.max(width, quizPanel.offsetWidth);
-                    }
-                    if (calcPanel && !calcPanel.classList.contains("collapsed")) {
-                        width = Math.max(width, calcPanel.offsetWidth);
-                    }
-                    if (contactPanel && !contactPanel.classList.contains("collapsed")) {
-                        width = Math.max(width, contactPanel.offsetWidth);
-                    }
-                    if (newPanel && !newPanel.classList.contains("collapsed")) {
-                        width = Math.max(width, newPanel.offsetWidth);
-                    }
-                    const bpc157Panel = document.getElementById("bpc157-panel");
-                    if (bpc157Panel && !bpc157Panel.classList.contains("collapsed")) {
-                        width = Math.max(width, bpc157Panel.offsetWidth);
-                    }
-                    return width + 20;
-                }
-
-                function updateFloatingControls() {
-                    const baseLeft = computeBaseLeft();
-
-                    if (tabToggle) {
-                        tabToggle.style.left = `${baseLeft}px`;
-                    }
-
-                    if (studiesToggle) {
-                        studiesToggle.style.left = `${baseLeft}px`;
-                    }
-
-                    if (companiesToggle) {
-                        companiesToggle.style.left = `${baseLeft}px`;
-                    }
-
-                    const quizToggle = document.getElementById("quiz-toggle");
-                    if (quizToggle) {
-                        quizToggle.style.left = `${baseLeft}px`;
-                    }
-
-                    const contactToggle = document.getElementById("contact-toggle");
-                    if (contactToggle) {
-                        contactToggle.style.left = `${baseLeft}px`;
-                    }
-
-                    const newPanelToggle = document.getElementById("new-panel-toggle");
-                    if (newPanelToggle) {
-                        newPanelToggle.style.left = `${baseLeft}px`;
-                    }
-
-                    const bpc157Toggle = document.getElementById("bpc157-toggle");
-                    if (bpc157Toggle) {
-                        bpc157Toggle.style.left = `${baseLeft}px`;
-                    }
-
-                    if (searchContainer) {
-                        if (searchContainer.classList.contains("collapsed")) {
-                            // Position on the left when collapsed
-                            searchContainer.style.transform = "none";
-                            searchContainer.style.left = `${baseLeft}px`;
-                            searchContainer.style.top = "60px";
-                        } else {
-                            // When expanded, it's centered by CSS (no need to override)
-                            // The CSS already handles centering for .expanded state
-                        }
-                    }
-
-                    const calcToggle = document.getElementById("calc-toggle");
-                    if (calcToggle) {
-                        calcToggle.style.left = `${baseLeft}px`;
-                    }
-
-                    const themeToggle = document.getElementById("theme-toggle");
-                    if (themeToggle) {
-                        themeToggle.style.left = `${baseLeft}px`;
-                    }
-
-                    const peptideAnalysisToggle = document.getElementById(
-                        "peptide-analysis-toggle",
-                    );
-                    if (peptideAnalysisToggle) {
-                        peptideAnalysisToggle.style.left = `${baseLeft}px`;
-                    }
-
-                    const logoContainer = document.querySelector(".logo-container");
-                    if (logoContainer) {
-                        logoContainer.style.left = `${baseLeft + 8}px`;
-                    }
-                }
-
-                function setPanelState(panel, toggle, open) {
-                    if (!panel || !toggle) return;
-                    const currentlyOpen =
-                        !panel.classList.contains("collapsed");
-                    if (open === currentlyOpen) {
-                        updateFloatingControls();
-                        return;
-                    }
-
-                    if (open) {
-                        panel.classList.remove("collapsed");
-                        toggle.classList.remove("panel-collapsed");
-                        if (toggle.dataset.openIcon) {
-                            toggle.innerHTML = toggle.dataset.openIcon;
-                        } else {
-                            toggle.innerHTML = "✕";
-                        }
-                    } else {
-                        panel.classList.add("collapsed");
-                        toggle.classList.add("panel-collapsed");
-                        if (toggle.dataset.closedIcon) {
-                            toggle.innerHTML = toggle.dataset.closedIcon;
-                        } else {
-                            toggle.innerHTML = "☰";
-                        }
-                    }
-
-                    updateFloatingControls();
-                }
-
-                function togglePanel(panel, toggle, collapseList = []) {
-                    if (!panel || !toggle) return;
-                    const shouldOpen = panel.classList.contains("collapsed");
-
-                    if (shouldOpen && Array.isArray(collapseList)) {
-                        collapseList.forEach(
-                            ({ panel: otherPanel, toggle: otherToggle }) => {
-                                if (otherPanel && otherToggle) {
-                                    setPanelState(
-                                        otherPanel,
-                                        otherToggle,
-                                        false,
-                                    );
-                                }
-                            },
-                        );
-                    }
-
-                    setPanelState(panel, toggle, shouldOpen);
-                }
-
-                // Expose centralized toggling for other modules
-                window.togglePanel = togglePanel;
-
-                if (tabToggle && tabPanel && !tabToggle.__bound) {
-                    tabToggle.addEventListener("click", () => {
-                        togglePanel(tabPanel, tabToggle, [
-                            { panel: studiesPanel, toggle: studiesToggle },
-                            { panel: document.getElementById("quiz-panel"), toggle: document.getElementById("quiz-toggle") },
-                            { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
-                            { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
-                            { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
-                        ]);
-                    });
-                    tabToggle.__bound = true;
-                }
-
-                // Quiz drag handle
-                const quizDragHandle = document.getElementById("quiz-drag-handle");
-                let draggingQuiz = false;
-                let quizStartX = 0;
-                let quizStartWidth = 0;
-
-                if (quizDragHandle && quizPanel) {
-                    quizDragHandle.addEventListener("mousedown", (e) => {
-                        draggingQuiz = true;
-                        quizStartX = e.clientX;
-                        quizStartWidth = quizPanel.offsetWidth;
-                        quizPanel.style.transition = "none";
-                        document.body.style.userSelect = "none";
-                        document.body.style.webkitUserSelect = "none";
-                        disableAllToggleTransitions();
-                        e.preventDefault();
-                    });
-                }
-
-                // Companies drag handle
-                const companiesDragHandle = document.getElementById("companies-drag-handle");
-                let draggingCompanies = false;
-                let companiesStartX = 0;
-                let companiesStartWidth = 0;
-
-                if (companiesDragHandle && companiesPanel) {
-                    companiesDragHandle.addEventListener("mousedown", (e) => {
-                        draggingCompanies = true;
-                        companiesStartX = e.clientX;
-                        companiesStartWidth = companiesPanel.offsetWidth;
-                        companiesPanel.style.transition = "none";
-                        document.body.style.userSelect = "none";
-                        document.body.style.webkitUserSelect = "none";
-                        disableAllToggleTransitions();
-                        e.preventDefault();
-                    });
-                }
-
-                // Contact drag handle
-                const contactDragHandle = document.getElementById("contact-drag-handle");
-                let draggingContact = false;
-                let contactStartX = 0;
-                let contactStartWidth = 0;
-
-                if (contactDragHandle && contactPanel) {
-                    contactDragHandle.addEventListener("mousedown", (e) => {
-                        draggingContact = true;
-                        contactStartX = e.clientX;
-                        contactStartWidth = contactPanel.offsetWidth;
-                        contactPanel.style.transition = "none";
-                        document.body.style.userSelect = "none";
-                        document.body.style.webkitUserSelect = "none";
-                        disableAllToggleTransitions();
-                        e.preventDefault();
-                    });
-                }
-
-                // New panel drag handle
-                const newPanelDragHandle = document.getElementById("new-panel-drag-handle");
-                let draggingNewPanel = false;
-                let newPanelStartX = 0;
-                let newPanelStartWidth = 0;
-
-                if (newPanelDragHandle && newPanel) {
-                    newPanelDragHandle.addEventListener("mousedown", (e) => {
-                        draggingNewPanel = true;
-                        newPanelStartX = e.clientX;
-                        newPanelStartWidth = newPanel.offsetWidth;
-                        newPanel.style.transition = "none";
-                        document.body.style.userSelect = "none";
-                        document.body.style.webkitUserSelect = "none";
-                        disableAllToggleTransitions();
-                        e.preventDefault();
-                    });
-                }
-
-                // BPC-157 panel drag handle
-                const bpc157DragHandle = document.getElementById("bpc157-drag-handle");
-                const bpc157Panel = document.getElementById("bpc157-panel");
-                let draggingBpc157 = false;
-                let bpc157StartX = 0;
-                let bpc157StartWidth = 0;
-
-                if (bpc157DragHandle && bpc157Panel) {
-                    bpc157DragHandle.addEventListener("mousedown", (e) => {
-                        draggingBpc157 = true;
-                        bpc157StartX = e.clientX;
-                        bpc157StartWidth = bpc157Panel.offsetWidth;
-                        bpc157Panel.style.transition = "none";
-                        document.body.style.userSelect = "none";
-                        document.body.style.webkitUserSelect = "none";
-                        disableAllToggleTransitions();
-                        e.preventDefault();
-                    });
-                }
-
-                if (studiesToggle && studiesPanel && !studiesToggle.__bound) {
-                    studiesToggle.addEventListener("click", () => {
-                        const wasCollapsed =
-                            studiesPanel.classList.contains("collapsed");
-                        togglePanel(studiesPanel, studiesToggle, [
-                            { panel: tabPanel, toggle: tabToggle },
-                            { panel: document.getElementById("quiz-panel"), toggle: document.getElementById("quiz-toggle") },
-                            { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
-                            { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
-                            { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
-                            { panel: document.getElementById("bpc157-panel"), toggle: document.getElementById("bpc157-toggle") },
-                        ]);
-                        if (
-                            wasCollapsed &&
-                            typeof window.initializeStudiesPanel === "function"
-                        ) {
-                            window.initializeStudiesPanel({
-                                deferRender: false,
-                            });
-                        }
-                    });
-                    studiesToggle.__bound = true;
-                }
-
-                // Quiz toggle wiring (only if not already bound by initializeToggleButtons)
-                if (quizToggle && quizPanel && !quizToggle.__bound) {
-                    quizToggle.addEventListener("click", () => {
-                        const wasCollapsed = quizPanel.classList.contains("collapsed");
-                        togglePanel(quizPanel, quizToggle, [
-                            { panel: tabPanel, toggle: tabToggle },
-                            { panel: studiesPanel, toggle: studiesToggle },
-                            { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
-                            { panel: calcPanel, toggle: calcToggleBtn },
-                            { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
-                            { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
-                            { panel: document.getElementById("bpc157-panel"), toggle: document.getElementById("bpc157-toggle") },
-                        ]);
-                        if (wasCollapsed && typeof window.initializePeptideQuiz === "function") {
-                            window.initializePeptideQuiz();
-                        }
-                    });
-                    quizToggle.__bound = true;
-                }
-
-                // Calculator toggle wiring
-                if (calcToggleBtn && calcPanel && !calcToggleBtn.__bound) {
-                    calcToggleBtn.addEventListener("click", () => {
-                        const wasCollapsed = calcPanel.classList.contains("collapsed");
-                        togglePanel(calcPanel, calcToggleBtn, [
-                            { panel: tabPanel, toggle: tabToggle },
-                            { panel: studiesPanel, toggle: studiesToggle },
-                            { panel: document.getElementById("companies-panel"), toggle: document.getElementById("companies-toggle") },
-                            { panel: quizPanel, toggle: quizToggle },
-                            { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
-                            { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
-                            { panel: document.getElementById("bpc157-panel"), toggle: document.getElementById("bpc157-toggle") },
-                        ]);
-                        // Initialize calculator when panel opens
-                        if (wasCollapsed && typeof initializeCalculator === "function") {
-                            // Use setTimeout to ensure panel is fully visible before initializing
-                            setTimeout(() => {
-                                initializeCalculator();
-                            }, 100);
-                        }
-                    });
-                    calcToggleBtn.__bound = true;
-                }
-
-                // Drag functionality for adjusting panel widths
-                const tabDragHandle =
-                    document.getElementById("tab-drag-handle");
-                let draggingTab = false;
-                let tabStartX = 0;
-                let tabStartWidth = 0;
-
-                if (tabDragHandle && tabPanel) {
-                    tabDragHandle.addEventListener("mousedown", (e) => {
-                        draggingTab = true;
-                        tabStartX = e.clientX;
-                        tabStartWidth = tabPanel.offsetWidth;
-                        tabPanel.style.transition = "none";
-                        document.body.style.userSelect = "none";
-                        document.body.style.webkitUserSelect = "none";
-                        disableAllToggleTransitions();
-                        e.preventDefault();
-                    });
-                }
-
-                const studiesDragHandle = document.getElementById(
-                    "studies-drag-handle",
-                );
-                let draggingStudies = false;
-                let studiesStartX = 0;
-                let studiesStartWidth = 0;
-
-                if (studiesDragHandle && studiesPanel) {
-                    studiesDragHandle.addEventListener("mousedown", (e) => {
-                        draggingStudies = true;
-                        studiesStartX = e.clientX;
-                        studiesStartWidth = studiesPanel.offsetWidth;
-                        studiesPanel.style.transition = "none";
-                        document.body.style.userSelect = "none";
-                        document.body.style.webkitUserSelect = "none";
-                        disableAllToggleTransitions();
-                        e.preventDefault();
-                    });
-                }
-
-                document.addEventListener("mousemove", (e) => {
-                    if (draggingTab) {
-                        const deltaX = e.clientX - tabStartX;
-                        const newWidth = tabStartWidth + deltaX;
-                        const constrainedWidth = Math.max(
-                            300,
-                            Math.min(window.innerWidth * 0.6, newWidth),
-                        );
-                        tabPanel.style.width = `${constrainedWidth}px`;
-                        if (tabToggle) {
-                            tabToggle.style.transition = "none";
-                        }
-                        updateFloatingControls();
-                    } else if (draggingStudies) {
-                        const deltaX = e.clientX - studiesStartX;
-                        const newWidth = studiesStartWidth + deltaX;
-                        const constrainedWidth = Math.max(
-                            300,
-                            Math.min(window.innerWidth * 0.6, newWidth),
-                        );
-                        studiesPanel.style.width = `${constrainedWidth}px`;
-                        if (studiesToggle) {
-                            studiesToggle.style.transition = "none";
-                        }
-                        updateFloatingControls();
-                    } else if (draggingQuiz) {
-                        const deltaX = e.clientX - quizStartX;
-                        const newWidth = quizStartWidth + deltaX;
-                        const constrainedWidth = Math.max(
-                            300,
-                            Math.min(window.innerWidth * 0.6, newWidth),
-                        );
-                        quizPanel.style.width = `${constrainedWidth}px`;
-                        const quizToggleBtn = document.getElementById("quiz-toggle");
-                        if (quizToggleBtn) quizToggleBtn.style.transition = "none";
-                        updateFloatingControls();
-                    } else if (draggingCompanies) {
-                        const deltaX = e.clientX - companiesStartX;
-                        const newWidth = companiesStartWidth + deltaX;
-                        const constrainedWidth = Math.max(
-                            300,
-                            Math.min(window.innerWidth * 0.6, newWidth),
-                        );
-                        companiesPanel.style.width = `${constrainedWidth}px`;
-                        if (companiesToggle) companiesToggle.style.transition = "none";
-                        updateFloatingControls();
-                    } else if (draggingCalc) {
-                        const deltaX = e.clientX - calcStartX;
-                        const newWidth = calcStartWidth + deltaX;
-                        const constrainedWidth = Math.max(
-                            300,
-                            Math.min(window.innerWidth * 0.6, newWidth),
-                        );
-                        calcPanel.style.width = `${constrainedWidth}px`;
-                        if (calcToggleBtn) calcToggleBtn.style.transition = "none";
-                        updateFloatingControls();
-                    } else if (draggingContact) {
-                        const deltaX = e.clientX - contactStartX;
-                        const newWidth = contactStartWidth + deltaX;
-                        const constrainedWidth = Math.max(
-                            300,
-                            Math.min(window.innerWidth * 0.6, newWidth),
-                        );
-                        contactPanel.style.width = `${constrainedWidth}px`;
-                        if (contactToggle) contactToggle.style.transition = "none";
-                        updateFloatingControls();
-                    } else if (draggingNewPanel) {
-                        const deltaX = e.clientX - newPanelStartX;
-                        const newWidth = newPanelStartWidth + deltaX;
-                        const constrainedWidth = Math.max(
-                            300,
-                            Math.min(window.innerWidth * 0.6, newWidth),
-                        );
-                        newPanel.style.width = `${constrainedWidth}px`;
-                        if (newPanelToggle) newPanelToggle.style.transition = "none";
-                        updateFloatingControls();
-                    } else if (draggingBpc157) {
-                        const deltaX = e.clientX - bpc157StartX;
-                        const newWidth = bpc157StartWidth + deltaX;
-                        const constrainedWidth = Math.max(
-                            400,
-                            Math.min(window.innerWidth * 0.8, newWidth),
-                        );
-                        bpc157Panel.style.width = `${constrainedWidth}px`;
-                        const bpc157Toggle = document.getElementById("bpc157-toggle");
-                        if (bpc157Toggle) bpc157Toggle.style.transition = "none";
-                        updateFloatingControls();
-                    }
-                });
-
-                document.addEventListener("mouseup", () => {
-                    if (draggingTab) {
-                        draggingTab = false;
-                        tabPanel.style.transition =
-                            "transform 0.3s ease-in-out";
-                        document.body.style.userSelect = "";
-                        document.body.style.webkitUserSelect = "";
-                        enableAllToggleTransitions();
-                        updateFloatingControls();
-                    }
-                    if (draggingStudies) {
-                        draggingStudies = false;
-                        studiesPanel.style.transition =
-                            "transform 0.3s ease-in-out";
-                        document.body.style.userSelect = "";
-                        document.body.style.webkitUserSelect = "";
-                        enableAllToggleTransitions();
-                        updateFloatingControls();
-                    }
-                    if (draggingQuiz) {
-                        draggingQuiz = false;
-                        quizPanel.style.transition =
-                            "transform 0.3s ease-in-out";
-                        document.body.style.userSelect = "";
-                        document.body.style.webkitUserSelect = "";
-                        enableAllToggleTransitions();
-                        updateFloatingControls();
-                    }
-                    if (draggingCompanies) {
-                        draggingCompanies = false;
-                        companiesPanel.style.transition =
-                            "transform 0.3s ease-in-out";
-                        document.body.style.userSelect = "";
-                        document.body.style.webkitUserSelect = "";
-                        enableAllToggleTransitions();
-                        updateFloatingControls();
-                    }
-                    if (draggingCalc) {
-                        draggingCalc = false;
-                        calcPanel.style.transition = "transform 0.3s ease-in-out";
-                        document.body.style.userSelect = "";
-                        document.body.style.webkitUserSelect = "";
-                        enableAllToggleTransitions();
-                        updateFloatingControls();
-                    }
-                    if (draggingContact) {
-                        draggingContact = false;
-                        contactPanel.style.transition = "transform 0.3s ease-in-out";
-                        document.body.style.userSelect = "";
-                        document.body.style.webkitUserSelect = "";
-                        enableAllToggleTransitions();
-                        updateFloatingControls();
-                    }
-                    if (draggingNewPanel) {
-                        draggingNewPanel = false;
-                        newPanel.style.transition = "transform 0.3s ease-in-out";
-                        document.body.style.userSelect = "";
-                        document.body.style.webkitUserSelect = "";
-                        enableAllToggleTransitions();
-                        updateFloatingControls();
-                    }
-                    if (draggingBpc157) {
-                        draggingBpc157 = false;
-                        bpc157Panel.style.transition = "transform 0.3s ease-in-out";
-                        document.body.style.userSelect = "";
-                        document.body.style.webkitUserSelect = "";
-                        enableAllToggleTransitions();
-                        updateFloatingControls();
-                    }
-                });
-
-                window.addEventListener("resize", () => {
-                    updateFloatingControls();
-                });
-
-                if (tabToggle) {
-                    tabToggle.innerHTML =
-                        tabToggle.dataset.closedIcon || tabToggle.innerHTML;
-                }
-                if (studiesToggle) {
-                    studiesToggle.innerHTML =
-                        studiesToggle.dataset.closedIcon ||
-                        studiesToggle.innerHTML;
-                }
-
-                window.setStudiesPanelState = (open = true) => {
-                    if (open && tabPanel && tabToggle) {
-                        setPanelState(tabPanel, tabToggle, false);
-                    }
-                    setPanelState(studiesPanel, studiesToggle, open);
-                };
-                window.setTabPanelState = (open = true) => {
-                    if (open && studiesPanel && studiesToggle) {
-                        setPanelState(studiesPanel, studiesToggle, false);
-                    }
-                    setPanelState(tabPanel, tabToggle, open);
-                };
-
-                // Expose updateFloatingControls for external use (e.g., companies.js)
-                window.updateFloatingControls = updateFloatingControls;
-
+                // Initialize UI
+                initializeTabs();
+                initializeToggleButtons();
                 updateFloatingControls();
+
+                window.addEventListener("resize", updateFloatingControls);
+
+                // Also update right-side controls on resize
+                window.addEventListener("resize", updateRightFloatingControls);
+                updateRightFloatingControls();
             }
 
-            // Wait for Three.js dependencies to load before starting the application
-            function initializeApp() {
-                if (window.threeDepsReady) {
-                    startApplication();
-                } else {
-                    // Wait for Three.js dependencies
-                    window.addEventListener('threeDepsReady', () => {
-                        startApplication();
-                    }, { once: true });
+            // Right-Side Floating Controls Logic (Stacking Panels)
+            window.updateRightFloatingControls = function () {
+                const infoPanel = document.getElementById("side-panel");
+                const savedPanel = document.getElementById("saved-locations-panel");
+                const savedToggle = document.getElementById("saved-toggle");
 
-                    // Fallback: if Three.js is already loaded, check immediately
-                    if (typeof THREE !== 'undefined' && typeof THREE.OBJLoader !== 'undefined') {
-                        window.threeDepsReady = true;
-                        window.dispatchEvent(new CustomEvent('threeDepsReady'));
+                // Info Panel is fixed at right: 0 (or -320 when hidden)
+                // We check if it's active
+                const isInfoOpen = infoPanel && infoPanel.classList.contains("active");
+                const infoWidth = isInfoOpen ? (infoPanel.offsetWidth || 300) : 0;
+
+                // Saved Panel
+                const isSavedOpen = savedPanel && !savedPanel.classList.contains("collapsed");
+                const savedWidth = isSavedOpen ? (savedPanel.offsetWidth || 320) : 0;
+
+                // Stack Saved Panel to the left of Info Panel if both are open
+                if (savedPanel) {
+                    if (isInfoOpen && isSavedOpen) {
+                        savedPanel.style.right = `${infoWidth}px`;
+                    } else {
+                        savedPanel.style.right = "0px";
                     }
+                }
+
+                // Position Toggle to the left of the leftmost panel
+                if (savedToggle) {
+                    const totalOffset = infoWidth + savedWidth + 20; // 20px padding
+                    savedToggle.style.right = `${totalOffset}px`;
+                }
+            };
+
+            // Floating Controls Logic (Positions toggles next to open panels)
+            function updateFloatingControls() {
+                let width = 0;
+                // List of left-side panels that push buttons
+                const panels = [
+                    "tab-panel", "studies-panel", "companies-panel", "quiz-panel",
+                    "calc-panel", "contact-panel", "new-panel", "bpc157-panel",
+                    "compare-panel", "journal-panel", "chat-panel", "analytics-panel"
+                ];
+
+                panels.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el && !el.classList.contains("collapsed")) {
+                        width = Math.max(width, el.offsetWidth);
+                    }
+                });
+
+                const baseLeft = width + 20; // 20px base margin
+
+                // Update all left-side toggles
+                const toggles = [
+                    "tab-toggle", "studies-toggle", "companies-toggle", "quiz-toggle",
+                    "contact-toggle", "new-panel-toggle", "bpc157-toggle", "calc-toggle",
+                    "theme-toggle", "peptide-analysis-toggle", "compare-toggle",
+                    "journal-toggle", "chat-toggle", "analytics-toggle"
+                ];
+
+                toggles.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) btn.style.left = `${baseLeft}px`;
+                });
+
+                // Update logo
+                const logo = document.querySelector(".logo-container");
+                if (logo) logo.style.left = `${baseLeft + 8}px`;
+
+                // Update search container if collapsed
+                const search = document.getElementById("search-container");
+                if (search && search.classList.contains("collapsed")) {
+                    search.style.left = `${baseLeft}px`;
                 }
             }
 
-            // Tab switching functionality - initialize immediately, doesn't depend on Three.js
+            // Centralized Panel Configuration
+            const LEFT_PANEL_CONFIG = [
+                { panelId: "tab-panel", toggleId: "tab-toggle" },
+                { panelId: "studies-panel", toggleId: "studies-toggle" },
+                { panelId: "companies-panel", toggleId: "companies-toggle" },
+                { panelId: "quiz-panel", toggleId: "quiz-toggle" },
+                { panelId: "calc-panel", toggleId: "calc-toggle" },
+                { panelId: "contact-panel", toggleId: "contact-toggle" },
+                { panelId: "new-panel", toggleId: "new-panel-toggle" },
+                { panelId: "bpc157-panel", toggleId: "bpc157-toggle" },
+                { panelId: "compare-panel", toggleId: "compare-toggle" },
+                { panelId: "journal-panel", toggleId: "journal-toggle" },
+                { panelId: "chat-panel", toggleId: "chat-toggle" },
+                { panelId: "analytics-panel", toggleId: "analytics-toggle" }
+            ];
+
+            // Centralized Panel Toggling
+            window.togglePanel = function (panel, toggle) {
+                if (!panel || !toggle) return;
+
+                const isOpening = panel.classList.contains("collapsed");
+
+                if (isOpening) {
+                    // Close ALL other known left panels
+                    LEFT_PANEL_CONFIG.forEach(config => {
+                        const otherPanel = document.getElementById(config.panelId);
+                        const otherToggle = document.getElementById(config.toggleId);
+
+                        if (otherPanel && otherPanel !== panel) {
+                            otherPanel.classList.add("collapsed");
+                            if (otherToggle) {
+                                otherToggle.classList.add("panel-collapsed");
+                                if (otherToggle.dataset.closedIcon) {
+                                    otherToggle.innerHTML = otherToggle.dataset.closedIcon;
+                                }
+                            }
+                        }
+                    });
+
+                    // Open target
+                    panel.classList.remove("collapsed");
+                    toggle.classList.remove("panel-collapsed");
+                    if (toggle.dataset.openIcon) toggle.innerHTML = toggle.dataset.openIcon;
+                } else {
+                    // Close target
+                    panel.classList.add("collapsed");
+                    toggle.classList.add("panel-collapsed");
+                    if (toggle.dataset.closedIcon) toggle.innerHTML = toggle.dataset.closedIcon;
+                }
+
+                if (typeof window.updateFloatingControls === 'function') {
+                    window.updateFloatingControls();
+                }
+            };
+
+            function initializeToggleButtons() {
+                // List of panels that handle their own binding
+                const SELF_BINDING_PANELS = [
+                    'compare-panel',
+                    'journal-panel',
+                    'chat-panel',
+                    'analytics-panel'
+                ];
+
+                // Bind clicks for static panels only
+                LEFT_PANEL_CONFIG.forEach(({ panelId, toggleId }) => {
+                    // Skip if panel handles its own binding
+                    if (SELF_BINDING_PANELS.includes(panelId)) return;
+
+                    const panel = document.getElementById(panelId);
+                    const toggle = document.getElementById(toggleId);
+
+                    if (panel && toggle && !toggle.__bound) {
+                        toggle.addEventListener("click", (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            window.togglePanel(panel, toggle);
+
+                            // Specific initialization callbacks
+                            if (panel.id === 'calc-panel' && !panel.classList.contains('collapsed')) {
+                                setTimeout(initializeCalculator, 100);
+                            }
+                            if (panel.id === 'studies-panel' && !panel.classList.contains('collapsed') && window.initializeStudiesPanel) {
+                                window.initializeStudiesPanel({ deferRender: false });
+                            }
+                            if (panel.id === 'companies-panel' && !panel.classList.contains('collapsed') && window.initializeCompaniesPanel) {
+                                window.initializeCompaniesPanel();
+                            }
+                        });
+                        toggle.__bound = true;
+                    }
+                });
+            }
+
             function initializeTabs() {
                 const tabButtons = document.querySelectorAll(".tab-btn");
-                console.log(`🔍 Found ${tabButtons.length} tab buttons`);
-
-                if (tabButtons.length === 0) {
-                    console.warn("⚠️ No tab buttons found");
-                    return;
-                }
-
-                tabButtons.forEach((button) => {
-                    // Remove any existing listeners to prevent duplicates
+                tabButtons.forEach(button => {
                     const newButton = button.cloneNode(true);
                     button.parentNode.replaceChild(newButton, button);
-
                     newButton.addEventListener("click", (e) => {
                         e.preventDefault();
-                        e.stopPropagation();
-
                         const targetTab = newButton.getAttribute("data-tab");
-                        console.log(`🔄 Switching to tab: ${targetTab}`);
-
-                        if (!targetTab) {
-                            console.warn("⚠️ Tab button missing data-tab attribute");
-                            return;
-                        }
-
-                        // Remove active class from all buttons and contents
-                        document.querySelectorAll(".tab-btn").forEach((btn) =>
-                            btn.classList.remove("active"),
-                        );
-                        document
-                            .querySelectorAll(".tab-content")
-                            .forEach((content) => {
-                                content.classList.remove("active");
-                            });
-
-                        // Add active class to clicked button and corresponding content
+                        document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+                        document.querySelectorAll(".tab-content").forEach(content => content.classList.remove("active"));
                         newButton.classList.add("active");
                         const targetContent = document.getElementById(`tab-${targetTab}`);
-                        if (targetContent) {
-                            targetContent.classList.add("active");
-                            console.log(`✅ Switched to tab: ${targetTab}`);
-                        } else {
-                            console.error(`❌ Tab content not found: tab-${targetTab}`);
-                        }
+                        if (targetContent) targetContent.classList.add("active");
                     });
                 });
             }
 
-            // Initialize search immediately - doesn't depend on Three.js
+            // Initialize Search Toggle 
             function initializeSearchNow() {
                 if (typeof initializeSearch === 'function') {
-                    console.log('🔍 Initializing search...');
                     initializeSearch();
                 } else {
-                    console.warn('⚠️ initializeSearch function not available yet, retrying...');
                     setTimeout(initializeSearchNow, 100);
                 }
             }
 
-            // Initialize toggle buttons immediately - doesn't depend on Three.js
-            function initializeToggleButtons() {
-                console.log('🔘 Initializing toggle buttons...');
-
-                // Get all panel elements
-                const tabToggle = document.getElementById("tab-toggle");
-                const tabPanel = document.getElementById("tab-panel");
-                const studiesToggle = document.getElementById("studies-toggle");
-                const studiesPanel = document.getElementById("studies-panel");
-                const calcToggleBtn = document.getElementById("calc-toggle");
-                const calcPanel = document.getElementById("calc-panel");
-                const quizToggle = document.getElementById("quiz-toggle");
-                const quizPanel = document.getElementById("quiz-panel");
-                const companiesToggle = document.getElementById("companies-toggle");
-                const companiesPanel = document.getElementById("companies-panel");
-
-                console.log('🔘 Panel elements found:', {
-                    tabToggle: !!tabToggle,
-                    tabPanel: !!tabPanel,
-                    studiesToggle: !!studiesToggle,
-                    studiesPanel: !!studiesPanel,
-                    calcToggleBtn: !!calcToggleBtn,
-                    calcPanel: !!calcPanel,
-                    quizToggle: !!quizToggle,
-                    quizPanel: !!quizPanel,
-                    companiesToggle: !!companiesToggle,
-                    companiesPanel: !!companiesPanel
-                });
-
-                // Define togglePanel function if it doesn't exist yet
-                if (typeof window.togglePanel === 'undefined') {
-                    function setPanelState(panel, toggle, open) {
-                        if (!panel || !toggle) {
-                            console.warn('⚠️ setPanelState: missing panel or toggle', { panel: !!panel, toggle: !!toggle });
-                            return;
-                        }
-                        const currentlyOpen = !panel.classList.contains("collapsed");
-                        console.log(`🔘 setPanelState: panel=${panel.id}, currentlyOpen=${currentlyOpen}, requestedOpen=${open}`);
-
-                        if (open === currentlyOpen) {
-                            console.log('⚠️ Panel already in requested state');
-                            return;
-                        }
-
-                        if (open) {
-                            panel.classList.remove("collapsed");
-                            toggle.classList.remove("panel-collapsed");
-                            if (toggle.dataset.openIcon) {
-                                toggle.innerHTML = toggle.dataset.openIcon;
-                            }
-                            console.log(`✅ Panel ${panel.id} opened`);
-                        } else {
-                            panel.classList.add("collapsed");
-                            toggle.classList.add("panel-collapsed");
-                            if (toggle.dataset.closedIcon) {
-                                toggle.innerHTML = toggle.dataset.closedIcon;
-                            }
-                            console.log(`✅ Panel ${panel.id} closed`);
-                        }
-
-                        // Update floating controls if available
-                        if (typeof window.updateFloatingControls === 'function') {
-                            window.updateFloatingControls();
-                        }
-                    }
-
-                    window.togglePanel = function (panel, toggle, collapseList = []) {
-                        if (!panel || !toggle) {
-                            console.warn('⚠️ togglePanel: missing panel or toggle', { panel: !!panel, toggle: !!toggle });
-                            return;
-                        }
-                        console.log(`🔘 togglePanel called: panel=${panel.id}, toggle=${toggle.id}`);
-                        const shouldOpen = panel.classList.contains("collapsed");
-                        console.log(`🔘 Panel ${panel.id} is currently ${shouldOpen ? 'collapsed' : 'open'}, will ${shouldOpen ? 'open' : 'close'}`);
-
-                        if (shouldOpen && Array.isArray(collapseList)) {
-                            collapseList.forEach(({ panel: otherPanel, toggle: otherToggle }) => {
-                                if (otherPanel && otherToggle) {
-                                    console.log(`🔘 Closing other panel: ${otherPanel.id}`);
-                                    setPanelState(otherPanel, otherToggle, false);
-                                }
-                            });
-                        }
-
-                        setPanelState(panel, toggle, shouldOpen);
-                    };
+            // Bootstrap
+            function initializeApp() {
+                if (window.threeDepsReady) {
+                    startApplication();
                 } else {
-                    console.log('✅ togglePanel function already exists');
-                }
-
-
-                if (tabToggle && tabPanel && !tabToggle.__bound) {
-                    console.log('✅ Setting up tab toggle', { tabToggle: !!tabToggle, tabPanel: !!tabPanel });
-                    tabToggle.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🔘 Tab toggle clicked');
-                        console.log('🔘 Tab panel state before:', tabPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
-                        if (window.togglePanel) {
-                            window.togglePanel(tabPanel, tabToggle, [
-                                { panel: studiesPanel, toggle: studiesToggle },
-                                { panel: quizPanel, toggle: quizToggle },
-                                { panel: companiesPanel, toggle: companiesToggle },
-                                { panel: calcPanel, toggle: calcToggleBtn },
-                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
-                                { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
-                                { panel: document.getElementById("bpc157-panel"), toggle: document.getElementById("bpc157-toggle") },
-                            ]);
-                            console.log('🔘 Tab panel state after:', tabPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
-                        } else {
-                            console.warn('⚠️ togglePanel not available, using fallback');
-                            // Fallback if togglePanel not ready
-                            tabPanel.classList.toggle("collapsed");
-                        }
-                    });
-                    tabToggle.__bound = true;
-                } else {
-                    console.warn('⚠️ Tab toggle not set up', { tabToggle: !!tabToggle, tabPanel: !!tabPanel, bound: tabToggle?.__bound });
-                }
-
-                <!-- Studies toggle -->
-                if (studiesToggle && studiesPanel && !studiesToggle.__bound) {
-                    studiesToggle.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🔘 Studies toggle clicked');
-                        if (window.togglePanel) {
-                            window.togglePanel(studiesPanel, studiesToggle, [
-                                { panel: tabPanel, toggle: tabToggle },
-                                { panel: quizPanel, toggle: quizToggle },
-                                { panel: companiesPanel, toggle: companiesToggle },
-                                { panel: calcPanel, toggle: calcToggleBtn },
-                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
-                                { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
-                                { panel: document.getElementById("bpc157-panel"), toggle: document.getElementById("bpc157-toggle") },
-                            ]);
-                        } else {
-                            studiesPanel.classList.toggle("collapsed");
-                        }
-                    });
-                    studiesToggle.__bound = true;
-                }
-
-                if (calcToggleBtn && calcPanel && !calcToggleBtn.__bound) {
-                    console.log('✅ Setting up calculator toggle', { calcToggleBtn: !!calcToggleBtn, calcPanel: !!calcPanel });
-                    calcToggleBtn.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🔘 Calculator toggle clicked');
-                        const wasCollapsed = calcPanel.classList.contains("collapsed");
-                        console.log('🔘 Calc panel state before:', wasCollapsed ? 'collapsed' : 'open');
-                        if (window.togglePanel) {
-                            window.togglePanel(calcPanel, calcToggleBtn, [
-                                { panel: tabPanel, toggle: tabToggle },
-                                { panel: studiesPanel, toggle: studiesToggle },
-                                { panel: quizPanel, toggle: quizToggle },
-                                { panel: companiesPanel, toggle: companiesToggle },
-                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
-                                { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
-                                { panel: document.getElementById("bpc157-panel"), toggle: document.getElementById("bpc157-toggle") },
-                            ]);
-                            console.log('🔘 Calc panel state after:', calcPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
-                            // Initialize calculator when panel opens
-                            if (wasCollapsed && typeof initializeCalculator === "function") {
-                                console.log('🔘 Initializing calculator...');
-                                // Use setTimeout to ensure panel is fully visible before initializing
-                                setTimeout(() => {
-                                    initializeCalculator();
-                                }, 100);
-                            }
-                        } else {
-                            console.warn('⚠️ togglePanel not available, using fallback');
-                            calcPanel.classList.toggle("collapsed");
-                            if (!calcPanel.classList.contains("collapsed") && typeof initializeCalculator === "function") {
-                                initializeCalculator();
-                            }
-                        }
-                    });
-                    calcToggleBtn.__bound = true;
-                } else {
-                    console.warn('⚠️ Calculator toggle not set up', { calcToggleBtn: !!calcToggleBtn, calcPanel: !!calcPanel, bound: calcToggleBtn?.__bound });
-                }
-
-                if (quizToggle && quizPanel && !quizToggle.__bound) {
-                    console.log('✅ Setting up quiz toggle', { quizToggle: !!quizToggle, quizPanel: !!quizPanel });
-                    quizToggle.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🔘 Quiz toggle clicked');
-                        const wasCollapsed = quizPanel.classList.contains("collapsed");
-                        console.log('🔘 Quiz panel state before:', wasCollapsed ? 'collapsed' : 'open');
-                        console.log('🔘 window.togglePanel available:', typeof window.togglePanel === 'function');
-
-                        if (window.togglePanel) {
-                            try {
-                                window.togglePanel(quizPanel, quizToggle, [
-                                    { panel: tabPanel, toggle: tabToggle },
-                                    { panel: studiesPanel, toggle: studiesToggle },
-                                    { panel: companiesPanel, toggle: companiesToggle },
-                                    { panel: calcPanel, toggle: calcToggleBtn },
-                                    { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
-                                    { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
-                                    { panel: document.getElementById("bpc157-panel"), toggle: document.getElementById("bpc157-toggle") },
-                                ]);
-                                console.log('🔘 Quiz panel state after:', quizPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
-                                // Initialize quiz when panel opens
-                                if (wasCollapsed && typeof window.initializePeptideQuiz === "function") {
-                                    console.log('🔘 Initializing quiz...');
-                                    setTimeout(() => {
-                                        window.initializePeptideQuiz();
-                                    }, 100);
-                                }
-                            } catch (error) {
-                                console.error('❌ Error in togglePanel:', error);
-                                // Fallback
-                                quizPanel.classList.toggle("collapsed");
-                                if (!quizPanel.classList.contains("collapsed") && typeof window.initializePeptideQuiz === "function") {
-                                    setTimeout(() => {
-                                        window.initializePeptideQuiz();
-                                    }, 100);
-                                }
-                            }
-                        } else {
-                            console.warn('⚠️ togglePanel not available, using fallback');
-                            quizPanel.classList.toggle("collapsed");
-                            if (!quizPanel.classList.contains("collapsed") && typeof window.initializePeptideQuiz === "function") {
-                                setTimeout(() => {
-                                    window.initializePeptideQuiz();
-                                }, 100);
-                            }
-                        }
-                    });
-                    quizToggle.__bound = true;
-                } else {
-                    console.warn('⚠️ Quiz toggle not set up', { quizToggle: !!quizToggle, quizPanel: !!quizPanel, bound: quizToggle?.__bound });
-                }
-
-                if (companiesToggle && companiesPanel && !companiesToggle.__bound) {
-                    console.log('✅ Setting up companies toggle', { companiesToggle: !!companiesToggle, companiesPanel: !!companiesPanel });
-                    companiesToggle.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🔘 Companies toggle clicked');
-                        const wasCollapsed = companiesPanel.classList.contains("collapsed");
-                        console.log('🔘 Companies panel state before:', wasCollapsed ? 'collapsed' : 'open');
-                        if (window.togglePanel) {
-                            window.togglePanel(companiesPanel, companiesToggle, [
-                                { panel: tabPanel, toggle: tabToggle },
-                                { panel: studiesPanel, toggle: studiesToggle },
-                                { panel: quizPanel, toggle: quizToggle },
-                                { panel: calcPanel, toggle: calcToggleBtn },
-                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
-                                { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
-                                { panel: document.getElementById("bpc157-panel"), toggle: document.getElementById("bpc157-toggle") },
-                            ]);
-                            console.log('🔘 Companies panel state after:', companiesPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
-                            // Initialize companies when panel opens
-                            if (wasCollapsed && typeof window.initializeCompaniesPanel === "function") {
-                                console.log('🔘 Initializing companies panel...');
-                                setTimeout(() => {
-                                    window.initializeCompaniesPanel();
-                                }, 100);
-                            }
-                        } else {
-                            console.warn('⚠️ togglePanel not available, using fallback');
-                            companiesPanel.classList.toggle("collapsed");
-                            if (!companiesPanel.classList.contains("collapsed") && typeof window.initializeCompaniesPanel === "function") {
-                                setTimeout(() => {
-                                    window.initializeCompaniesPanel();
-                                }, 100);
-                            }
-                        }
-                    });
-                    companiesToggle.__bound = true;
-                } else {
-                    console.warn('⚠️ Companies toggle not set up', { companiesToggle: !!companiesToggle, companiesPanel: !!companiesPanel, bound: companiesToggle?.__bound });
-                }
-
-                const contactToggle = document.getElementById("contact-toggle");
-                const contactPanel = document.getElementById("contact-panel");
-                if (contactToggle && contactPanel && !contactToggle.__bound) {
-                    console.log('✅ Setting up contact toggle', { contactToggle: !!contactToggle, contactPanel: !!contactPanel });
-                    contactToggle.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🔘 Contact toggle clicked');
-                        const wasCollapsed = contactPanel.classList.contains("collapsed");
-                        console.log('🔘 Contact panel state before:', wasCollapsed ? 'collapsed' : 'open');
-                        if (window.togglePanel) {
-                            window.togglePanel(contactPanel, contactToggle, [  // Changed to use togglePanel with full collapseList
-                                { panel: tabPanel, toggle: tabToggle },
-                                { panel: studiesPanel, toggle: studiesToggle },
-                                { panel: quizPanel, toggle: quizToggle },
-                                { panel: companiesPanel, toggle: companiesToggle },
-                                { panel: calcPanel, toggle: calcToggleBtn },
-                                { panel: newPanel, toggle: newPanelToggle },
-                                { panel: document.getElementById("bpc157-panel"), toggle: document.getElementById("bpc157-toggle") },
-                            ]);
-                            console.log('🔘 Contact panel state after:', contactPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
-                        } else {
-                            console.warn('⚠️ togglePanel not available, using fallback');
-                            contactPanel.classList.toggle("collapsed");
-                        }
-                    });
-                    contactToggle.__bound = true;
-                }
-
-                const newPanelToggle = document.getElementById("new-panel-toggle");
-                const newPanel = document.getElementById("new-panel");
-                if (newPanelToggle && newPanel && !newPanelToggle.__bound) {
-                    console.log('✅ Setting up new panel toggle', { newPanelToggle: !!newPanelToggle, newPanel: !!newPanel });
-                    newPanelToggle.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🔘 New panel toggle clicked');
-                        const wasCollapsed = newPanel.classList.contains("collapsed");
-                        console.log('🔘 New panel state before:', wasCollapsed ? 'collapsed' : 'open');
-                        if (window.togglePanel) {
-                            window.togglePanel(newPanel, newPanelToggle, [
-                                { panel: tabPanel, toggle: tabToggle },
-                                { panel: studiesPanel, toggle: studiesToggle },
-                                { panel: quizPanel, toggle: quizToggle },
-                                { panel: companiesPanel, toggle: companiesToggle },
-                                { panel: contactPanel, toggle: contactToggle },
-                                { panel: calcPanel, toggle: calcToggleBtn },
-                                { panel: document.getElementById("bpc157-panel"), toggle: document.getElementById("bpc157-toggle") },
-                            ]);
-                            console.log('🔘 New panel state after:', newPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
-                        } else {
-                            console.warn('⚠️ togglePanel not available, using fallback');
-                            newPanel.classList.toggle("collapsed");
-                        }
-                    });
-                    newPanelToggle.__bound = true;
-                }
-
-                // BPC-157 Dashboard toggle
-                const bpc157Toggle = document.getElementById("bpc157-toggle");
-                const bpc157Panel = document.getElementById("bpc157-panel");
-                if (bpc157Toggle && bpc157Panel && !bpc157Toggle.__bound) {
-                    console.log('✅ Setting up BPC-157 toggle', { bpc157Toggle: !!bpc157Toggle, bpc157Panel: !!bpc157Panel });
-                    bpc157Toggle.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🔘 BPC-157 toggle clicked');
-                        const wasCollapsed = bpc157Panel.classList.contains("collapsed");
-                        console.log('🔘 BPC-157 panel state before:', wasCollapsed ? 'collapsed' : 'open');
-                        if (window.togglePanel) {
-                            window.togglePanel(bpc157Panel, bpc157Toggle, [
-                                { panel: tabPanel, toggle: tabToggle },
-                                { panel: studiesPanel, toggle: studiesToggle },
-                                { panel: quizPanel, toggle: quizToggle },
-                                { panel: companiesPanel, toggle: companiesToggle },
-                                { panel: contactPanel, toggle: contactToggle },
-                                { panel: calcPanel, toggle: calcToggleBtn },
-                                { panel: newPanel, toggle: newPanelToggle },
-                            ]);
-                            console.log('🔘 BPC-157 panel state after:', bpc157Panel.classList.contains("collapsed") ? 'collapsed' : 'open');
-                        } else {
-                            console.warn('⚠️ togglePanel not available, using fallback');
-                            bpc157Panel.classList.toggle("collapsed");
-                        }
-                    });
-                    bpc157Toggle.__bound = true;
-                }
-
-                // Contact form submission
-                const contactForm = document.getElementById("contact-form");
-                const contactEmail = document.getElementById("contact-email");
-                const contactMessage = document.getElementById("contact-message");
-                const contactSubmit = document.getElementById("contact-submit");
-                const contactStatus = document.getElementById("contact-status");
-
-                if (contactForm) {
-                    contactForm.addEventListener("submit", async (e) => {
-                        e.preventDefault();
-
-                        const email = contactEmail.value.trim();
-                        const message = contactMessage.value.trim();
-
-                        if (!email || !message) {
-                            showContactStatus("Please fill in all fields.", "error");
-                            return;
-                        }
-
-                        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                            showContactStatus("Please enter a valid email address.", "error");
-                            return;
-                        }
-
-                        // Disable submit button
-                        contactSubmit.disabled = true;
-                        contactSubmit.textContent = "Sending...";
-                        showContactStatus("Sending your message...", "info");
-
-                        try {
-                            // Try Vercel API first, fallback to PHP endpoint
-                            let response;
-                            try {
-                                response = await fetch("/api/contact", {
-                                    method: "POST",
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                        email: email,
-                                        message: message,
-                                    }),
-                                });
-                            } catch (apiError) {
-                                // Fallback to PHP endpoint if Vercel API fails
-                                console.log("Vercel API failed, trying PHP endpoint:", apiError);
-                                response = await fetch("php/api/contact.php", {
-                                    method: "POST",
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                        email: email,
-                                        message: message,
-                                    }),
-                                });
-                            }
-
-                            const data = await response.json();
-
-                            if (response.ok && data.success) {
-                                showContactStatus("Message sent successfully! We'll get back to you soon.", "success");
-                                contactForm.reset();
-                            } else {
-                                showContactStatus(data.error || "Failed to send message. Please try again.", "error");
-                            }
-                        } catch (error) {
-                            console.error("Error sending contact form:", error);
-                            showContactStatus("Network error. Please check your connection and try again.", "error");
-                        } finally {
-                            contactSubmit.disabled = false;
-                            contactSubmit.textContent = "Send Message";
-                        }
-                    });
-                }
-
-                function showContactStatus(message, type) {
-                    if (!contactStatus) return;
-                    contactStatus.textContent = message;
-                    contactStatus.className = type;
-                    contactStatus.style.display = "block";
-
-                    if (type === "success") {
-                        setTimeout(() => {
-                            contactStatus.style.display = "none";
-                        }, 5000);
+                    window.addEventListener('threeDepsReady', startApplication, { once: true });
+                    // Fallback check
+                    if (typeof THREE !== 'undefined' && typeof THREE.OBJLoader !== 'undefined') {
+                        startApplication();
                     }
                 }
-
-                // Companies toggle (may be initialized by companies.js, but add fallback)
-                if (companiesToggle && companiesPanel && !companiesToggle.__bound) {
-                    console.log('✅ Setting up companies toggle', { companiesToggle: !!companiesToggle, companiesPanel: !!companiesPanel });
-                    companiesToggle.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        console.log('🔘 Companies toggle clicked');
-                        const wasCollapsed = companiesPanel.classList.contains("collapsed");
-                        console.log('🔘 Companies panel state before:', wasCollapsed ? 'collapsed' : 'open');
-                        if (window.togglePanel) {
-                            window.togglePanel(companiesPanel, companiesToggle, [
-                                { panel: tabPanel, toggle: tabToggle },
-                                { panel: studiesPanel, toggle: studiesToggle },
-                                { panel: quizPanel, toggle: quizToggle },
-                                { panel: calcPanel, toggle: calcToggleBtn },
-                                { panel: document.getElementById("contact-panel"), toggle: document.getElementById("contact-toggle") },
-                                { panel: document.getElementById("new-panel"), toggle: document.getElementById("new-panel-toggle") },
-                            ]);
-                            console.log('🔘 Companies panel state after:', companiesPanel.classList.contains("collapsed") ? 'collapsed' : 'open');
-                            // Initialize companies when panel opens
-                            if (wasCollapsed && typeof window.initializeCompaniesPanel === "function") {
-                                console.log('🔘 Initializing companies panel...');
-                                setTimeout(() => {
-                                    window.initializeCompaniesPanel();
-                                }, 100);
-                            }
-                        } else {
-                            console.warn('⚠️ togglePanel not available, using fallback');
-                            companiesPanel.classList.toggle("collapsed");
-                            if (!companiesPanel.classList.contains("collapsed") && typeof window.initializeCompaniesPanel === "function") {
-                                setTimeout(() => {
-                                    window.initializeCompaniesPanel();
-                                }, 100);
-                            }
-                        }
-                    });
-                    companiesToggle.__bound = true;
-                } else {
-                    console.warn('⚠️ Companies toggle not set up', { companiesToggle: !!companiesToggle, companiesPanel: !!companiesPanel, bound: companiesToggle?.__bound });
-                }
-
-                console.log('✅ Toggle buttons initialized');
             }
 
-            // Initialize tabs, search, and toggle buttons immediately when DOM is ready
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', () => {
-                    initializeTabs();
                     initializeSearchNow();
-                    initializeToggleButtons();
                     initializeApp();
-                    // Fallback: ensure search toggle works even if initializeSearch fails
-                    setTimeout(() => {
-                        const searchToggle = document.getElementById('search-toggle');
-                        const searchContainer = document.getElementById('search-container');
-                        if (searchToggle && searchContainer && !searchToggle.__bound) {
-                            console.log('🔍 Setting up fallback search toggle');
-                            searchToggle.addEventListener('click', (e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                const isExpanded = searchContainer.classList.contains('expanded');
-                                if (isExpanded) {
-                                    searchContainer.classList.remove('expanded');
-                                    searchContainer.classList.add('collapsed');
-                                    searchContainer.style.left = '';
-                                    searchContainer.style.top = '';
-                                    searchContainer.style.transform = '';
-                                } else {
-                                    searchContainer.classList.remove('collapsed');
-                                    searchContainer.classList.add('expanded');
-                                    searchContainer.style.left = '50%';
-                                    searchContainer.style.top = '20px';
-                                    searchContainer.style.transform = 'translateX(-50%)';
-                                    const input = document.getElementById('search-input');
-                                    if (input) setTimeout(() => input.focus(), 100);
-                                }
-                            });
-                            searchToggle.__bound = true;
-                        }
-                    }, 500);
                 });
             } else {
-                // DOM is already ready
-                initializeTabs();
                 initializeSearchNow();
-                initializeToggleButtons();
-                // DOM is already ready, but wait for window load for Three.js
-                window.addEventListener('load', initializeApp);
-                // Fallback: ensure search toggle works even if initializeSearch fails
-                setTimeout(() => {
-                    const searchToggle = document.getElementById('search-toggle');
-                    const searchContainer = document.getElementById('search-container');
-                    if (searchToggle && searchContainer && !searchToggle.__bound) {
-                        console.log('🔍 Setting up fallback search toggle');
-                        searchToggle.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const isExpanded = searchContainer.classList.contains('expanded');
-                            if (isExpanded) {
-                                searchContainer.classList.remove('expanded');
-                                searchContainer.classList.add('collapsed');
-                                searchContainer.style.left = '';
-                                searchContainer.style.top = '';
-                                searchContainer.style.transform = '';
-                            } else {
-                                searchContainer.classList.remove('collapsed');
-                                searchContainer.classList.add('expanded');
-                                searchContainer.style.left = '50%';
-                                searchContainer.style.top = '20px';
-                                searchContainer.style.transform = 'translateX(-50%)';
-                                const input = document.getElementById('search-input');
-                                if (input) setTimeout(() => input.focus(), 100);
-                            }
-                        });
-                        searchToggle.__bound = true;
-                    }
-                }, 500);
+                initializeApp();
             }
         </script>
-
-        <!-- Image Lightbox for full-size viewing -->
-        <div id="image-lightbox" class="image-lightbox" onclick="closeImageLightbox()">
-            <span class="lightbox-close">&times;</span>
-            <img id="lightbox-image" src="" alt="" />
-            <div id="lightbox-caption" class="lightbox-caption"></div>
-        </div>
-
-        <!-- Image Lightbox Script -->
-        <script>
-            function openImageLightbox(imageSrc, caption) {
-                const lightbox = document.getElementById("image-lightbox");
-                const lightboxImage = document.getElementById("lightbox-image");
-                const lightboxCaption =
-                    document.getElementById("lightbox-caption");
-
-                lightboxImage.src = imageSrc;
-                lightboxCaption.textContent = caption;
-                lightbox.classList.add("active");
-
-                // Prevent click event from propagating
-                event.stopPropagation();
-            }
-
-            function closeImageLightbox() {
-                const lightbox = document.getElementById("image-lightbox");
-                lightbox.classList.remove("active");
-            }
-
-            // Close lightbox on Escape key
-            document.addEventListener("keydown", (e) => {
-                if (e.key === "Escape") {
-                    closeImageLightbox();
-                }
-            });
-
-            // Make functions globally accessible
-            window.openImageLightbox = openImageLightbox;
-            window.closeImageLightbox = closeImageLightbox;
-        </script>
-
-        <!-- Injection Point Images Data (generated by image_manager.py) -->
-        <script src="js/injection-images.js"></script>
 
         <!-- Quiz script -->
         <script src="js/quiz.js"></script>

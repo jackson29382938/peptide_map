@@ -25,6 +25,9 @@ function animate() {
             console.log('✅ Animation loop started - rendering scene');
             animateStarted = true;
         }
+        if (typeof window.updateHighlightAnimation === 'function') {
+            window.updateHighlightAnimation();
+        }
         controls.update();
         renderer.render(scene, camera);
     }
@@ -125,6 +128,21 @@ function getLeftPanelsWidth() {
 
     if (bpc157Panel && !bpc157Panel.classList.contains('collapsed')) {
         maxWidth = Math.max(maxWidth, bpc157Panel.offsetWidth);
+    }
+
+    const comparePanel = document.getElementById('compare-panel');
+    if (comparePanel && !comparePanel.classList.contains('collapsed')) {
+        maxWidth = Math.max(maxWidth, comparePanel.offsetWidth);
+    }
+
+    const journalPanel = document.getElementById('journal-panel');
+    if (journalPanel && !journalPanel.classList.contains('collapsed')) {
+        maxWidth = Math.max(maxWidth, journalPanel.offsetWidth);
+    }
+
+    const chatPanel = document.getElementById('chat-panel');
+    if (chatPanel && !chatPanel.classList.contains('collapsed')) {
+        maxWidth = Math.max(maxWidth, chatPanel.offsetWidth);
     }
 
     return maxWidth;

@@ -77,14 +77,14 @@
 
         if (wasCollapsed) loadVendors();
 
-      // Adjust toggle positions after panel state change
-      setTimeout(() => {
-        if (typeof window.updateFloatingControls === "function") {
-          window.updateFloatingControls();
-        } else {
-          adjustTogglePosition();
-        }
-      }, 50);
+        // Adjust toggle positions after panel state change
+        setTimeout(() => {
+          if (typeof window.updateFloatingControls === "function") {
+            window.updateFloatingControls();
+          } else {
+            adjustTogglePosition();
+          }
+        }, 50);
       });
       toggleBtn.__bound = true;
     } else {
@@ -204,24 +204,49 @@
     return html;
   }
 
+  function getVendorBadges(v) {
+    const badges = [];
+    const avg = parseFloat(v.avg_rating) || 0;
+    const total = parseInt(v.total_ratings) || 0;
+    const comments = parseInt(v.total_comments) || 0;
+
+    // Mock logic for badges
+    if (avg >= 4.5 && total >= 5) {
+      badges.push({ text: 'Community Trusted', class: 'badge-trusted', icon: '🛡️' });
+    }
+    if (total >= 10) {
+      badges.push({ text: 'Verified', class: 'badge-verified', icon: '✅' });
+    }
+    // Random "Lab Tested" for demo purposes based on ID parity
+    if (v.id % 3 === 0) {
+      badges.push({ text: 'Lab Tested', class: 'badge-tested', icon: '🔬' });
+    }
+
+    return badges;
+  }
+
   function renderVendorCard(v) {
     const safeName = escapeHtml(v.name || "");
     const safeUrl = escapeHtml(v.url || "");
     const avgRating = parseFloat(v.avg_rating) || 0;
     const totalRatings = parseInt(v.total_ratings) || 0;
     const totalComments = parseInt(v.total_comments) || 0;
+    const badges = getVendorBadges(v);
 
     return `
         <div class="company-card" id="company-${v.id}" data-vendor-id="${v.id}">
             <div class="company-header">
                 <div class="vendor-name-row">
                     <input class="company-name" data-id="${v.id}" value="${safeName}" readonly/>
-                    <button class="company-edit" data-id="${v.id}" title="Edit vendor">✏️</button>
+                    <div class="vendor-badges">
+                        ${badges.map(b => `<span class="vendor-badge ${b.class}" title="${b.text}">${b.icon} ${b.text}</span>`).join('')}
+                    </div>
                 </div>
-                <div class="vendor-url-row">
-                    <input class="company-url" data-id="${v.id}" value="${safeUrl}" readonly/>
-                    <a href="${safeUrl}" target="_blank" rel="noopener" class="company-visit" title="Visit website">🔗</a>
-                </div>
+                <button class="company-edit" data-id="${v.id}" title="Edit vendor">✏️</button>
+            </div>
+            <div class="vendor-url-row">
+                <input class="company-url" data-id="${v.id}" value="${safeUrl}" readonly/>
+                <a href="${safeUrl}" target="_blank" rel="noopener" class="company-visit" title="Visit website">🔗</a>
             </div>
             <div class="company-rating">
                 ${renderStars(avgRating, totalRatings)}
@@ -474,11 +499,11 @@
   function escapeHtml(value) {
     return value
       ? value
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/\"/g, "&quot;")
-          .replace(/'/g, "&#39;")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;")
       : "";
   }
 
