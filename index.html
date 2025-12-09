@@ -2860,6 +2860,9 @@
                             if (panel.id === 'companies-panel' && !panel.classList.contains('collapsed') && window.initializeCompaniesPanel) {
                                 window.initializeCompaniesPanel();
                             }
+                            if (panel.id === 'quiz-panel' && !panel.classList.contains('collapsed') && window.initializePeptideQuiz) {
+                                window.initializePeptideQuiz();
+                            }
                         });
                         toggle.__bound = true;
                     }
