@@ -2,11 +2,26 @@
 // Database Configuration for InfinityFree
 // Update these values with your InfinityFree MySQL credentials
 
-// Database credentials - GET THESE FROM VISTAPANEL
-define('DB_HOST', 'sql304.infinityfree.com'); // Your MySQL hostname
-define('DB_NAME', 'if0_40377460_common_clicks');            // Your database name
-define('DB_USER', 'if0_40377460');               // Your database username
-define('DB_PASS', 'IBraverest1');          // Your database password
+// Load environment variables if available
+if (file_exists(__DIR__ . '/../.env')) {
+    $lines = file(__DIR__ . '/../.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            if (!getenv($key)) {
+                putenv("$key=$value");
+            }
+        }
+    }
+}
+
+// Database credentials - now loaded from environment variables
+define('DB_HOST', getenv('DB_HOST') ?: 'sql304.infinityfree.com'); // Your MySQL hostname
+define('DB_NAME', getenv('DB_NAME') ?: 'if0_40377460_common_clicks');            // Your database name
+define('DB_USER', getenv('DB_USER') ?: 'if0_40377460');               // Your database username
+define('DB_PASS', getenv('DB_PASS') ?: 'IBraverest1');          // Your database password
 
 // Create database connection
 function getDBConnection() {

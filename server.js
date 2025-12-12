@@ -133,6 +133,63 @@ function initializeDatabase() {
         }
     });
 
+    // Create indexes after tables are created
+    db.run(`CREATE INDEX IF NOT EXISTS idx_click_events_timestamp ON click_events(timestamp)`, (err) => {
+        if (err) {
+            console.error('❌ Error creating click_events timestamp index:', err.message);
+        } else {
+            console.log('✅ click_events timestamp index ready');
+        }
+    });
+    
+    db.run(`CREATE INDEX IF NOT EXISTS idx_click_events_session_id ON click_events(session_id)`, (err) => {
+        if (err) {
+            console.error('❌ Error creating click_events session_id index:', err.message);
+        } else {
+            console.log('✅ click_events session_id index ready');
+        }
+    });
+    
+    db.run(`CREATE INDEX IF NOT EXISTS idx_click_events_element_id ON click_events(element_id)`, (err) => {
+        if (err) {
+            console.error('❌ Error creating click_events element_id index:', err.message);
+        } else {
+            console.log('✅ click_events element_id index ready');
+        }
+    });
+    
+    db.run(`CREATE INDEX IF NOT EXISTS idx_page_views_timestamp ON page_views(timestamp)`, (err) => {
+        if (err) {
+            console.error('❌ Error creating page_views timestamp index:', err.message);
+        } else {
+            console.log('✅ page_views timestamp index ready');
+        }
+    });
+    
+    db.run(`CREATE INDEX IF NOT EXISTS idx_page_views_session_id ON page_views(session_id)`, (err) => {
+        if (err) {
+            console.error('❌ Error creating page_views session_id index:', err.message);
+        } else {
+            console.log('✅ page_views session_id index ready');
+        }
+    });
+    
+    db.run(`CREATE INDEX IF NOT EXISTS idx_search_queries_timestamp ON search_queries(timestamp)`, (err) => {
+        if (err) {
+            console.error('❌ Error creating search_queries timestamp index:', err.message);
+        } else {
+            console.log('✅ search_queries timestamp index ready');
+        }
+    });
+    
+    db.run(`CREATE INDEX IF NOT EXISTS idx_session_events_session_id ON session_events(session_id)`, (err) => {
+        if (err) {
+            console.error('❌ Error creating session_events session_id index:', err.message);
+        } else {
+            console.log('✅ session_events session_id index ready');
+        }
+    });
+
     ensureColumn('click_events', 'ip_address', 'TEXT');
     ensureColumn('click_events', 'flow_label', 'TEXT');
     ensureColumn('page_views', 'ip_address', 'TEXT');
