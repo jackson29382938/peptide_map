@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Body Map Peptides</title>
 
+    <!-- Favicon & Icons -->
+    <link rel="icon" type="image/png" href="logo_main.png" />
+    <link rel="apple-touch-icon" href="logo_main.png" />
+    <meta name="theme-color" content="#1f2937" />
+
     <meta name="google-site-verification" content="oXDcgGP0tWj5TSbsf1bIKdjlYI6AvrtNA1NOvg3xpzU" />
 
     <!-- Basic SEO Meta Tags -->
@@ -15,15 +20,15 @@
         content="peptides, peptide map, body map, injection points, BPC-157, peptide recommendations, peptide vendors, 3D visualization, medical peptides" />
     <meta name="author" content="Body Map Peptides" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://yourdomain.com/" />
+    <link rel="canonical" href="https://peptide-map.vercel.app/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Body Map Peptides - Interactive 3D Peptide Explorer" />
     <meta property="og:description"
         content="Interactive 3D body map for exploring peptides, injection points, and peptide recommendations. Get personalized peptide stacks, doses, and protocols." />
-    <meta property="og:image" content="https://yourdomain.com/images/logo_main.png" />
-    <meta property="og:url" content="https://yourdomain.com/" />
+    <meta property="og:image" content="https://peptide-map.vercel.app/logo_main.png" />
+    <meta property="og:url" content="https://peptide-map.vercel.app/" />
     <meta property="og:site_name" content="Body Map Peptides" />
 
     <!-- Twitter Card -->
@@ -31,7 +36,10 @@
     <meta name="twitter:title" content="Body Map Peptides - Interactive 3D Peptide Explorer" />
     <meta name="twitter:description"
         content="Interactive 3D body map for exploring peptides, injection points, and peptide recommendations." />
-    <meta name="twitter:image" content="https://yourdomain.com/images/logo_main.png" />
+    <meta name="twitter:image" content="https://peptide-map.vercel.app/logo_main.png" />
+
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="css/styles.css" as="style" />
 
     <!-- Tailwind CSS (via CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -54,14 +62,14 @@
 
     <!-- Logo -->
     <div class="logo-container">
-        <img src="images/logo_main.png" alt="Logo">
+        <img src="logo_main.png" alt="Body Map Peptides Logo" loading="lazy">
     </div>
 
     <!-- Tiny right-fixed disclaimer links -->
     <div class="disclaimer-links">
-        <a href="pages/link-disclaimer.html" target="_blank" rel="noopener">Links Disclaimer</a>
+        <a href="pages/link-disclaimer.html" target="_blank" rel="noopener noreferrer">Links Disclaimer</a>
         <span>|</span>
-        <a href="pages/medical-disclaimer.html" target="_blank" rel="noopener">Not Medical Advice</a>
+        <a href="pages/medical-disclaimer.html" target="_blank" rel="noopener noreferrer">Not Medical Advice</a>
     </div>
 
     <!-- Quiz Panel (Left) -->
@@ -318,10 +326,6 @@
     <!-- Peptides Panel Toggle Button -->
     <button id="new-panel-toggle" class="left-toggle" data-closed-icon="💊" data-open-icon="✕"
         title="Toggle peptides database">💊</button>
-
-    <!-- Analytics Panel Toggle Button -->
-    <button id="analytics-toggle" class="left-toggle" data-closed-icon="📈" data-open-icon="✕"
-        title="Toggle public analytics">📈</button>
 
     <!-- BPC-157 Dashboard Toggle Button -->
     <button id="bpc157-toggle" class="left-toggle" data-closed-icon="📊" data-open-icon="✕"
@@ -2406,8 +2410,9 @@
             </div>
 
             <div class="mt-4">
-                <img id="panel-image" src="assets/injection types.jpg" alt="Injection Types"
-                    class="w-full rounded-lg shadow-md" />
+                <img id="panel-image" src="assets/injection types.jpg"
+                    alt="Diagram showing different injection types including subcutaneous and intramuscular"
+                    class="w-full rounded-lg shadow-md" loading="lazy" />
             </div>
         </div>
     </div>
@@ -2736,7 +2741,7 @@
                 const panels = [
                     "tab-panel", "studies-panel", "companies-panel", "quiz-panel",
                     "calc-panel", "contact-panel", "new-panel", "bpc157-panel",
-                    "compare-panel", "journal-panel", "chat-panel", "analytics-panel"
+                    "compare-panel", "journal-panel", "chat-panel"
                 ];
 
                 panels.forEach(id => {
@@ -2753,7 +2758,7 @@
                     "tab-toggle", "studies-toggle", "companies-toggle", "quiz-toggle",
                     "contact-toggle", "new-panel-toggle", "bpc157-toggle", "calc-toggle",
                     "theme-toggle", "peptide-analysis-toggle", "compare-toggle",
-                    "journal-toggle", "chat-toggle", "analytics-toggle"
+                    "journal-toggle", "chat-toggle"
                 ];
 
                 toggles.forEach(id => {
@@ -2784,8 +2789,7 @@
                 { panelId: "bpc157-panel", toggleId: "bpc157-toggle" },
                 { panelId: "compare-panel", toggleId: "compare-toggle" },
                 { panelId: "journal-panel", toggleId: "journal-toggle" },
-                { panelId: "chat-panel", toggleId: "chat-toggle" },
-                { panelId: "analytics-panel", toggleId: "analytics-toggle" }
+                { panelId: "chat-panel", toggleId: "chat-toggle" }
             ];
 
             // Centralized Panel Toggling
@@ -2833,7 +2837,7 @@
                     'compare-panel',
                     'journal-panel',
                     'chat-panel',
-                    'analytics-panel'
+                    'chat-panel'
                 ];
 
                 // Bind clicks for static panels only

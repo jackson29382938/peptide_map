@@ -1,41 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics Dashboard - Body Peptide Map</title>
+
+    <!-- Favicon & Icons -->
+    <link rel="icon" type="image/png" href="logo_main.png" />
+    <link rel="apple-touch-icon" href="logo_main.png" />
+    <meta name="theme-color" content="#1f2937" />
+
+    <!-- Basic SEO Meta Tags -->
+    <meta name="description"
+        content="Analytics dashboard for Body Map Peptides. View user interaction data, popular searches, and engagement metrics." />
+    <meta name="robots" content="noindex, nofollow" />
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         .stat-card {
             @apply bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-lg shadow-lg border border-gray-700;
         }
+
         .stat-value {
             @apply text-4xl font-bold text-blue-400 mb-2;
         }
+
         .stat-label {
             @apply text-gray-400 text-sm uppercase tracking-wide;
         }
+
         .table-container {
             @apply overflow-x-auto bg-gray-800 rounded-lg border border-gray-700;
         }
+
         table {
             @apply w-full text-sm text-left;
         }
+
         thead {
             @apply text-xs text-gray-400 uppercase bg-gray-900;
         }
+
         th {
             @apply px-6 py-3;
         }
+
         td {
             @apply px-6 py-4 border-t border-gray-700;
         }
+
         tr:hover {
             @apply bg-gray-750;
         }
     </style>
 </head>
+
 <body class="bg-gray-900 text-white min-h-screen p-8">
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
@@ -51,7 +72,8 @@
                     <option value="30">Last 30 days</option>
                     <option value="90">Last 90 days</option>
                 </select>
-                <button onclick="exportData()" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-semibold transition">
+                <button onclick="exportData()"
+                    class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-semibold transition">
                     Export CSV
                 </button>
                 <a href="/" class="bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg font-semibold transition">
@@ -234,14 +256,14 @@
         // Update clicks by hour chart
         function updateClicksByHourChart(data) {
             const ctx = document.getElementById('clicksByHourChart').getContext('2d');
-            
+
             if (clicksByHourChart) {
                 clicksByHourChart.destroy();
             }
 
             const labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
             const clickData = new Array(24).fill(0);
-            
+
             data.forEach(row => {
                 clickData[parseInt(row.hour)] = row.clicks;
             });
@@ -292,13 +314,13 @@
         // Update top clicks chart
         function updateTopClicksChart(data) {
             const ctx = document.getElementById('topClicksChart').getContext('2d');
-            
+
             if (topClicksChart) {
                 topClicksChart.destroy();
             }
 
             const top10 = data.slice(0, 10);
-            const labels = top10.map(item => 
+            const labels = top10.map(item =>
                 item.element_text || item.element_id || item.element_type
             ).map(label => label.length > 20 ? label.substring(0, 20) + '...' : label);
             const counts = top10.map(item => item.clicks);
@@ -350,7 +372,7 @@
         // Update top clicks table
         function updateTopClicksTable(data, total) {
             const tbody = document.getElementById('topClicksTable');
-            
+
             if (!data || data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500">No data available</td></tr>';
                 return;
@@ -373,7 +395,7 @@
         // Update top searches table
         function updateTopSearchesTable(data, total) {
             const tbody = document.getElementById('topSearchesTable');
-            
+
             if (!data || data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500">No data available</td></tr>';
                 return;
@@ -421,9 +443,9 @@
 
             // Peak hour
             if (data.clicksByHour && data.clicksByHour.length > 0) {
-                const peakHour = data.clicksByHour.reduce((max, item) => 
+                const peakHour = data.clicksByHour.reduce((max, item) =>
                     item.clicks > max.clicks ? item : max
-                , data.clicksByHour[0]);
+                    , data.clicksByHour[0]);
                 insights.push(`⏰ Peak activity occurs at <strong>${peakHour.hour}:00</strong> with ${peakHour.clicks} clicks`);
             }
 
@@ -437,7 +459,7 @@
                 insights.push(`🧭 Tracking <strong>${formatNumber(data.flowSummary.sessionsTracked)} sessions</strong> with ~${formatNumber(data.flowSummary.averageEventsPerSession)} events each`);
             }
 
-            document.getElementById('insights').innerHTML = insights.map(insight => 
+            document.getElementById('insights').innerHTML = insights.map(insight =>
                 `<p class="flex items-start gap-3"><span class="text-xl">•</span><span>${insight}</span></p>`
             ).join('');
         }
@@ -528,4 +550,5 @@
         fetchAnalytics(7);
     </script>
 </body>
+
 </html>

@@ -6,7 +6,7 @@
 
     const STORAGE_KEY = 'hasSeenOnboarding';
 
-    // Tutorial steps configuration
+    // Tutorial steps configuration - ordered top to bottom as buttons appear on screen
     const tutorialSteps = [
         {
             target: '#container',
@@ -19,6 +19,13 @@
             target: '#container canvas',
             title: '3D Body Model 🧍',
             content: 'Click and drag to rotate the model. Click on any muscle region to see injection information and related peptides.',
+            position: 'right',
+            highlight: true
+        },
+        {
+            target: '#tab-toggle',
+            title: 'Injection Info Panel ☰',
+            content: 'Detailed injection procedures, types, and comprehensive peptide analysis guides.',
             position: 'right',
             highlight: true
         },
@@ -37,9 +44,30 @@
             highlight: true
         },
         {
-            target: '#new-panel-toggle',
-            title: 'Peptides Database 💊',
-            content: 'Browse our comprehensive database of peptides with detailed information on mechanisms, dosing, and applications.',
+            target: '#theme-toggle',
+            title: 'Theme Toggle 🎨',
+            content: 'Switch between dark and light themes for your preferred viewing experience.',
+            position: 'right',
+            highlight: true
+        },
+        {
+            target: '#peptide-analysis-toggle',
+            title: 'Peptide Analysis 📄',
+            content: 'Access comprehensive peptide analysis with detailed research and mechanism information.',
+            position: 'right',
+            highlight: true
+        },
+        {
+            target: '#studies-toggle',
+            title: 'Research Studies 📚',
+            content: 'Search and browse scientific research studies on peptides with community voting and comments.',
+            position: 'right',
+            highlight: true
+        },
+        {
+            target: '#companies-toggle',
+            title: 'Peptide Vendors 🏢',
+            content: 'Find and rate peptide vendors. Add your own ratings and comments to help the community.',
             position: 'right',
             highlight: true
         },
@@ -51,10 +79,52 @@
             highlight: true
         },
         {
-            target: '#theme-toggle',
-            title: 'You\'re All Set! 🎉',
-            content: 'Press "?" anytime to see keyboard shortcuts. Toggle between dark and light themes here. Enjoy exploring!',
+            target: '#contact-toggle',
+            title: 'Contact Us ✉️',
+            content: 'Have questions or feedback? Send us a message through the contact form.',
             position: 'right',
+            highlight: true
+        },
+        {
+            target: '#new-panel-toggle',
+            title: 'Peptides Database 💊',
+            content: 'Browse our comprehensive database of peptides with detailed information on mechanisms, dosing, and applications.',
+            position: 'right',
+            highlight: true
+        },
+        {
+            target: '#bpc157-toggle',
+            title: 'BPC-157 Research Dashboard 📊',
+            content: 'Interactive research publication forecast dashboard for BPC-157 peptide studies.',
+            position: 'right',
+            highlight: true
+        },
+        {
+            target: '#compare-toggle',
+            title: 'Compare Peptides ⚖️',
+            content: 'Compare multiple peptides side by side to see their differences and similarities.',
+            position: 'right',
+            highlight: true
+        },
+        {
+            target: '#journal-toggle',
+            title: 'Peptide Journal 📓',
+            content: 'Track your peptide usage, dosages, and experiences in your personal journal.',
+            position: 'right',
+            highlight: true
+        },
+        {
+            target: '#chat-toggle',
+            title: 'AI Peptide Q&A 🤖',
+            content: 'Ask questions about peptides and get AI-powered answers based on research.',
+            position: 'right',
+            highlight: true
+        },
+        {
+            target: '#saved-toggle',
+            title: 'You\'re All Set! 🎉',
+            content: 'Save your marked injection locations here for quick access. Press "?" anytime for keyboard shortcuts. Enjoy exploring!',
+            position: 'left',
             highlight: true
         }
     ];

@@ -3180,7 +3180,7 @@ body.bg-black {
 .logo-container {
     position: fixed;
     bottom: 8px;
-    left: 8px;
+    left: 35px;
     z-index: 1000;
     transition: left 0.3s ease-in-out;
 }
@@ -5001,6 +5001,7 @@ body.bg-black {
     color: #fff;
     border-color: var(--text-accent);
 }
+
 /* ==========================================
    ANALYTICS DASHBOARD
    ========================================== */
@@ -5036,7 +5037,8 @@ body.bg-black {
     position: fixed;
     top: 0;
     left: 0;
-    width: 450px; /* Wider for charts */
+    width: 450px;
+    /* Wider for charts */
     height: 100vh;
     background: var(--bg-panel);
     border-right: 1px solid var(--border-primary);
@@ -5248,7 +5250,8 @@ body.bg-black {
 #saved-toggle {
     position: fixed;
     top: 20px;
-    right: 20px; /* Top Right corner */
+    right: 20px;
+    /* Top Right corner */
     width: 40px;
     height: 40px;
     background: var(--bg-secondary);
@@ -5284,7 +5287,8 @@ body.bg-black {
     border-left: 1px solid var(--border-primary);
     box-shadow: -4px 0 12px var(--shadow-sm);
     z-index: 15;
-    padding-top: 60px; /* Space for top header/toggle */
+    padding-top: 60px;
+    /* Space for top header/toggle */
     display: flex;
     flex-direction: column;
     transition:
@@ -5298,7 +5302,8 @@ body.bg-black {
 
 /* When panel opens, move toggle to the left */
 #saved-toggle.panel-open {
-    right: 330px; /* 320px panel + 10px margin */
+    right: 330px;
+    /* 320px panel + 10px margin */
 }
 
 /* Saved Item List */
