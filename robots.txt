@@ -1,10 +1,12 @@
 User-agent: *
 Allow: /
 
+# Disallow server-side files from crawlers
+Disallow: /php/
+Disallow: /api/
+Disallow: /*.db$
+Disallow: /*.log$
+Disallow: /*.env$
+
 # Sitemap
 Sitemap: https://peptide-map.vercel.app/sitemap.xml
-
-# Disallow admin/private areas (if any)
-# Disallow: /php/
-# Disallow: /api/
-
