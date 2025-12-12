@@ -19,14 +19,7 @@
         <priority>1.0</priority>
     </url>
     
-    <!-- BPC-157 Reports -->
-    <url>
-        <loc>https://peptide-map.vercel.app/BPC-157_report.html</loc>
-        <lastmod>2025-12-12</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    
+    <!-- BPC-157 Dashboard -->
     <url>
         <loc>https://peptide-map.vercel.app/BPC-157_interactive_dashboard.html</loc>
         <lastmod>2025-12-12</lastmod>
