@@ -11,4 +11,4 @@ jobs:
         with:
           # Replace the URL below with your GitLab repo URL
           # Format: gitlab.com
-          target_repo_url: https://jackson29382938:${{ secrets.GITLAB_TOKEN }}@gitlab.com
+          target_repo_url: https://@jackson29382938:${{ secrets.GITLAB_TOKEN }}@gitlab.com
