@@ -27,3 +27,7 @@ Thumbs.db
 *.swo
 *~
 .vercel
+
+# macOS custom folder icons (not compatible with Windows)
+Icon?
+Icon
