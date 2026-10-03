@@ -46,4 +46,4 @@ that runs PHP/MySQL and `API_BASE` in `js/companies.js` pointed at it.
   public: rotate them, and prefer proxying through a server route.
 - `php/config.php` still contains the original database credentials as fallbacks. Rotate that password, then
   move the new values into `php/config.local.php` (git-ignored) or environment variables and delete the fallbacks.
-- Anyone can add or edit vendors through the PHP API. Add authentication or moderation before relying on it.
+- Adding or editing vendors through the PHP API requires an admin token (`ADMIN_TOKEN` env var or `define('ADMIN_TOKEN', ...)` in `php/config.local.php`). With no token configured, vendor writes are disabled. Ratings and comments remain open to everyone and are not rate limited.

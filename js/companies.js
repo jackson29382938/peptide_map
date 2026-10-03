@@ -40,6 +40,34 @@
     ["CordenPharma", "https://www.cordenpharma.com"],
   ].map(([name, url], i) => ({ id: i + 1, name, url }));
 
+  // Vendor add/edit is admin-only: the server checks an X-Admin-Token header. The token is kept
+  // for this tab only (sessionStorage) and never written to disk.
+  function getAdminToken(forcePrompt) {
+    let token = "";
+    try { token = sessionStorage.getItem("vendorAdminToken") || ""; } catch (e) { /* ignore */ }
+    if (!token || forcePrompt) {
+      token = (prompt("Admin token required to change vendors:") || "").trim();
+      try { sessionStorage.setItem("vendorAdminToken", token); } catch (e) { /* ignore */ }
+    }
+    return token;
+  }
+
+  async function adminPost(payload) {
+    const token = getAdminToken(false);
+    if (!token) throw new Error("cancelled");
+    const res = await fetch(`${API_BASE}/companies.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Admin-Token": token },
+      body: JSON.stringify(payload),
+    });
+    if (res.status === 403) {
+      try { sessionStorage.removeItem("vendorAdminToken"); } catch (e) { /* ignore */ }
+      throw new Error("Admin token rejected");
+    }
+    if (!res.ok) throw new Error("Request failed");
+    return res;
+  }
+
   // State
   let offline = false;
   let vendors = [];
@@ -501,12 +529,7 @@
     }
 
     try {
-      const res = await fetch(`${API_BASE}/companies.php`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "update", ...payload }),
-      });
-      if (!res.ok) throw new Error("Save failed");
+      await adminPost({ action: "update", ...payload });
 
       nameEl.readOnly = true;
       urlEl.readOnly = true;
@@ -517,7 +540,7 @@
       alert("Changes saved!");
     } catch (e) {
       console.error(e);
-      alert("Failed to save");
+      if (e.message !== "cancelled") alert(e.message === "Admin token rejected" ? e.message : "Failed to save");
     }
   }
 
@@ -535,21 +558,12 @@
       return;
     }
     try {
-      const res = await fetch(`${API_BASE}/companies.php`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "add",
-          name: name.trim(),
-          url: url.trim(),
-        }),
-      });
-      if (!res.ok) throw new Error("Add failed");
+      await adminPost({ action: "add", name: name.trim(), url: url.trim() });
       await loadVendors();
       alert("Vendor added successfully!");
     } catch (e) {
       console.error(e);
-      alert("Failed to add vendor");
+      if (e.message !== "cancelled") alert(e.message === "Admin token rejected" ? e.message : "Failed to add vendor");
     }
   }
 

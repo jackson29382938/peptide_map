@@ -12,6 +12,9 @@ if (file_exists(__DIR__ . '/config.local.php')) {
 if (!defined('DB_HOST')) define('DB_HOST', getenv('DB_HOST') ?: 'sql304.infinityfree.com');
 if (!defined('DB_NAME')) define('DB_NAME', getenv('DB_NAME') ?: 'if0_40377460_common_clicks');
 if (!defined('DB_USER')) define('DB_USER', getenv('DB_USER') ?: 'if0_40377460');
+// Shared secret required to add or edit vendors (ratings/comments stay open). Leave empty to disable
+// vendor writes entirely. Set in php/config.local.php or the ADMIN_TOKEN environment variable.
+if (!defined('ADMIN_TOKEN')) define('ADMIN_TOKEN', getenv('ADMIN_TOKEN') ?: '');
 if (!defined('DB_PASS')) define('DB_PASS', getenv('DB_PASS') ?: 'IBraverest1');
 
 // Create database connection
@@ -40,7 +43,7 @@ function setJSONHeaders() {
     header('Content-Type: application/json');
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
+    header('Access-Control-Allow-Headers: Content-Type, X-Admin-Token');
     
     // Handle preflight requests
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -61,5 +64,11 @@ function sanitize($data) {
         return array_map('sanitize', $data);
     }
     return htmlspecialchars(strip_tags(trim($data)));
+}
+// Returns true only when the request carries the configured admin token.
+function isAdminRequest() {
+    if (ADMIN_TOKEN === '') return false;
+    $given = $_SERVER['HTTP_X_ADMIN_TOKEN'] ?? '';
+    return is_string($given) && hash_equals(ADMIN_TOKEN, $given);
 }
 ?>

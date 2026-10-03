@@ -51,6 +51,11 @@ try {
 
     // POST add/update
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!isAdminRequest()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Adding or editing vendors requires an admin token']);
+            exit();
+        }
         $data = getJSONInput();
         $action = isset($data['action']) ? $data['action'] : '';
 
