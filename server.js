@@ -8,30 +8,42 @@ if (process.env.NODE_ENV !== 'production' && process.env.VERCEL !== '1') {
 
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
-const cors = require('cors');
 const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
-// Local dev static serving. Only public assets are exposed -- never the repo root,
-// which contains server.js, the SQLite databases and (locally) .env.
-const PUBLIC_ROOT_FILES = [
-    'index.html',
-    'BPC-157_interactive_dashboard.html',
-    'sitemap.xml',
-    'robots.txt',
-    'google9e5a33f1c42669c8.html'
-];
-PUBLIC_ROOT_FILES.forEach((file) => {
-    app.get(`/${file}`, (req, res) => res.sendFile(path.join(__dirname, file)));
+// No blanket CORS: the site and its API share an origin. (/api/contact sets its own, narrower, CORS headers.)
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
 });
-['css', 'js', 'images', 'assets', 'pages'].forEach((dir) => {
-    app.use(`/${dir}`, express.static(path.join(__dirname, dir), { dotfiles: 'deny' }));
+app.use(express.json({ limit: '1mb' }));
+// Static serving. Only public assets are exposed -- never the repo root, which contains
+// server.js, the SQLite databases and (locally) .env. Paths are literals so Vercel's file
+// tracer bundles them with this function.
+app.get('/BPC-157_interactive_dashboard.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'BPC-157_interactive_dashboard.html'));
 });
+app.get('/google9e5a33f1c42669c8.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'google9e5a33f1c42669c8.html'));
+});
+app.get('/index.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Pinned third-party libraries and the 3D model rarely change; everything else revalidates on each load
+app.use('/js/vendor', express.static(path.join(__dirname, 'js', 'vendor'), { dotfiles: 'deny', maxAge: '30d', immutable: true }));
+app.use('/assets', express.static(path.join(__dirname, 'assets'), { dotfiles: 'deny', maxAge: '1d' }));
+app.use('/css', express.static(path.join(__dirname, 'css'), { dotfiles: 'deny' }));
+app.use('/js', express.static(path.join(__dirname, 'js'), { dotfiles: 'deny' }));
+app.use('/images', express.static(path.join(__dirname, 'images'), { dotfiles: 'deny' }));
+app.use('/pages', express.static(path.join(__dirname, 'pages'), { dotfiles: 'deny' }));
 
 // Serve main SPA / landing page
 app.get('/', (req, res) => {
@@ -613,9 +625,14 @@ app.get('/api/analytics/export/clicks', (req, res) => {
     });
 });
 
-// Serve analytics dashboard
-app.get('/analytics', (req, res) => {
-  res.sendFile(path.join(__dirname, 'analytics-dashboard.html'));
+// Crawler files
+app.get('/sitemap.xml', (req, res) => {
+    res.type('application/xml');
+    res.sendFile(path.join(__dirname, 'sitemap.xml'));
+});
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.sendFile(path.join(__dirname, 'robots.txt'));
 });
 
 // Contact form endpoint: same handler Vercel runs for /api/contact
@@ -932,7 +949,6 @@ module.exports = app;
 if (process.env.VERCEL !== '1') {
     app.listen(PORT, () => {
         console.log(`🚀 Analytics server running on http://localhost:${PORT}`);
-        console.log(`📊 Analytics dashboard: http://localhost:${PORT}/analytics`);
     });
 }
 

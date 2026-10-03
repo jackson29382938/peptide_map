@@ -76,7 +76,9 @@
                 primaryTerms: (queryParams.primaryTerms || []).sort().join(','),
                 secondaryTerms: (queryParams.secondaryTerms || []).sort().join(',')
             };
-            return CACHE_KEY_PREFIX + btoa(JSON.stringify(normalized)).replace(/[^a-zA-Z0-9]/g, '');
+            // btoa() only accepts Latin-1, so encode first (queries like "Thymosin α1" would otherwise throw)
+            const bytes = unescape(encodeURIComponent(JSON.stringify(normalized)));
+            return CACHE_KEY_PREFIX + btoa(bytes).replace(/[^a-zA-Z0-9]/g, '');
         },
 
         get(cacheKey) {
@@ -113,13 +115,12 @@
         },
 
         set(cacheKey, papers) {
+            const data = {
+                version: CACHE_VERSION,
+                timestamp: Date.now(),
+                papers: papers
+            };
             try {
-                const data = {
-                    version: CACHE_VERSION,
-                    timestamp: Date.now(),
-                    papers: papers
-                };
-
                 localStorage.setItem(cacheKey, JSON.stringify(data));
                 this.updateIndex(cacheKey);
                 this.cleanup();
@@ -138,7 +139,9 @@
         },
 
         delete(cacheKey) {
-            localStorage.removeItem(cacheKey);
+            try {
+                localStorage.removeItem(cacheKey);
+            } catch (e) { /* storage unavailable */ }
             this.removeFromIndex(cacheKey);
         },
 
@@ -248,7 +251,9 @@
         
         for (const [key, synonyms] of Object.entries(peptideDatabase)) {
             for (const synonym of synonyms) {
-                if (queryLower.includes(synonym.toLowerCase())) {
+                // Whole-term match: short aliases ("TTA", "NAD", "AOD") must not fire inside other words
+                const escaped = synonym.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                if (new RegExp(`(^|[^a-z0-9])${escaped}($|[^a-z0-9])`).test(queryLower)) {
                     detectedPeptides.add(key);
                     lastDetectedPeptides.push({key, synonyms});
                     break;

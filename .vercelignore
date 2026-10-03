@@ -1,0 +1,10 @@
+# Server-side / non-site files that should never be deployed (Vercel serves what it bundles)
+php/
+analytics.php
+index.php
+test.py
+.github/
+.vscode/
+tailwind.config.js
+css/tailwind.src.css
+README.md

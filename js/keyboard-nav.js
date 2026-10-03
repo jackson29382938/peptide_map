@@ -64,20 +64,30 @@
     }
 
     // Handle keyboard events
+    // True when the user is typing into (or operating) a form control, where letters and
+    // arrow keys must keep their normal meaning
+    function isFormControl(el) {
+        if (!el) return false;
+        const tag = el.tagName;
+        return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+    }
+
     function handleKeyPress(event) {
         const key = event.key;
         const target = event.target;
+
+        // Never hijack browser/OS shortcuts such as Ctrl+T or Cmd+/
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
 
         // Global shortcuts (work anywhere)
         switch (key) {
             case 'Escape':
                 handleEscape();
-                event.preventDefault();
                 break;
 
             case '/':
                 // Quick search activation (like GitHub)
-                if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+                if (!isFormControl(target)) {
                     toggleSearch();
                     event.preventDefault();
                 }
@@ -85,7 +95,7 @@
 
             case 't':
                 // Toggle theme (when not in input)
-                if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+                if (!isFormControl(target)) {
                     document.getElementById('theme-toggle')?.click();
                     event.preventDefault();
                 }
@@ -93,17 +103,15 @@
 
             case 'm':
                 // Toggle menu/tab panel (when not in input)
-                if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+                if (!isFormControl(target)) {
                     document.getElementById('tab-toggle')?.click();
                     event.preventDefault();
                 }
                 break;
         }
 
-        // Navigation in search results
-        if (isSearchOpen()) {
-            handleSearchNavigation(event);
-        }
+        // Arrow/Enter navigation inside search results is handled by search.js (its input
+        // keydown handler); handling it here as well made one key press select twice.
 
         // General tab navigation
         if (key === 'Tab') {
@@ -112,13 +120,20 @@
         }
 
         // Arrow key navigation when not in text input
-        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+        if (!isFormControl(target)) {
             handleArrowNavigation(event);
         }
     }
 
     // Handle Escape key
     function handleEscape() {
+        // Shortcuts help is the top-most layer
+        const help = document.getElementById('keyboard-shortcuts-modal');
+        if (help && help.classList.contains('visible')) {
+            hideKeyboardHelp();
+            return;
+        }
+
         const calcModal = document.getElementById('calc-modal');
         const searchContainer = document.getElementById('search-container');
         const sidePanel = document.getElementById('side-panel');
@@ -284,6 +299,9 @@
             modal = document.createElement('div');
             modal.id = 'keyboard-shortcuts-modal';
             modal.className = 'keyboard-shortcuts-modal';
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
+            modal.setAttribute('aria-label', 'Keyboard shortcuts');
             modal.innerHTML = `
                 <div class="shortcuts-content">
                     <div class="shortcuts-header">
@@ -342,7 +360,7 @@
 
         // Add '?' shortcut to show help
         document.addEventListener('keydown', (e) => {
-            if (e.key === '?' && e.target.tagName !== 'INPUT') {
+            if (e.key === '?' && !isFormControl(e.target) && !e.ctrlKey && !e.metaKey && !e.altKey) {
                 showKeyboardHelp();
                 e.preventDefault();
             }

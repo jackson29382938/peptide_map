@@ -1,8 +1,26 @@
 // Theme management with system preference detection
 (function () {
+  // localStorage can throw (blocked cookies, some private modes); the theme must still work
+  function readStoredTheme() {
+    try {
+      const saved = localStorage.getItem("theme");
+      return saved === "light" || saved === "dark" ? saved : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function storeTheme(theme) {
+    try {
+      localStorage.setItem("theme", theme);
+    } catch (e) {
+      /* preference just won't persist */
+    }
+  }
+
   // Get saved theme preference or detect system preference
   function getInitialTheme() {
-    const saved = localStorage.getItem("theme");
+    const saved = readStoredTheme();
     if (saved) {
       return saved;
     }
@@ -19,8 +37,11 @@
   // Apply theme
   function applyTheme(theme) {
     document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
+    storeTheme(theme);
     updateThemeIcon(theme);
+
+    const themeColor = document.querySelector('meta[name="theme-color"]');
+    if (themeColor) themeColor.setAttribute("content", theme === "light" ? "#f9fafb" : "#1f2937");
 
     // Dispatch custom event for other components to listen to
     window.dispatchEvent(
@@ -53,6 +74,7 @@
                 </svg>
             `;
       themeToggle.title = "Switch to light mode";
+      themeToggle.setAttribute("aria-label", "Switch to light mode");
     } else {
       icon.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -60,6 +82,7 @@
                 </svg>
             `;
       themeToggle.title = "Switch to dark mode";
+      themeToggle.setAttribute("aria-label", "Switch to dark mode");
     }
   }
 
@@ -120,7 +143,7 @@
       const mediaQuery = window.matchMedia("(prefers-color-scheme: light)");
       mediaQuery.addEventListener("change", (e) => {
         // Only auto-switch if user hasn't manually set a preference
-        if (!localStorage.getItem("theme")) {
+        if (!readStoredTheme()) {
           applyTheme(e.matches ? "light" : "dark");
         }
       });

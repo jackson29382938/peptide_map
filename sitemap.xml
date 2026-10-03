@@ -7,14 +7,7 @@
     <!-- Main Application -->
     <url>
         <loc>https://peptide-map.vercel.app/</loc>
-        <lastmod>2025-12-12</lastmod>
-        <changefreq>weekly</changefreq>
-        <priority>1.0</priority>
-    </url>
-    
-    <url>
-        <loc>https://peptide-map.vercel.app/index.html</loc>
-        <lastmod>2025-12-12</lastmod>
+        <lastmod>2026-10-03</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
@@ -22,7 +15,7 @@
     <!-- BPC-157 Dashboard -->
     <url>
         <loc>https://peptide-map.vercel.app/BPC-157_interactive_dashboard.html</loc>
-        <lastmod>2025-12-12</lastmod>
+        <lastmod>2026-10-03</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
@@ -30,14 +23,14 @@
     <!-- Disclaimer Pages -->
     <url>
         <loc>https://peptide-map.vercel.app/pages/medical-disclaimer.html</loc>
-        <lastmod>2025-12-12</lastmod>
+        <lastmod>2026-10-03</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.3</priority>
     </url>
     
     <url>
         <loc>https://peptide-map.vercel.app/pages/link-disclaimer.html</loc>
-        <lastmod>2025-12-12</lastmod>
+        <lastmod>2026-10-03</lastmod>
         <changefreq>yearly</changefreq>
         <priority>0.3</priority>
     </url>

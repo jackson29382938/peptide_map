@@ -15,6 +15,15 @@ const UnitConverter = (function() {
     INCHES_TO_CM: 2.54
   };
 
+  // Storage can be blocked (private mode, cookie settings); preferences just won't persist
+  function safeStore(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* ignore */ }
+  }
+
+  function safeRead(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+
   function kgToLbs(kg) {
     return kg * CONVERSIONS.KG_TO_LBS;
   }
@@ -45,7 +54,7 @@ const UnitConverter = (function() {
       return;
     }
     state.weightUnit = unit;
-    localStorage.setItem('preferredWeightUnit', unit);
+    safeStore('preferredWeightUnit', unit);
     window.dispatchEvent(new CustomEvent('weightUnitChanged', { detail: { unit } }));
   }
 
@@ -55,7 +64,7 @@ const UnitConverter = (function() {
       return;
     }
     state.heightUnit = unit;
-    localStorage.setItem('preferredHeightUnit', unit);
+    safeStore('preferredHeightUnit', unit);
     window.dispatchEvent(new CustomEvent('heightUnitChanged', { detail: { unit } }));
   }
 
@@ -220,8 +229,8 @@ const UnitConverter = (function() {
   }
 
   function init() {
-    const savedWeightUnit = localStorage.getItem('preferredWeightUnit');
-    const savedHeightUnit = localStorage.getItem('preferredHeightUnit');
+    const savedWeightUnit = safeRead('preferredWeightUnit');
+    const savedHeightUnit = safeRead('preferredHeightUnit');
     
     if (savedWeightUnit === 'kg' || savedWeightUnit === 'lbs') {
       state.weightUnit = savedWeightUnit;

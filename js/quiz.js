@@ -471,10 +471,26 @@
     back.addEventListener('click', ()=>{
       if (state.current>0) { state.current--; draw(); }
     });
+    // Validate the current step before moving on, with an inline message instead of an alert
+    function stepIsValid(){
+      const q = state.flow[state.current];
+      saveAnswer(q);
+      container.querySelector('.q-error')?.remove();
+      if (validate(q)) return true;
+      const msg = q.type==='number'
+        ? `Please enter a realistic ${q.label.toLowerCase()}.`
+        : 'Please choose an answer to continue.';
+      const err = el('div', {class:'q-error text-red-300 text-sm mt-2', role:'alert'}, msg);
+      container.insertBefore(err, nav);
+      return false;
+    }
+
     next.addEventListener('click', ()=>{
+      if (!stepIsValid()) return;
       if (state.current < state.flow.length-1) { state.current++; draw(); }
     });
     submit.addEventListener('click', ()=>{
+      if (!stepIsValid()) return;
       showResults();
     });
 

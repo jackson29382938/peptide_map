@@ -2,11 +2,17 @@
 // Database Configuration for InfinityFree
 // Update these values with your InfinityFree MySQL credentials
 
-// Database credentials - GET THESE FROM VISTAPANEL
-define('DB_HOST', 'sql304.infinityfree.com'); // Your MySQL hostname
-define('DB_NAME', 'if0_40377460_common_clicks');            // Your database name
-define('DB_USER', 'if0_40377460');               // Your database username
-define('DB_PASS', 'IBraverest1');          // Your database password
+// Database credentials. Prefer overriding these without editing this tracked file:
+//   * create php/config.local.php (git-ignored) that define()s DB_HOST / DB_NAME / DB_USER / DB_PASS, or
+//   * set DB_HOST / DB_NAME / DB_USER / DB_PASS environment variables.
+// The literal values below are the original defaults and should be rotated and then removed.
+if (file_exists(__DIR__ . '/config.local.php')) {
+    require_once __DIR__ . '/config.local.php';
+}
+if (!defined('DB_HOST')) define('DB_HOST', getenv('DB_HOST') ?: 'sql304.infinityfree.com');
+if (!defined('DB_NAME')) define('DB_NAME', getenv('DB_NAME') ?: 'if0_40377460_common_clicks');
+if (!defined('DB_USER')) define('DB_USER', getenv('DB_USER') ?: 'if0_40377460');
+if (!defined('DB_PASS')) define('DB_PASS', getenv('DB_PASS') ?: 'IBraverest1');
 
 // Create database connection
 function getDBConnection() {
