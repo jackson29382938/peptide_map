@@ -264,7 +264,9 @@
 
   function renderQuestion(q){
     const block = el('div', {class:'q-block mb-4 p-3 rounded bg-gray-800 border border-gray-700'});
-    const labelDiv = el('div', {class:'text-white font-semibold mb-2', text:q.label});
+    const labelDiv = q.type==='multiselect'
+      ? el('div', {class:'text-white font-semibold mb-2', text:q.label})
+      : el('label', {class:'text-white font-semibold mb-2 block', for:`q-${q.id}`, text:q.label});
     block.appendChild(labelDiv);
     let control;
     if (q.type==='select') control = renderSelect(q);
@@ -291,12 +293,26 @@
     return block;
   }
 
+  // Number answers are validated in metric so inches/cm and lbs/kg both work
+  function toMetric(q, n){
+    if (!window.UnitConverter) return n;
+    if (q.id==='height') return window.UnitConverter.getHeightInCm(n);
+    if (q.id==='weight') return window.UnitConverter.getWeightInKg(n);
+    return n;
+  }
+  const METRIC_LIMITS = { height:[120,230], weight:[30,250] };
+
   function validate(q){
     const val = state.answers[q.id];
     if (q.required && (val==null || val==='')) return false;
     if (q.type==='number'){
       const n = parseFloat(val);
       if (Number.isNaN(n)) return false;
+      const limits = METRIC_LIMITS[q.id];
+      if (limits){
+        const m = toMetric(q, n);
+        return m>=limits[0] && m<=limits[1];
+      }
       if (q.min!=null && n<q.min) return false;
       if (q.max!=null && n>q.max) return false;
     }
@@ -315,19 +331,6 @@
     return +(weightKg/(h*h)).toFixed(1);
   }
 
-  function dosageBase(){
-    // Example base dose map by goal
-    switch(state.answers.goal){
-      case 'weight_loss': return 1; // mg/week (GLP-1 base)
-      case 'muscle_growth': return 200; // mcg/day (GH peptides)
-      case 'injury_recovery': return 300; // mcg/day (BPC-157)
-      case 'anti_aging': return 2; // mg/day (GHK-Cu topical/SubQ equiv guidance)
-      case 'performance': return 10; // mg/day (MK-677 oral)
-      case 'immune': return 1.6; // mg twice weekly (Ta1)
-      default: return 200;
-    }
-  }
-
   function weightFactor(){
     const weightValue = parseFloat(state.answers.weight || 165);
     const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
@@ -336,10 +339,11 @@
 
   function ageMult(){
     const a = state.answers.age;
-    if (a==='18-30') return 0.8;
+    // Older adults are never scaled UP: dose escalation is the riskier direction
+    if (a==='18-30') return 0.9;
     if (a==='31-45') return 1.0;
-    if (a==='46-60') return 1.15;
-    return 1.25; // 60+
+    if (a==='46-60') return 1.0;
+    return 0.9; // 60+
   }
 
   function experienceAdj(){
@@ -354,14 +358,26 @@
   function contraindications(){
     const out = [];
     const cond = state.answers.conditions || [];
-    if (cond.includes('cancer')) out.push('Avoid GH/IGF-1 related peptides due to proliferation risk.');
-    if (cond.includes('pregnancy')) out.push('Most peptides contraindicated in pregnancy.');
-    if ((state.answers.allergies||[]).includes('needle_phobia')) out.push('Prefer oral options (e.g., MK-677) and topical GHK-Cu.');
+    const meds = state.answers.meds || [];
+    if (cond.includes('cancer')) out.push('Cancer history: GH-axis peptides (CJC-1295, Ipamorelin, IGF-1 LR3, MK-677) were removed from this list because of proliferation concerns. Discuss any peptide with your oncology team first.');
+    if ((state.answers.allergies||[]).includes('needle_phobia')) out.push('Needle phobia: oral options (e.g., MK-677) and topical GHK-Cu are less intimidating, but are still not risk-free.');
+    if (cond.includes('renal') || cond.includes('hepatic')) out.push('Kidney/liver conditions change how drugs are cleared. Dosing must be set by a clinician who can monitor labs.');
+    if (cond.includes('autoimmune') || meds.includes('immunosuppressants')) out.push('Autoimmune disease or immunosuppressants: immune-modulating peptides (Thymosin Alpha-1, LL-37) can interfere with treatment. Do not use without specialist approval.');
+    if (cond.includes('cardio') || meds.includes('blood_thinners')) out.push('Cardiovascular conditions or blood thinners: injections can bruise or bleed more, and some peptides affect blood pressure or fluid retention. Check with your cardiologist first.');
+    if (meds.includes('hormones')) out.push('You listed hormone therapy: GH-axis and melanocortin peptides can interact with it.');
     return out;
   }
 
+  // GH-axis peptides to remove for anyone with a cancer history
+  const GH_AXIS = /CJC-1295|Ipamorelin|IGF-1|MK-677|Sermorelin|Tesamorelin/i;
+
   function recommendStack(){
     const goal = state.answers.goal;
+    // Pregnancy / breastfeeding: no recommendation at all
+    if ((state.answers.conditions||[]).includes('pregnancy')){
+      return { title:'No recommendation', peptides:[], protocol:[], reconstitution:[],
+        notes:['You selected pregnancy. Research peptides have not been shown safe in pregnancy or while breastfeeding, so this tool will not suggest any. Please speak with your obstetric provider.'] };
+    }
     const bmi = computeBMI();
     const rec = { title:'', peptides:[], protocol:[], notes:[] };
 
@@ -372,11 +388,12 @@
 
     if (goal==='weight_loss'){
       rec.title = 'Weight Loss Stack';
-      // GLP-1 primary + AOD-9604 support
-      const glp = calcDose(1, 'mg');
-      rec.peptides.push({ name:'Semaglutide (GLP-1)', dose:`${glp.value}-${Math.max(glp.value*2.4, glp.value).toFixed(2)} mg/week (titrate)`, route:'SubQ weekly', concentration:'1 mg/mL typical', reconstitution:'Reconstitute 10 mg with 10 mL for 1 mg/mL' });
+      // GLP-1 primary + AOD-9604 support. The GLP-1 schedule follows the prescribing label:
+      // it is NOT scaled by weight, age or experience (those never raise a starting dose).
+      rec.peptides.push({ name:'Semaglutide (GLP-1)', dose:'Start 0.25 mg once weekly for 4 weeks, then step up about every 4 weeks (0.5 → 1.0 → 1.7 → 2.4 mg/week). Label maximum is 2.4 mg/week.', route:'SubQ weekly', concentration:'1 mg/mL typical', reconstitution:'Reconstitute 10 mg with 10 mL for 1 mg/mL' });
       rec.peptides.push({ name:'AOD-9604', dose:'300 mcg/day', route:'SubQ daily', concentration:'5 mg/2 mL → 2.5 mg/mL', reconstitution:'5 mg with 2 mL BAC' });
-      if (bmi && bmi>30) rec.notes.push('Higher BMI supports longer protocols (≥ 24 weeks) and higher GLP-1 titration.');
+      if (bmi && bmi < 27) rec.notes.push('A BMI under 27 is below the range where GLP-1 drugs are approved for weight management. Talk to a clinician before considering one.');
+      if (bmi && bmi>30) rec.notes.push('Higher BMI supports longer protocols (≥ 24 weeks), but it does not change the label starting dose or maximum.');
       rec.protocol.push('Duration: 16-24+ weeks, slow titration to minimize GI effects.');
     } else if (goal==='muscle_growth'){
       rec.title = 'Muscle Growth Stack';
@@ -420,6 +437,10 @@
     if ((state.answers.tolerance)==='low') rec.notes.push('Start low, go slow; consider diluting to lower mg/mL for comfort.');
 
     // Contraindications
+    if ((state.answers.conditions||[]).includes('cancer')){
+      rec.peptides = rec.peptides.filter(p => !GH_AXIS.test(p.name));
+      if (!rec.peptides.length) rec.notes.push('No peptide in this goal category was left after removing GH-axis options.');
+    }
     const ci = contraindications();
     if (ci.length) rec.notes.push(...ci);
 
@@ -490,7 +511,16 @@
 
     // Hook changes to save answers and allow branching updates
     if (q.type==='multiselect'){
-      block.addEventListener('change', ()=>{ saveAnswer(q); });
+      block.addEventListener('change', (e)=>{
+        // "None" and a real selection can't both be true
+        const target = e.target;
+        if (target && target.type==='checkbox'){
+          const boxes = block.querySelectorAll('input[type="checkbox"]');
+          if (target.value==='none' && target.checked) boxes.forEach(cb=>{ if (cb!==target) cb.checked = false; });
+          else if (target.value!=='none' && target.checked) boxes.forEach(cb=>{ if (cb.value==='none') cb.checked = false; });
+        }
+        saveAnswer(q);
+      });
     } else {
       const input = block.querySelector('input,select');
       input && input.addEventListener('change', ()=>{

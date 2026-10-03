@@ -169,11 +169,15 @@ function initializeSearch() {
     return { score: 0, matched: false };
   }
 
-  // Highlight fuzzy matches in text
+  // Highlight fuzzy matches in text (always returns HTML-safe markup)
   function highlightFuzzyMatch(text, query, isExact) {
+    text = String(text == null ? "" : text);
     if (isExact) {
-      const regex = new RegExp(`(${query})`, "gi");
-      return text.replace(regex, '<strong class="result-match">$1</strong>');
+      const regex = new RegExp(`(${escapeRegExp(escapeHtml(query))})`, "gi");
+      return escapeHtml(text).replace(
+        regex,
+        '<strong class="result-match">$1</strong>',
+      );
     }
 
     // For fuzzy matches, highlight matched characters
@@ -183,14 +187,15 @@ function initializeSearch() {
     let queryIndex = 0;
 
     for (let i = 0; i < text.length; i++) {
+      const ch = escapeHtml(text[i]);
       if (
         queryIndex < lowerQuery.length &&
         lowerText[i] === lowerQuery[queryIndex]
       ) {
-        result += `<strong class="result-match">${text[i]}</strong>`;
+        result += `<strong class="result-match">${ch}</strong>`;
         queryIndex++;
       } else {
-        result += text[i];
+        result += ch;
       }
     }
 
@@ -404,7 +409,7 @@ function initializeSearch() {
         snippetHtml = result.snippet;
       } else { // injury
         injuryHtml = highlightFuzzyMatch(result.injury, query, result.isExact);
-        regionHtml = `📍 ${result.region}`;
+        regionHtml = `📍 ${escapeHtml(result.region)}`;
       }
 
       item.innerHTML = `
@@ -650,86 +655,19 @@ function initializeSearch() {
       return;
     }
 
-    // Find the center point of the region
-    const regionBox = regions[regionName];
-    if (!regionBox) {
+    if (!regions[regionName]) {
       console.warn(`⚠️ Region "${regionName}" not found in regions data`);
       return;
     }
 
-    const center = new THREE.Vector3();
-    regionBox.getCenter(center);
-
-    // Simulate a click on that region
+    // Reuse the same code path as clicking the model (highlight, injection points, side panel)
     removeCurrentHighlight();
-    hideSidePanel();
-
-    // Add highlight
-    addHighlightSphere(center, regionName);
-
-    // Update side panel with region info
-    const parts = regionName.split(" - ");
-    const muscle = parts[0];
-    const portion = parts[1];
-    const injuries = regionInjuries[regionName] || ["No injuries listed"];
-
-    const panelTitle = document.getElementById("panel-title");
-    if (panelTitle) {
-      panelTitle.textContent = muscle;
-    }
-    const portionElement = document.getElementById("panel-portion");
-    if (portionElement) {
-      if (portion) {
-        portionElement.textContent = `Portion: ${portion}`;
-        portionElement.style.display = "block";
-      } else {
-        portionElement.style.display = "none";
-      }
-    }
+    removeInjectionPointSpheres();
+    window.selectRegion(regionName);
 
     const injuriesList = document.getElementById("panel-injuries");
-    if (injuriesList) {
-      injuriesList.innerHTML = "";
-      injuries.forEach((injury) => {
-        const li = document.createElement("li");
-        li.textContent = injury;
-        injuriesList.appendChild(li);
-      });
-    }
-
-    // Update injection procedure data
-    const procedure = regionProcedures[regionName];
-    const procedureSection = document.getElementById("panel-procedure");
-    if (procedureSection) {
-      if (procedure) {
-        procedureSection.style.display = "block";
-        const procTechnique = document.getElementById("proc-technique");
-        const procPosition = document.getElementById("proc-position");
-        const procLandmark = document.getElementById("proc-landmark");
-        const procNeedle = document.getElementById("proc-needle");
-        const procAngle = document.getElementById("proc-angle");
-        const procVolume = document.getElementById("proc-volume");
-        const procNotes = document.getElementById("proc-notes");
-        
-        if (procTechnique) procTechnique.textContent = procedure.technique || "N/A";
-        if (procPosition) procPosition.textContent = procedure.position || "N/A";
-        if (procLandmark) procLandmark.textContent = procedure.landmark || "N/A";
-        if (procNeedle) procNeedle.textContent = procedure.needle || "N/A";
-        if (procAngle) procAngle.textContent = procedure.angleDepth || "N/A";
-        if (procVolume) procVolume.textContent = procedure.volume || "N/A";
-        if (procNotes) procNotes.textContent = procedure.notes || "N/A";
-      } else {
-        procedureSection.style.display = "none";
-      }
-    }
-
-    // Show side panel
     const panel = document.getElementById("side-panel");
-    if (panel) {
-      panel.classList.add("active");
-      // Ensure panel is scrolled to top initially
-      panel.scrollTop = 0;
-    }
+    if (panel) panel.scrollTop = 0;
 
     // If there's a specific injury to highlight, find and scroll to it
     if (highlightInjury && injuriesList) {
@@ -748,18 +686,6 @@ function initializeSearch() {
           targetLi.scrollIntoView({ behavior: "smooth", block: "center" });
         }, 300); // Small delay to allow panel to fully open/animate
       }
-    }
-
-    // Hide title card
-    const titleCard = document.getElementById("title-card");
-    if (titleCard) {
-      titleCard.classList.add("hidden");
-    }
-
-    // Hide info-box
-    const infoBox = document.getElementById("info-box");
-    if (infoBox) {
-      infoBox.style.display = "none";
     }
   }
 

@@ -135,19 +135,6 @@ function loadModel() {
     console.log('🔍 Full URL:', fullPath);
     console.log('🔍 OBJLoader class:', OBJLoaderClass);
     
-    // First, verify the file is accessible
-    fetch(modelPath, { method: 'HEAD' })
-        .then(response => {
-            if (response.ok) {
-                console.log('✅ Model file is accessible (HTTP', response.status + ')');
-            } else {
-                console.error('❌ Model file returned HTTP', response.status);
-            }
-        })
-        .catch(err => {
-            console.warn('⚠️ Could not verify model file accessibility:', err.message);
-        });
-    
     try {
         loader.load(
             modelPath,
@@ -187,7 +174,6 @@ function loadModel() {
                         
                         // Make sure mesh is visible
                         child.visible = true;
-                        console.log(`  📦 Mesh: ${child.name || 'unnamed'}, vertices: ${child.geometry?.attributes?.position?.count || 0}`);
                     }
                 });
                 

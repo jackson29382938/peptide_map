@@ -597,7 +597,7 @@
             if (!isBackgroundRefresh) {
                 resultsContainer.innerHTML = `
                     <div class="research-error">
-                        <strong>Error:</strong> ${error.message}
+                        <strong>Error:</strong> ${escapeHtml(error.message)}
                     </div>
                 `;
             }
@@ -674,7 +674,7 @@
             html += '<strong>🔍 Search Enhanced:</strong> Including alternative names for: ';
             html += lastDetectedPeptides.map(p => {
                 const names = p.synonyms.slice(0, 3).join(', ') + (p.synonyms.length > 3 ? ` +${p.synonyms.length - 3} more` : '');
-                return `<span>${names}</span>`;
+                return `<span>${escapeHtml(names)}</span>`;
             }).join(' | ');
             html += '</div>';
         }
@@ -692,20 +692,20 @@
             
             html += `
                 <div class="research-article" data-paper-index="${paperIndex}">
-                    <div class="research-article-title" data-paper-index="${paperIndex}">${paper.title}</div>
+                    <div class="research-article-title" data-paper-index="${paperIndex}" role="button" tabindex="0">${escapeHtml(paper.title)}</div>
                     <div class="research-article-interactions">
                         <span class="interaction-item"><span class="interaction-icon">👍</span> ${upvotes}</span>
                         <span class="interaction-item"><span class="interaction-icon">👎</span> ${downvotes}</span>
                         <span class="interaction-item"><span class="interaction-icon">💬</span> ${commentCount}</span>
                     </div>
-                    <div class="research-article-authors">${authorsStr || 'Unknown authors'}</div>
-                    <div class="research-article-journal">${paper.journal}</div>
+                    <div class="research-article-authors">${escapeHtml(authorsStr) || 'Unknown authors'}</div>
+                    <div class="research-article-journal">${escapeHtml(paper.journal)}</div>
                     <div class="research-article-meta">
-                        <span class="research-meta-item"><strong>Year:</strong> ${paper.year || 'N/A'}</span>
-                        <span class="research-meta-item"><strong>Citations:</strong> ${paper.citationCount !== null ? paper.citationCount : 'N/A'}</span>
-                        <span class="research-meta-item"><strong>Source:</strong> ${paper.source.toUpperCase()}</span>
+                        <span class="research-meta-item"><strong>Year:</strong> ${escapeHtml(paper.year || 'N/A')}</span>
+                        <span class="research-meta-item"><strong>Citations:</strong> ${paper.citationCount !== null && paper.citationCount !== undefined ? escapeHtml(paper.citationCount) : 'N/A'}</span>
+                        <span class="research-meta-item"><strong>Source:</strong> ${escapeHtml(String(paper.source || "").toUpperCase())}</span>
                     </div>
-                    <div class="research-article-abstract">${abstractStr}</div>
+                    <div class="research-article-abstract">${escapeHtml(abstractStr)}</div>
                 </div>
             `;
         });
@@ -718,11 +718,18 @@
 
         const articleTitles = document.querySelectorAll('.research-article-title');
         articleTitles.forEach(title => {
-            title.addEventListener('click', () => {
-                const paperIndex = parseInt(title.dataset.paperIndex);
+            const open = () => {
+                const paperIndex = parseInt(title.dataset.paperIndex, 10);
                 const paper = lastSearchResults[paperIndex];
                 if (paper) {
                     openStudyModal(paper);
+                }
+            };
+            title.addEventListener('click', open);
+            title.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    open();
                 }
             });
         });
@@ -823,7 +830,7 @@
         modalTitle.textContent = study.title;
         modalAuthors.textContent = study.authors.slice(0, 10).join(', ') + (study.authors.length > 10 ? ' et al.' : '');
         modalJournal.textContent = `${study.journal} (${study.year || 'N/A'})`;
-        openLink.href = study.url;
+        openLink.href = /^https?:\/\//i.test(study.url || '') ? study.url : '#';
         
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -878,7 +885,7 @@
 
     function escapeHtml(text) {
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = text == null ? '' : String(text);
         return div.innerHTML;
     }
 

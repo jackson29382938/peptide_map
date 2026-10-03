@@ -1775,9 +1775,17 @@ body.bg-black {
 
 .study-card-header {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 6px 10px;
     margin-bottom: 8px;
+    min-width: 0;
+}
+
+.study-card-header h3 {
+    flex: 1 1 12rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .study-badge {
@@ -1831,7 +1839,9 @@ body.bg-black {
 
 /* Peptide-specific card styles */
 .peptide-shortcuts {
-    margin: 4px 0 0 0;
+    flex-basis: 100%;
+    overflow-wrap: anywhere;
+    margin: 0;
     font-size: 0.75rem;
     color: var(--text-tertiary);
     font-style: italic;
@@ -3981,7 +3991,7 @@ body.bg-black {
 }
 
 .mobile-drawer-header h2 {
-    margin: 0;
+    margin: 0 0 0 54px; /* clear the fixed hamburger button that sits above the drawer */
     font-size: 1.3rem;
     font-weight: 700;
     color: var(--text-primary);
@@ -4056,8 +4066,13 @@ body.bg-black {
 }
 
 /* Hide desktop toggles on mobile */
-.left-toggle.hide-on-mobile {
+.left-toggle.hide-on-mobile,
+.right-toggle.hide-on-mobile {
     display: none !important;
+}
+
+.mobile-menu-item[hidden] {
+    display: none;
 }
 
 /* ==========================================
@@ -4074,10 +4089,20 @@ body.bg-black {
     #contact-panel,
     #new-panel,
     #bpc157-panel,
-    #calc-panel {
+    #calc-panel,
+    #compare-panel,
+    #journal-panel,
+    #chat-panel,
+    #saved-locations-panel {
         width: 100vw !important;
         max-width: 100vw !important;
         min-width: 100vw !important;
+    }
+
+    /* Keep panel headings clear of the fixed hamburger button */
+    .studies-header,
+    .tab-buttons {
+        padding-top: 64px;
     }
 
     /* Info box adjustments */

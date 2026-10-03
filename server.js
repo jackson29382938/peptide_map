@@ -17,13 +17,21 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-// Only serve static files when running locally, not in Vercel
-app.use(express.static(path.join(__dirname)));
-
-app.use('/css', express.static(path.join(__dirname, 'css')));
-app.use('/js', express.static(path.join(__dirname, 'js')));
-app.use('/images', express.static(path.join(__dirname, 'images')));
-app.use('/assets', express.static(path.join(__dirname, 'assets')));
+// Local dev static serving. Only public assets are exposed -- never the repo root,
+// which contains server.js, the SQLite databases and (locally) .env.
+const PUBLIC_ROOT_FILES = [
+    'index.html',
+    'BPC-157_interactive_dashboard.html',
+    'sitemap.xml',
+    'robots.txt',
+    'google9e5a33f1c42669c8.html'
+];
+PUBLIC_ROOT_FILES.forEach((file) => {
+    app.get(`/${file}`, (req, res) => res.sendFile(path.join(__dirname, file)));
+});
+['css', 'js', 'images', 'assets', 'pages'].forEach((dir) => {
+    app.use(`/${dir}`, express.static(path.join(__dirname, dir), { dotfiles: 'deny' }));
+});
 
 // Serve main SPA / landing page
 app.get('/', (req, res) => {
@@ -452,7 +460,7 @@ app.post('/api/analytics/search', (req, res) => {
 
 // Get analytics summary
 app.get('/api/analytics/summary', (req, res) => {
-    const days = parseInt(req.query.days) || 7;
+    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 7, 1), 3650);
     const dateLimit = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
     const queries = {
@@ -542,7 +550,7 @@ app.get('/api/analytics/summary', (req, res) => {
 
 // Get detailed click statistics
 app.get('/api/analytics/clicks', (req, res) => {
-    const days = parseInt(req.query.days) || 7;
+    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 7, 1), 3650);
     const dateLimit = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
     const sql = `
@@ -610,152 +618,8 @@ app.get('/analytics', (req, res) => {
   res.sendFile(path.join(__dirname, 'analytics-dashboard.html'));
 });
 
-// Serve sitemap.xml
-app.get('/sitemap.xml', (req, res) => {
-  res.setHeader('Content-Type', 'application/xml');
-  res.sendFile(path.join(__dirname, 'sitemap.xml'));
-});
-
-// Serve robots.txt
-app.get('/robots.txt', (req, res) => {
-  res.setHeader('Content-Type', 'text/plain');
-  res.sendFile(path.join(__dirname, 'robots.txt'));
-});
-
-// Contact form endpoint (for local development)
-// In Vercel, this is handled by /api/contact.js serverless function
-app.post('/api/contact', async (req, res) => {
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    
-    // Handle preflight requests
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-    
-    try {
-        const { email, message } = req.body;
-        
-        // Validate required fields
-        if (!email || !message) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-        
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({ error: 'Invalid email address' });
-        }
-        
-        // Validate message length
-        if (message.trim().length < 10) {
-            return res.status(400).json({ error: 'Message must be at least 10 characters long' });
-        }
-        
-        // Recipient email
-        const to = 'bodymappeptide@gmail.com';
-        
-        // Email subject
-        const subject = 'Contact Form Submission from Peptide Map';
-        
-        // Email body
-        const emailBody = `New contact form submission from Peptide Map
-
-From: ${email}
-Date: ${new Date().toISOString()}
-
-Message:
-${message}
-
----
-This email was sent from the contact form on the Peptide Map website.`;
-        
-        // Check if SMTP is configured
-        if (!process.env.SMTP_HOST && !process.env.SMTP_USER) {
-            console.warn('SMTP not configured - email sending will likely fail');
-            return res.status(500).json({ 
-                error: 'Email service not configured. Please contact the administrator.',
-                details: process.env.NODE_ENV === 'development' ? 
-                    'SMTP_HOST and SMTP_USER environment variables are not set. See VERCEL_EMAIL_SETUP.md for configuration instructions.' : 
-                    undefined
-            });
-        }
-        
-        // Create transporter
-        const nodemailer = require('nodemailer');
-        const transporterConfig = {
-            host: process.env.SMTP_HOST || 'smtp.gmail.com',
-            port: parseInt(process.env.SMTP_PORT || '587'),
-            secure: process.env.SMTP_SECURE === 'true',
-        };
-        
-        // Only add auth if credentials are provided
-        if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-            transporterConfig.auth = {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            };
-        }
-        
-        const transporter = nodemailer.createTransport(transporterConfig);
-        
-        // Verify transporter configuration (optional, but helpful for debugging)
-        try {
-            await transporter.verify();
-            console.log('SMTP server is ready to send emails');
-        } catch (verifyError) {
-            console.error('SMTP verification failed:', verifyError);
-            // Continue anyway - verification might fail but sending could still work
-        }
-        
-        // Send email
-        const mailOptions = {
-            from: process.env.SMTP_FROM || email,
-            replyTo: email,
-            to: to,
-            subject: subject,
-            text: emailBody,
-        };
-        
-        const info = await transporter.sendMail(mailOptions);
-        
-        return res.status(200).json({
-            success: true,
-            message: 'Email sent successfully',
-            messageId: info.messageId
-        });
-        
-    } catch (error) {
-        console.error('Error sending contact email:', error);
-        console.error('Error stack:', error.stack);
-        
-        // Provide more detailed error information for debugging
-        const errorDetails = {
-            message: error.message,
-            code: error.code,
-            command: error.command,
-            response: error.response,
-            responseCode: error.responseCode
-        };
-        
-        console.error('Error details:', JSON.stringify(errorDetails, null, 2));
-        
-        return res.status(500).json({ 
-            error: 'Failed to send email. Please try again later.',
-            details: process.env.NODE_ENV === 'development' 
-                ? {
-                    message: error.message,
-                    code: error.code,
-                    hint: !process.env.SMTP_HOST ? 'SMTP_HOST environment variable not set' : 
-                          !process.env.SMTP_USER || !process.env.SMTP_PASS ? 'SMTP credentials not configured' : 
-                          'Check SMTP server configuration'
-                } 
-                : undefined
-        });
-    }
-});
+// Contact form endpoint: same handler Vercel runs for /api/contact
+app.all('/api/contact', require('./api/contact'));
 
 // Study Interactions API Endpoints
 app.get('/api/study-interactions/:studyId', (req, res) => {
@@ -801,7 +665,7 @@ app.post('/api/study-vote', (req, res) => {
     const { study_id, vote, title, doi, pmid } = req.body;
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     
-    if (!study_id || (vote !== 1 && vote !== -1)) {
+    if (!study_id || typeof study_id !== 'string' || study_id.length > 200 || (vote !== 1 && vote !== -1)) {
         return res.status(400).json({ error: 'Invalid vote data' });
     }
     
@@ -835,7 +699,9 @@ app.post('/api/study-vote', (req, res) => {
 app.post('/api/study-interactions-bulk', (req, res) => {
     const { study_ids } = req.body;
     
-    if (!study_ids || !Array.isArray(study_ids) || study_ids.length === 0) {
+    // SQLite caps bound variables (999 by default), so keep the batch well below that.
+    if (!Array.isArray(study_ids) || study_ids.length === 0 || study_ids.length > 500 ||
+        study_ids.some((id) => typeof id !== 'string' && typeof id !== 'number')) {
         return res.status(400).json({ error: 'Invalid study IDs' });
     }
     
@@ -903,7 +769,8 @@ app.post('/api/study-comment', (req, res) => {
     const { study_id, comment_text, title, doi, pmid } = req.body;
     const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     
-    if (!study_id || !comment_text || comment_text.trim().length === 0) {
+    if (!study_id || typeof study_id !== 'string' || study_id.length > 200 ||
+        typeof comment_text !== 'string' || comment_text.trim().length === 0 || comment_text.length > 1000) {
         return res.status(400).json({ error: 'Invalid comment data' });
     }
     
@@ -972,6 +839,28 @@ function initializeResearchCacheDatabase() {
     });
 }
 
+// Get popular research queries
+app.get('/api/research-cache/popular', (req, res) => {
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 10, 1), 100);
+    
+    researchCacheDb.all(
+        `SELECT query_text, search_count, last_updated 
+         FROM research_cache 
+         WHERE query_text IS NOT NULL
+         ORDER BY search_count DESC 
+         LIMIT ?`,
+        [limit],
+        (err, rows) => {
+            if (err) {
+                console.error('Error fetching popular queries:', err);
+                return res.status(500).json({ error: 'Failed to fetch popular queries' });
+            }
+            
+            res.json({ queries: rows });
+        }
+    );
+});
+
 // Get cached research results
 app.get('/api/research-cache/:cacheKey', (req, res) => {
     const { cacheKey } = req.params;
@@ -1032,28 +921,6 @@ app.post('/api/research-cache', (req, res) => {
             }
             
             res.json({ success: true });
-        }
-    );
-});
-
-// Get popular research queries
-app.get('/api/research-cache/popular', (req, res) => {
-    const limit = parseInt(req.query.limit) || 10;
-    
-    researchCacheDb.all(
-        `SELECT query_text, search_count, last_updated 
-         FROM research_cache 
-         WHERE query_text IS NOT NULL
-         ORDER BY search_count DESC 
-         LIMIT ?`,
-        [limit],
-        (err, rows) => {
-            if (err) {
-                console.error('Error fetching popular queries:', err);
-                return res.status(500).json({ error: 'Failed to fetch popular queries' });
-            }
-            
-            res.json({ queries: rows });
         }
     );
 });

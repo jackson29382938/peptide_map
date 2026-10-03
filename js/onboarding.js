@@ -115,7 +115,7 @@
         },
         {
             target: '#chat-toggle',
-            title: 'AI Peptide Q&A 🤖',
+            title: 'Peptide Q&A 🤖',
             content: 'Ask questions about peptides and get AI-powered answers based on research.',
             position: 'right',
             highlight: true
@@ -134,13 +134,47 @@
     let tooltip = null;
     let spotlightMask = null;
 
+    let started = false;
+
     function hasSeenOnboarding() {
-        return localStorage.getItem(STORAGE_KEY) === 'true';
+        try {
+            return localStorage.getItem(STORAGE_KEY) === 'true';
+        } catch (e) {
+            return false;
+        }
     }
 
     function markOnboardingSeen() {
-        localStorage.setItem(STORAGE_KEY, 'true');
+        try {
+            localStorage.setItem(STORAGE_KEY, 'true');
+        } catch (e) {
+            /* storage blocked (private mode): the tutorial just shows again next visit */
+        }
     }
+
+    function isMobileLayout() {
+        return window.innerWidth <= 768;
+    }
+
+    // On phones the left/right toggle buttons are folded into the hamburger menu, so
+    // collapse the per-button steps into one "Menu" step instead of pointing at hidden elements.
+    function getSteps() {
+        if (!isMobileLayout()) return tutorialSteps;
+        const isToggleStep = (step) => /-toggle$/.test(step.target);
+        const steps = tutorialSteps
+            .map(step => (/All Set/.test(step.title) ? { ...step, target: '#container', highlight: false, position: 'center' } : step))
+            .filter(step => !isToggleStep(step));
+        const menuStep = {
+            target: '#mobile-hamburger',
+            title: 'Menu ☰',
+            content: 'Everything lives in this menu: search, the calculator, the peptides database, research studies, vendors, the quiz, comparison, your journal, Q&A, saved locations and more.',
+            position: 'bottom',
+            highlight: true
+        };
+        steps.splice(Math.min(2, steps.length), 0, menuStep);
+        return steps;
+    }
+    let activeSteps = tutorialSteps;
 
     function createOnboardingElements() {
         // Main overlay container
@@ -168,7 +202,7 @@
         tooltip.className = 'onboarding-tooltip';
         tooltip.innerHTML = `
             <div class="onboarding-tooltip-header">
-                <span class="onboarding-step-counter">1 / ${tutorialSteps.length}</span>
+                <span class="onboarding-step-counter">1 / ${activeSteps.length}</span>
                 <button class="onboarding-skip" aria-label="Skip tutorial">Skip</button>
             </div>
             <h3 class="onboarding-title"></h3>
@@ -178,7 +212,7 @@
                 <button class="onboarding-next">Next →</button>
             </div>
             <div class="onboarding-progress">
-                ${tutorialSteps.map((_, i) => `<div class="onboarding-dot${i === 0 ? ' active' : ''}" data-step="${i}"></div>`).join('')}
+                ${activeSteps.map((_, i) => `<div class="onboarding-dot${i === 0 ? ' active' : ''}" data-step="${i}"></div>`).join('')}
             </div>
         `;
         document.body.appendChild(tooltip);
@@ -195,7 +229,8 @@
             });
         });
 
-        // Close on escape
+        // Close on escape (registered once; the handler ignores events while the tutorial is hidden)
+        document.removeEventListener('keydown', handleKeydown);
         document.addEventListener('keydown', handleKeydown);
     }
 
@@ -212,14 +247,14 @@
     }
 
     function showStep(stepIndex) {
-        const step = tutorialSteps[stepIndex];
+        const step = activeSteps[stepIndex];
         if (!step) return;
 
         currentStep = stepIndex;
         const target = document.querySelector(step.target);
 
         // Update counter
-        tooltip.querySelector('.onboarding-step-counter').textContent = `${stepIndex + 1} / ${tutorialSteps.length}`;
+        tooltip.querySelector('.onboarding-step-counter').textContent = `${stepIndex + 1} / ${activeSteps.length}`;
 
         // Update content
         tooltip.querySelector('.onboarding-title').textContent = step.title;
@@ -229,7 +264,7 @@
         const prevBtn = tooltip.querySelector('.onboarding-prev');
         const nextBtn = tooltip.querySelector('.onboarding-next');
         prevBtn.disabled = stepIndex === 0;
-        nextBtn.textContent = stepIndex === tutorialSteps.length - 1 ? 'Finish ✓' : 'Next →';
+        nextBtn.textContent = stepIndex === activeSteps.length - 1 ? 'Finish ✓' : 'Next →';
 
         // Update progress dots
         tooltip.querySelectorAll('.onboarding-dot').forEach((dot, i) => {
@@ -310,7 +345,7 @@
     }
 
     function nextStep() {
-        if (currentStep < tutorialSteps.length - 1) {
+        if (currentStep < activeSteps.length - 1) {
             showStep(currentStep + 1);
         } else {
             endTutorial();
@@ -324,15 +359,18 @@
     }
 
     function goToStep(stepIndex) {
-        if (stepIndex >= 0 && stepIndex < tutorialSteps.length) {
+        if (stepIndex >= 0 && stepIndex < activeSteps.length) {
             showStep(stepIndex);
         }
     }
 
     function startOnboarding() {
-        if (!overlay) {
-            createOnboardingElements();
-        }
+        activeSteps = getSteps();
+        // Rebuild so the step counter and dots match the active step list (desktop vs mobile)
+        if (overlay) overlay.remove();
+        if (tooltip) tooltip.remove();
+        overlay = tooltip = spotlightMask = null;
+        createOnboardingElements();
 
         currentStep = 0;
         overlay.classList.add('visible');
@@ -354,46 +392,34 @@
         markOnboardingSeen();
     }
 
-    // Auto-start on first visit
-    function init() {
-        // Wait for app to be ready before starting tutorial
-        const checkReady = () => {
-            if (document.querySelector('#container canvas')) {
-                if (!hasSeenOnboarding()) {
-                    // Delay a bit so user sees the 3D model first
-                    setTimeout(startOnboarding, 1500);
-                }
-            } else {
-                setTimeout(checkReady, 500);
-            }
-        };
+    // Auto-start on first visit only
+    function autoStart() {
+        if (started || hasSeenOnboarding()) return;
+        started = true;
+        startOnboarding();
+    }
 
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                // Wait for 3D model to load
-                window.addEventListener('appReady', () => setTimeout(startOnboarding, 500), { once: true });
-                // Fallback if appReady never fires
-                setTimeout(checkReady, 3000);
-            });
-        } else {
-            window.addEventListener('appReady', () => {
-                if (!hasSeenOnboarding()) {
-                    setTimeout(startOnboarding, 500);
-                }
-            }, { once: true });
-            setTimeout(checkReady, 3000);
-        }
+    function init() {
+        if (hasSeenOnboarding()) return;
+
+        // Wait for the 3D model so visitors see it before the tutorial covers the screen
+        window.addEventListener('appReady', () => setTimeout(autoStart, 500), { once: true });
+
+        // Fallback if appReady never fires (e.g. WebGL unavailable)
+        setTimeout(() => {
+            if (!started) autoStart();
+        }, 8000);
     }
 
     init();
 
     // Export for external use
     window.Onboarding = {
-        start: startOnboarding,
+        start: () => { started = true; startOnboarding(); },
         end: endTutorial,
         reset: () => localStorage.removeItem(STORAGE_KEY)
     };
 
     // Alias for mobile menu
-    window.startOnboarding = startOnboarding;
+    window.startOnboarding = () => { started = true; startOnboarding(); };
 })();

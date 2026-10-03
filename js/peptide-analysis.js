@@ -1,5 +1,16 @@
 // Comprehensive Peptide Analysis Calculators
 
+const CALC_DISCLAIMER_HTML = `
+    <p class="text-gray-300 text-sm" style="margin-top: 12px; font-style: italic;">
+        ⚠️ Educational estimate only, not medical advice or a prescription. Doses here come from simplified
+        formulas and published ranges, not from your medical history. Confirm any dose with a qualified healthcare professional.
+    </p>`;
+
+// Reject values that are clearly typos before they feed a dose formula (weight/height in metric)
+function inRange(value, min, max) {
+  return Number.isFinite(value) && value >= min && value <= max;
+}
+
 function initializePeptideAnalysis() {
   const analysisToggle = document.getElementById("peptide-analysis-toggle");
   const tabPanel = document.getElementById("tab-panel");
@@ -60,12 +71,12 @@ function initBPC157Calculator() {
     const severity = parseInt(severityInput.value);
     const condition = conditionInput.value;
 
-    if (isNaN(weightValue) || weightValue <= 0) {
-      alert("Please enter a valid weight");
+    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
+
+    if (!inRange(weightKg, 30, 250)) {
+      alert("Please enter a realistic weight (roughly 66-550 lbs / 30-250 kg).");
       return;
     }
-
-    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
 
     let baseDosePerKg = 6;
 
@@ -109,6 +120,7 @@ function initBPC157Calculator() {
                         </div>
                     </div>
                 </div>
+                ${CALC_DISCLAIMER_HTML}
             </div>
         `;
     resultsDiv.style.display = "block";
@@ -132,12 +144,12 @@ function initGHSCalculator() {
     const experience = parseInt(expInput.value);
     const goal = goalInput.value;
 
-    if (isNaN(weightValue) || weightValue <= 0 || isNaN(age) || age <= 0) {
-      alert("Please enter valid weight and age");
+    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
+
+    if (!inRange(weightKg, 30, 250) || !inRange(age, 18, 100)) {
+      alert("Please enter a realistic weight and an age between 18 and 100.");
       return;
     }
-
-    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
 
     const goalMultipliers = {
       muscle_growth: 1.2,
@@ -188,6 +200,7 @@ function initGHSCalculator() {
                         </div>
                     </div>
                 </div>
+                ${CALC_DISCLAIMER_HTML}
             </div>
         `;
     resultsDiv.style.display = "block";
@@ -195,6 +208,16 @@ function initGHSCalculator() {
 }
 
 // GLP-1 Dosing Calculator
+// Starting doses and maximums follow the published prescribing labels (weight-management schedules).
+// Body weight, BMI and diabetes status do NOT raise a starting dose: these drugs are titrated up
+// slowly from the label's starting dose to limit nausea and other GI effects. The only adjustment
+// offered here is a slower escalation for people who expect poor tolerance.
+const GLP1_LABEL = {
+  semaglutide: { name: "Semaglutide", start: 0.25, max: 2.4, stepWeeks: 4, escalations: 4, unit: "mg", frequency: "weekly" },
+  liraglutide: { name: "Liraglutide", start: 0.6, max: 3.0, stepWeeks: 1, escalations: 4, unit: "mg", frequency: "daily" },
+  tirzepatide: { name: "Tirzepatide", start: 2.5, max: 15, stepWeeks: 4, escalations: 5, unit: "mg", frequency: "weekly" },
+};
+
 function initGLP1Calculator() {
   const weightInput = document.getElementById("glp1-weight");
   const bmiInput = document.getElementById("glp1-bmi");
@@ -211,60 +234,58 @@ function initGLP1Calculator() {
     const diabetes = diabetesInput.value;
     const tolerance = toleranceInput.value;
 
-    if (isNaN(weightValue) || weightValue <= 0 || isNaN(bmi) || bmi <= 0) {
-      alert("Please enter valid weight and BMI");
+    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
+
+    if (!inRange(weightKg, 30, 250) || !inRange(bmi, 10, 80)) {
+      alert("Please enter a realistic weight and a BMI between 10 and 80.");
       return;
     }
 
-    const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
-
-    const baseDoses = {
-      semaglutide: 0.25,
-      liraglutide: 0.6,
-      tirzepatide: 2.5,
-    };
-
-    const bmiFactor = Math.min(2.0, bmi / 25);
-    const diabetesFactor = { none: 1.0, pre: 1.1, type2: 1.2 };
-    const toleranceFactor = { low: 0.8, medium: 1.0, high: 1.2 };
+    // Slower escalation (never a higher dose) when tolerance is expected to be low
+    const slowFactor = tolerance === "low" ? 2 : 1;
 
     let resultsHtml =
-      '<div class="calc-results active"><h3>GLP-1 Dosing Recommendations:</h3>';
+      '<div class="calc-results active"><h3>GLP-1 Schedule (label-based):</h3>';
 
-    for (const [peptide, baseDose] of Object.entries(baseDoses)) {
-      const adjustedDose = (
-        baseDose *
-        bmiFactor *
-        diabetesFactor[diabetes] *
-        toleranceFactor[tolerance]
-      ).toFixed(2);
-      const maxDose = (parseFloat(adjustedDose) * 8).toFixed(2);
-      const titrationWeeks = tolerance === "high" ? 4 : 6;
+    if (bmi < 27) {
+      resultsHtml += `<p class="text-gray-300 text-sm" style="margin-bottom: 12px;">
+        ⚠️ A BMI under 27 is below the range where these drugs are approved for weight management
+        (BMI ≥ 30, or ≥ 27 with a weight-related condition). Discuss with a clinician before considering them.</p>`;
+    }
+    if (diabetes === "type2") {
+      resultsHtml += `<p class="text-gray-300 text-sm" style="margin-bottom: 12px;">
+        ⚠️ With type 2 diabetes (especially alongside insulin or sulfonylureas) the dose and the rest of your
+        medication need to be managed by your prescriber because of low-blood-sugar risk.</p>`;
+    }
 
-      const peptideName = peptide.charAt(0).toUpperCase() + peptide.slice(1);
-
+    for (const drug of Object.values(GLP1_LABEL)) {
+      const stepWeeks = drug.stepWeeks * slowFactor;
       resultsHtml += `
                 <div class="result-card" style="margin-bottom: 20px;">
-                    <h4 style="color: var(--text-accent); margin-bottom: 15px;">${peptideName}</h4>
+                    <h4 style="color: var(--text-accent); margin-bottom: 15px;">${drug.name}</h4>
                     <div class="result-details">
                         <div class="result-item">
                             <span class="result-label">STARTING DOSE:</span>
-                            <span class="result-value highlight">${adjustedDose} mg</span>
+                            <span class="result-value highlight">${drug.start} ${drug.unit} ${drug.frequency}</span>
                         </div>
                         <div class="result-item">
-                            <span class="result-label">MAX DOSE:</span>
-                            <span class="result-value">${maxDose} mg</span>
+                            <span class="result-label">LABEL MAXIMUM:</span>
+                            <span class="result-value">${drug.max} ${drug.unit} ${drug.frequency}</span>
                         </div>
                         <div class="result-item">
-                            <span class="result-label">TITRATION PERIOD:</span>
-                            <span class="result-value">${titrationWeeks} weeks</span>
+                            <span class="result-label">ESCALATE NO FASTER THAN:</span>
+                            <span class="result-value">every ${stepWeeks} week${stepWeeks === 1 ? "" : "s"}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">TIME TO REACH MAX (earliest):</span>
+                            <span class="result-value">~${stepWeeks * drug.escalations} weeks</span>
                         </div>
                     </div>
                 </div>
             `;
     }
 
-    resultsHtml += "</div>";
+    resultsHtml += CALC_DISCLAIMER_HTML + "</div>";
     resultsDiv.innerHTML = resultsHtml;
     resultsDiv.style.display = "block";
   });
@@ -293,13 +314,13 @@ function initAdvancedDosing() {
     const peptide = peptideInput.value;
     const condition = conditionInput.value;
 
-    if (isNaN(weightValue) || isNaN(heightValue) || isNaN(age)) {
-      alert("Please enter valid values");
-      return;
-    }
-
     const weightKg = window.UnitConverter ? window.UnitConverter.getWeightInKg(weightValue) : weightValue;
     const heightCm = window.UnitConverter ? window.UnitConverter.getHeightInCm(heightValue) : heightValue;
+
+    if (!inRange(weightKg, 30, 250) || !inRange(heightCm, 120, 230) || !inRange(age, 18, 100)) {
+      alert("Please enter a realistic weight, height and an age between 18 and 100.");
+      return;
+    }
 
     const lbm = 0.407 * weightKg + 0.267 * heightCm - 19.2;
 
@@ -345,6 +366,7 @@ function initAdvancedDosing() {
                         </div>
                     </div>
                 </div>
+                ${CALC_DISCLAIMER_HTML}
             </div>
         `;
     resultsDiv.style.display = "block";

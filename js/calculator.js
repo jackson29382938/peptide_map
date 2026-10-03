@@ -1,5 +1,14 @@
 // Peptide Reconstitution Calculator with instant updates (left panel mode)
 function initializeCalculator() {
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   const calcToggle = document.getElementById("calc-toggle");
   const calcPanel = document.getElementById("calc-panel");
   // calcClose button may not be visible in panel mode; optional
@@ -9,6 +18,9 @@ function initializeCalculator() {
     console.error("❌ Calculator panel not found");
     return;
   }
+  // Guard against double initialisation (would stack duplicate listeners)
+  if (calcPanel.dataset.calcInitialized === "true") return;
+  calcPanel.dataset.calcInitialized = "true";
 
   // Normal mode elements
   const syringeVolume = document.getElementById("syringe-volume");
@@ -63,6 +75,31 @@ function initializeCalculator() {
     });
   });
 
+  // Insulin syringes are always U-100: 100 units = 1 ml, so 1 unit = 0.01 ml
+  // regardless of the syringe's capacity. Capacity (0.3 / 0.5 / 1 ml) only
+  // limits how many units can physically be drawn (30 / 50 / 100).
+  const UNITS_PER_ML = 100;
+
+  function isPositive(n) {
+    return Number.isFinite(n) && n > 0;
+  }
+
+  // Units to draw for a dose, or null when the inputs can't produce a result.
+  function unitsForDose(vialMg, bacMl, doseMcg) {
+    if (!isPositive(vialMg) || !isPositive(bacMl) || !isPositive(doseMcg)) return null;
+    const mcgPerMl = (vialMg * 1000) / bacMl;
+    const mlNeeded = doseMcg / mcgPerMl;
+    return mlNeeded * UNITS_PER_ML;
+  }
+
+  function capacityWarning(units, syringeVol) {
+    const capacity = syringeVol * UNITS_PER_ML;
+    if (units > capacity) {
+      return `⚠️ ${units.toFixed(1)} units is more than a ${syringeVol} ml syringe holds (${capacity} units). Use a larger syringe or reconstitute with less water.`;
+    }
+    return "";
+  }
+
   // Calculate normal mode with instant updates
   function calculateNormalMode() {
     const syringeVol = parseFloat(syringeVolume.value);
@@ -72,32 +109,29 @@ function initializeCalculator() {
 
     // Convert dose to mcg if in mg
     if (currentUnit === "mg") {
-      dose = dose * 1000; // Convert mg to mcg
+      dose = dose * 1000;
     }
 
-    // Calculate concentration (mg/ml)
+    const unitsNeeded = unitsForDose(peptideMg, bacMl, dose);
+
+    if (unitsNeeded === null) {
+      resultInstruction.textContent = "Enter a positive peptide amount, water volume and dose to see results.";
+      doseDisplay.textContent = "—";
+      syringeUnits.textContent = "—";
+      totalDoses.textContent = "—";
+      concentration.textContent = "—";
+      return;
+    }
+
     const concMgMl = peptideMg / bacMl;
-
-    // Calculate concentration (mcg/ml)
-    const concMcgMl = concMgMl * 1000;
-
-    // Calculate units per ml based on syringe volume
-    // Standard: 0.3ml = 30 units, 0.5ml = 50 units, 1ml = 100 units
-    const unitsPerMl = syringeVol * 100;
-
-    // Calculate mcg per unit
-    const mcgPerUnit = concMcgMl / unitsPerMl;
-
-    // Calculate units needed for desired dose
-    const unitsNeeded = dose / mcgPerUnit;
-
-    // Calculate total doses in vial
     const totalDosesCount = Math.floor((peptideMg * 1000) / dose);
-
-    // Update display
     const doseText =
       currentUnit === "mcg" ? `${dose} mcg` : `${dose / 1000} mg`;
-    resultInstruction.textContent = `To have a dose of ${doseText}, pull the syringe to ${unitsNeeded.toFixed(1)} units.`;
+    const warning = capacityWarning(unitsNeeded, syringeVol);
+
+    resultInstruction.textContent =
+      `To have a dose of ${doseText}, pull the syringe to ${unitsNeeded.toFixed(1)} units.` +
+      (warning ? ` ${warning}` : "");
     doseDisplay.textContent = doseText;
     syringeUnits.textContent = `${unitsNeeded.toFixed(1)} units`;
     totalDoses.textContent = `${totalDosesCount} doses`;
@@ -134,19 +168,15 @@ function initializeCalculator() {
   // Ml <-> Units converter
   convMl.addEventListener("input", () => {
     const ml = parseFloat(convMl.value);
-    const syringeVol = parseFloat(syringeVolume.value);
-    const unitsPerMl = syringeVol * 100;
     if (!isNaN(ml)) {
-      convUnits.value = Math.round(ml * unitsPerMl);
+      convUnits.value = Math.round(ml * UNITS_PER_ML * 10) / 10;
     }
   });
 
   convUnits.addEventListener("input", () => {
     const units = parseFloat(convUnits.value);
-    const syringeVol = parseFloat(syringeVolume.value);
-    const unitsPerMl = syringeVol * 100;
     if (!isNaN(units)) {
-      convMl.value = (units / unitsPerMl).toFixed(2);
+      convMl.value = (units / UNITS_PER_ML).toFixed(2);
     }
   });
 
@@ -162,24 +192,25 @@ function initializeCalculator() {
     }
 
     blendCount++;
+    const n = blendCount;
     const blendHtml = `
             <div class="peptide-blend">
-                <h4>Peptide ${blendCount}</h4>
+                <h4>Peptide ${n}</h4>
                 <div class="blend-row">
-                    <label>Peptide Name:</label>
-                    <input type="text" class="blend-name" placeholder="e.g., Ipamorelin">
+                    <label for="blend-name-${n}">Peptide Name:</label>
+                    <input type="text" id="blend-name-${n}" class="blend-name" placeholder="e.g., Ipamorelin">
                 </div>
                 <div class="blend-row">
-                    <label>Amount (mg):</label>
-                    <input type="number" class="blend-amount" value="5" min="1" step="0.1">
+                    <label for="blend-amount-${n}">Amount (mg):</label>
+                    <input type="number" id="blend-amount-${n}" class="blend-amount" value="5" min="0.1" step="0.1">
                 </div>
                 <div class="blend-row">
-                    <label>Dosage (mcg):</label>
-                    <input type="number" class="blend-dosage" value="250" min="1" step="1">
+                    <label for="blend-dosage-${n}">Dosage (mcg):</label>
+                    <input type="number" id="blend-dosage-${n}" class="blend-dosage" value="250" min="1" step="1">
                 </div>
                 <div class="blend-row">
-                    <label>BAC Used (ml):</label>
-                    <input type="number" class="blend-bac" value="2" min="0.5" step="0.1">
+                    <label for="blend-bac-${n}">BAC Used (ml):</label>
+                    <input type="number" id="blend-bac-${n}" class="blend-bac" value="2" min="0.1" step="0.1">
                 </div>
             </div>
         `;
@@ -195,26 +226,33 @@ function initializeCalculator() {
     const blends = document.querySelectorAll(".peptide-blend");
     let resultsHtml = "";
 
+    const syringeVol = parseFloat(syringeVolume.value);
+
     blends.forEach((blend, index) => {
       const name =
-        blend.querySelector(".blend-name").value || `Peptide ${index + 1}`;
+        blend.querySelector(".blend-name").value.trim() || `Peptide ${index + 1}`;
       const amount = parseFloat(blend.querySelector(".blend-amount").value);
       const dosage = parseFloat(blend.querySelector(".blend-dosage").value);
       const bac = parseFloat(blend.querySelector(".blend-bac").value);
 
-      const syringeVol = parseFloat(syringeVolume.value);
-      const unitsPerMl = syringeVol * 100;
+      const unitsNeeded = unitsForDose(amount, bac, dosage);
+      if (unitsNeeded === null) {
+        resultsHtml += `
+                <div class="result-card" style="margin-bottom: 20px;">
+                    <h4 style="color: #ef4444; margin-bottom: 15px;">${escapeHtml(name)}</h4>
+                    <p class="result-instruction">Enter a positive amount, dosage and BAC volume to calculate.</p>
+                </div>`;
+        return;
+      }
 
       const concMgMl = amount / bac;
-      const concMcgMl = concMgMl * 1000;
-      const mcgPerUnit = concMcgMl / unitsPerMl;
-      const unitsNeeded = dosage / mcgPerUnit;
       const totalDosesCount = Math.floor((amount * 1000) / dosage);
+      const warning = capacityWarning(unitsNeeded, syringeVol);
 
       resultsHtml += `
                 <div class="result-card" style="margin-bottom: 20px;">
-                    <h4 style="color: #ef4444; margin-bottom: 15px;">${name}</h4>
-                    <p class="result-instruction">Pull syringe to ${unitsNeeded.toFixed(1)} units for ${dosage} mcg dose</p>
+                    <h4 style="color: #ef4444; margin-bottom: 15px;">${escapeHtml(name)}</h4>
+                    <p class="result-instruction">Pull syringe to ${unitsNeeded.toFixed(1)} units for ${dosage} mcg dose${warning ? ` ${escapeHtml(warning)}` : ""}</p>
                     <div class="result-details">
                         <div class="result-item">
                             <span class="result-label">DRAW SYRINGE TO:</span>

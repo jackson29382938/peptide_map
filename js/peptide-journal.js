@@ -13,7 +13,8 @@
     function loadEntries() {
         try {
             const stored = localStorage.getItem(STORAGE_KEY);
-            entries = stored ? JSON.parse(stored) : [];
+            const parsed = stored ? JSON.parse(stored) : [];
+            entries = Array.isArray(parsed) ? parsed.filter(e => e && typeof e === 'object') : [];
         } catch (e) {
             console.error('Error loading journal entries:', e);
             entries = [];
@@ -27,6 +28,15 @@
         } catch (e) {
             console.error('Error saving journal entries:', e);
         }
+    }
+
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     // Get all available peptides for dropdown
@@ -53,7 +63,7 @@
             <div class="studies-header">
                 <h2 class="studies-title">📓 Peptide Journal</h2>
                 <div class="studies-meta">
-                    <span>Log your protocols, doses, and outcomes</span>
+                    <span>Log your protocols, doses, and outcomes. Entries are stored only in this browser (never uploaded); clearing site data deletes them.</span>
                 </div>
             </div>
             <div id="journal-container" class="studies-list">
@@ -96,7 +106,7 @@
                         <label for="journal-peptide">Peptide</label>
                         <select id="journal-peptide" required>
                             <option value="">-- Select --</option>
-                            ${peptides.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+                            ${peptides.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('')}
                             <option value="other">Other (specify in notes)</option>
                         </select>
                     </div>
@@ -128,7 +138,7 @@
                         <label>Outcome Rating</label>
                         <div class="journal-rating" id="journal-rating">
                             ${[1, 2, 3, 4, 5].map(n => `
-                                <button type="button" class="rating-star" data-rating="${n}">★</button>
+                                <button type="button" class="rating-star" data-rating="${n}" aria-label="${n} star${n > 1 ? 's' : ''}">★</button>
                             `).join('')}
                         </div>
                     </div>
@@ -147,11 +157,9 @@
         });
 
         // Rating stars
-        let selectedRating = 0;
         container.querySelectorAll('.rating-star').forEach(star => {
             star.addEventListener('click', () => {
-                selectedRating = parseInt(star.dataset.rating);
-                updateRatingDisplay(selectedRating);
+                updateRatingDisplay(parseInt(star.dataset.rating, 10));
             });
         });
 
@@ -163,6 +171,7 @@
         document.querySelectorAll('.rating-star').forEach(star => {
             const starRating = parseInt(star.dataset.rating);
             star.classList.toggle('active', starRating <= rating);
+            star.setAttribute('aria-pressed', String(starRating <= rating));
         });
     }
 
@@ -170,9 +179,9 @@
     function addEntry() {
         const date = document.getElementById('journal-date').value;
         const peptide = document.getElementById('journal-peptide').value;
-        const dose = document.getElementById('journal-dose').value;
+        const dose = document.getElementById('journal-dose').value.trim();
         const route = document.getElementById('journal-route').value;
-        const notes = document.getElementById('journal-notes').value;
+        const notes = document.getElementById('journal-notes').value.trim();
         const rating = document.querySelectorAll('.rating-star.active').length;
 
         if (!date || !peptide || !dose) {
@@ -181,7 +190,7 @@
         }
 
         const entry = {
-            id: Date.now(),
+            id: Date.now() + Math.random(),
             date,
             peptide,
             dose,
@@ -233,18 +242,18 @@
             <div class="journal-list">
                 <h3>Recent Entries (${entries.length})</h3>
                 ${entries.slice(0, 50).map(entry => `
-                    <div class="journal-entry" data-id="${entry.id}">
+                    <div class="journal-entry" data-id="${escapeHtml(entry.id)}">
                         <div class="journal-entry-header">
                             <span class="journal-entry-date">${formatDate(entry.date)}</span>
-                            <span class="journal-entry-peptide">${getPeptideName(entry.peptide)}</span>
-                            <button class="journal-entry-delete" data-id="${entry.id}" title="Delete">✕</button>
+                            <span class="journal-entry-peptide">${escapeHtml(getPeptideName(entry.peptide))}</span>
+                            <button class="journal-entry-delete" data-id="${escapeHtml(entry.id)}" title="Delete" aria-label="Delete entry">✕</button>
                         </div>
                         <div class="journal-entry-details">
-                            <span class="journal-entry-dose">${entry.dose}</span>
-                            <span class="journal-entry-route">${formatRoute(entry.route)}</span>
-                            ${entry.rating ? `<span class="journal-entry-rating">${'★'.repeat(entry.rating)}${'☆'.repeat(5 - entry.rating)}</span>` : ''}
+                            <span class="journal-entry-dose">${escapeHtml(entry.dose)}</span>
+                            <span class="journal-entry-route">${escapeHtml(formatRoute(entry.route))}</span>
+                            ${entry.rating >= 1 && entry.rating <= 5 ? `<span class="journal-entry-rating" aria-label="${entry.rating} out of 5">${'★'.repeat(entry.rating)}${'☆'.repeat(5 - entry.rating)}</span>` : ''}
                         </div>
-                        ${entry.notes ? `<div class="journal-entry-notes">${entry.notes}</div>` : ''}
+                        ${entry.notes ? `<div class="journal-entry-notes">${escapeHtml(entry.notes)}</div>` : ''}
                     </div>
                 `).join('')}
             </div>
@@ -254,13 +263,16 @@
         container.querySelectorAll('.journal-entry-delete').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                deleteEntry(parseInt(btn.dataset.id));
+                deleteEntry(Number(btn.dataset.id));
             });
         });
     }
 
     function formatDate(dateStr) {
-        const date = new Date(dateStr);
+        // "YYYY-MM-DD" parses as UTC, which shows the previous day in US timezones - build a local date
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr || '');
+        const date = m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(dateStr);
+        if (isNaN(date)) return escapeHtml(dateStr || '');
         return date.toLocaleDateString('en-US', {
             weekday: 'short',
             month: 'short',
@@ -286,6 +298,14 @@
             return;
         }
 
+        // Quote every field, and neutralise spreadsheet formulas (=, +, -, @) so opening the
+        // file in Excel/Sheets can't execute anything typed into a note.
+        const cell = (value) => {
+            let text = String(value == null ? '' : value);
+            if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+            return `"${text.replace(/"/g, '""')}"`;
+        };
+
         const headers = ['Date', 'Peptide', 'Dose', 'Route', 'Rating', 'Notes', 'Created'];
         const rows = entries.map(e => [
             e.date,
@@ -293,12 +313,12 @@
             e.dose,
             e.route,
             e.rating || '',
-            `"${(e.notes || '').replace(/"/g, '""')}"`,
+            e.notes || '',
             e.createdAt
-        ]);
+        ].map(cell));
 
-        const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv' });
+        const csv = '\ufeff' + [headers.map(cell).join(','), ...rows.map(r => r.join(','))].join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement('a');

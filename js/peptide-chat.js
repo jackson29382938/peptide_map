@@ -1,5 +1,5 @@
 // Peptide Chat Module
-// AI-powered Q&A using pattern matching from peptide database
+// Q&A that answers from the on-page peptides database using keyword/pattern matching (no external AI service)
 
 (function () {
     'use strict';
@@ -34,16 +34,41 @@
         });
     }
 
-    // Find peptide by name/alias
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // "BPC-157", "bpc157" and "BPC 157" should all be the same thing
+    const spaced = (t) => ' ' + t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+    const compact = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+    // Find peptide by name/alias. Whole-word matches only (so "attack" doesn't match "tta"),
+    // and the longest matching alias wins (so "cjc-1295/ipamorelin" beats "cjc-1295").
     function findPeptide(query) {
-        const q = query.toLowerCase();
+        const qSpaced = spaced(query);
+        const qCompact = compact(query);
+        let best = null;
+        let bestLen = 0;
 
         for (const [id, data] of Object.entries(knowledgeBase)) {
-            if (data.names.some(name => q.includes(name) || name.includes(q))) {
-                return { id, ...data };
+            for (const name of data.names) {
+                const nSpaced = spaced(name);
+                const nCompact = compact(name);
+                if (!nCompact) continue;
+                const hit = qSpaced.includes(nSpaced) ||
+                    (nCompact.length >= 5 && qCompact.includes(nCompact));
+                if (hit && nCompact.length > bestLen) {
+                    best = { id, ...data };
+                    bestLen = nCompact.length;
+                }
             }
         }
-        return null;
+        return best;
     }
 
     // Intent detection
@@ -52,9 +77,9 @@
 
         const intents = {
             benefits: /what (is|are|does)|benefits|help|good for|treats|healing|improve/i,
-            dosing: /dose|dosing|how much|dosage|amount|mcg|mg/i,
-            sideEffects: /side effect|danger|risk|safe|harmful|bad/i,
-            compare: /compare|vs|versus|difference|better|best/i,
+            dosing: /\b(dose|doses|dosing|dosage|amount|mcg|mg)\b|how much/i,
+            sideEffects: /side[- ]effect|danger|\brisks?\b|\bsafe(ty)?\b|harmful|\bbad\b/i,
+            compare: /compare|\bvs\.?\b|versus|difference|better/i,
             howTo: /how to|inject|use|take|administer|reconstitut/i,
             category: /type|category|kind|class/i,
             forms: /form|available|buy|get|purchase|pill|capsule|inject/i,
@@ -224,15 +249,15 @@
         chatPanel.innerHTML = `
             <div id="chat-drag-handle" title="Drag to adjust panel width"></div>
             <div class="studies-header">
-                <h2 class="studies-title">🤖 Peptide Q&A</h2>
+                <h2 class="studies-title">🤖 Peptide Q&amp;A</h2>
                 <div class="studies-meta">
-                    <span>Ask me anything about peptides</span>
+                    <span>Answers come from the Peptides Database on this site. Educational only, not medical advice.</span>
                 </div>
             </div>
             <div id="chat-container" class="studies-list">
                 <div class="chat-messages" id="chat-messages"></div>
                 <div class="chat-input-container">
-                    <input type="text" id="chat-input" placeholder="Ask about peptides..." autocomplete="off">
+                    <input type="text" id="chat-input" placeholder="Ask about peptides..." autocomplete="off" aria-label="Ask a question about peptides" maxlength="300">
                     <button id="chat-send" title="Send">➤</button>
                 </div>
             </div>
@@ -251,7 +276,7 @@
 
         // Chat input handlers
         document.getElementById('chat-send').addEventListener('click', sendMessage);
-        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+        document.getElementById('chat-input').addEventListener('keydown', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
 
@@ -284,8 +309,10 @@
         messageEl.className = `chat-message chat-message-${type}`;
 
         // Convert markdown-style formatting
-        const formatted = content
+        // Escape first so neither user input nor database text can inject markup
+        const formatted = escapeHtml(content)
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
             .replace(/\n/g, '<br>')
             .replace(/• /g, '&bull; ');
 

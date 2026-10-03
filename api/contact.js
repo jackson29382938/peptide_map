@@ -1,49 +1,119 @@
-// Vercel serverless function for contact form
+// Vercel serverless function for the contact form
 const nodemailer = require('nodemailer');
 
+const RECIPIENT = process.env.CONTACT_TO || 'bodymappeptide@gmail.com';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_EMAIL = 254;
+const MIN_MESSAGE = 10;
+const MAX_MESSAGE = 5000;
+
+// Best-effort per-instance rate limit (serverless instances are short lived, so this only
+// blunts bursts; use an external store or Vercel's WAF rules for hard limits).
+const WINDOW_MS = 60 * 1000;
+const MAX_PER_WINDOW = 3;
+const hits = new Map();
+
+function rateLimited(ip) {
+    const now = Date.now();
+    const recent = (hits.get(ip) || []).filter((t) => now - t < WINDOW_MS);
+    recent.push(now);
+    hits.set(ip, recent);
+    if (hits.size > 500) {
+        for (const [key, times] of hits) {
+            if (!times.some((t) => now - t < WINDOW_MS)) hits.delete(key);
+        }
+    }
+    return recent.length > MAX_PER_WINDOW;
+}
+
+function allowedOrigin(req) {
+    const origin = req.headers.origin;
+    if (!origin) return null;
+    const allowed = (process.env.CONTACT_ALLOWED_ORIGINS || 'https://peptide-map.vercel.app')
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean);
+    let host = '';
+    try { host = new URL(origin).host; } catch (_) { return null; }
+    // Same-origin requests (including preview deployments) and the configured origins
+    if (host === req.headers.host || allowed.includes(origin)) return origin;
+    return null;
+}
+
 module.exports = async (req, res) => {
-    // Set CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const origin = allowedOrigin(req);
+    if (origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Vary', 'Origin');
+    }
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    
-    // Handle preflight requests
+    res.setHeader('Cache-Control', 'no-store');
+
     if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+        return res.status(204).end();
     }
-    
-    // Only allow POST requests
+
     if (req.method !== 'POST') {
+        res.setHeader('Allow', 'POST, OPTIONS');
         return res.status(405).json({ error: 'Method not allowed' });
     }
-    
+
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const email = typeof body.email === 'string' ? body.email.trim() : '';
+    const message = typeof body.message === 'string' ? body.message.trim() : '';
+
+    // Honeypot: real visitors never fill this in. Pretend success so bots don't adapt.
+    if (typeof body.website === 'string' && body.website.trim() !== '') {
+        return res.status(200).json({ success: true, message: 'Email sent successfully' });
+    }
+
+    if (!email || !message) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (email.length > MAX_EMAIL || !EMAIL_RE.test(email)) {
+        return res.status(400).json({ error: 'Invalid email address' });
+    }
+    if (message.length < MIN_MESSAGE) {
+        return res.status(400).json({ error: `Message must be at least ${MIN_MESSAGE} characters long` });
+    }
+    if (message.length > MAX_MESSAGE) {
+        return res.status(400).json({ error: `Message must be at most ${MAX_MESSAGE} characters long` });
+    }
+
+    const forwarded = req.headers['x-forwarded-for'];
+    const ip = (typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : '') ||
+        (req.socket && req.socket.remoteAddress) || 'unknown';
+    if (rateLimited(ip)) {
+        res.setHeader('Retry-After', '60');
+        return res.status(429).json({ error: 'Too many messages. Please wait a minute and try again.' });
+    }
+
+    if (!process.env.SMTP_HOST && !process.env.SMTP_USER) {
+        console.warn('SMTP not configured - contact email cannot be sent');
+        return res.status(500).json({ error: 'Email service not configured. Please try again later.' });
+    }
+
     try {
-        const { email, message } = req.body;
-        
-        // Validate required fields
-        if (!email || !message) {
-            return res.status(400).json({ error: 'Missing required fields' });
+        const transporterConfig = {
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
+            port: parseInt(process.env.SMTP_PORT || '587', 10),
+            secure: process.env.SMTP_SECURE === 'true'
+        };
+        if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+            transporterConfig.auth = { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS };
         }
-        
-        // Validate email format
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({ error: 'Invalid email address' });
-        }
-        
-        // Validate message length
-        if (message.trim().length < 10) {
-            return res.status(400).json({ error: 'Message must be at least 10 characters long' });
-        }
-        
-        // Recipient email
-        const to = 'bodymappeptide@gmail.com';
-        
-        // Email subject
-        const subject = 'Contact Form Submission from Peptide Map';
-        
-        // Email body
-        const emailBody = `New contact form submission from Peptide Map
+        const transporter = nodemailer.createTransport(transporterConfig);
+
+        // Send from the authenticated account (mail providers reject or spam-flag forged From
+        // addresses) and let the recipient reply straight to the visitor.
+        const from = process.env.SMTP_FROM || process.env.SMTP_USER || RECIPIENT;
+        await transporter.sendMail({
+            from,
+            replyTo: email,
+            to: RECIPIENT,
+            subject: 'Contact Form Submission from Peptide Map',
+            text: `New contact form submission from Peptide Map
 
 From: ${email}
 Date: ${new Date().toISOString()}
@@ -52,93 +122,17 @@ Message:
 ${message}
 
 ---
-This email was sent from the contact form on the Peptide Map website.`;
-        
-        // Check if SMTP is configured
-        if (!process.env.SMTP_HOST && !process.env.SMTP_USER) {
-            console.warn('SMTP not configured - email sending will likely fail');
-            return res.status(500).json({ 
-                error: 'Email service not configured. Please contact the administrator.',
-                details: process.env.VERCEL_ENV === 'development' ? 
-                    'SMTP_HOST and SMTP_USER environment variables are not set. See VERCEL_EMAIL_SETUP.md for configuration instructions.' : 
-                    undefined
-            });
-        }
-        
-        // Create transporter
-        // For Vercel, you can use environment variables for SMTP config
-        // Default to using SendGrid, Gmail, or other SMTP service
-        const transporterConfig = {
-            host: process.env.SMTP_HOST || 'smtp.gmail.com',
-            port: parseInt(process.env.SMTP_PORT || '587'),
-            secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-        };
-        
-        // Only add auth if credentials are provided
-        if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-            transporterConfig.auth = {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            };
-        }
-        
-        const transporter = nodemailer.createTransport(transporterConfig);
-        
-        // Verify transporter configuration (optional, but helpful for debugging)
-        try {
-            await transporter.verify();
-            console.log('SMTP server is ready to send emails');
-        } catch (verifyError) {
-            console.error('SMTP verification failed:', verifyError);
-            // Continue anyway - verification might fail but sending could still work
-        }
-        
-        // Send email
-        const mailOptions = {
-            from: process.env.SMTP_FROM || email, // Use SMTP_FROM env var or user's email
-            replyTo: email,
-            to: to,
-            subject: subject,
-            text: emailBody,
-        };
-        
-        const info = await transporter.sendMail(mailOptions);
-        
-        return res.status(200).json({
-            success: true,
-            message: 'Email sent successfully',
-            messageId: info.messageId
+This email was sent from the contact form on the Peptide Map website.`
         });
-        
+
+        return res.status(200).json({ success: true, message: 'Email sent successfully' });
     } catch (error) {
-        console.error('Error sending contact email:', error);
-        console.error('Error stack:', error.stack);
-        
-        // Provide more detailed error information for debugging
-        const errorDetails = {
+        // Log details server-side only; never return SMTP internals to the client.
+        console.error('Error sending contact email:', {
             message: error.message,
             code: error.code,
-            command: error.command,
-            response: error.response,
             responseCode: error.responseCode
-        };
-        
-        console.error('Error details:', JSON.stringify(errorDetails, null, 2));
-        
-        // If SMTP fails, you might want to use a service like SendGrid API, Resend, etc.
-        // For now, return error
-        return res.status(500).json({ 
-            error: 'Failed to send email. Please try again later.',
-            details: process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'development' 
-                ? {
-                    message: error.message,
-                    code: error.code,
-                    hint: !process.env.SMTP_HOST ? 'SMTP_HOST environment variable not set' : 
-                          !process.env.SMTP_USER || !process.env.SMTP_PASS ? 'SMTP credentials not configured' : 
-                          'Check SMTP server configuration'
-                } 
-                : undefined
         });
+        return res.status(500).json({ error: 'Failed to send email. Please try again later.' });
     }
 };
-
