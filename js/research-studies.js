@@ -522,36 +522,53 @@
             }
             let uniquePapers = Array.from(paperMap.values());
 
+            // Citation counts: ONE batch request instead of one request per paper (which hit
+            // Semantic Scholar's rate limit and flooded the console with failed requests).
             const papersNeedingCitation = uniquePapers.filter(p => p.citationCount === null && p.pmid);
             if (papersNeedingCitation.length > 0) {
-                const promises = papersNeedingCitation.map(async (p) => {
-                    try {
-                        const res = await fetch(`${SEMANTIC_BASE_URL}paper/PMID:${p.pmid}?fields=citationCount`, {
-                            headers: { 'x-api-key': SEMANTIC_API_KEY }
+                try {
+                    const res = await fetch(`${SEMANTIC_BASE_URL}paper/batch?fields=citationCount`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'x-api-key': SEMANTIC_API_KEY },
+                        body: JSON.stringify({ ids: papersNeedingCitation.map(p => `PMID:${p.pmid}`) })
+                    });
+                    if (res.ok) {
+                        const rows = await res.json();
+                        // The response is positional: null entries are papers Semantic Scholar doesn't know
+                        papersNeedingCitation.forEach((p, i) => {
+                            const row = Array.isArray(rows) ? rows[i] : null;
+                            if (row && row.citationCount !== undefined) p.citationCount = row.citationCount;
                         });
-                        if (res.ok) {
-                            const data = await res.json();
-                            p.citationCount = data.citationCount !== undefined ? data.citationCount : null;
-                        }
-                    } catch {}
-                });
-                await Promise.all(promises);
+                    }
+                } catch {
+                    // Citation counts are a nicety; show "N/A" if the service is unreachable or rate limited
+                }
             }
 
+            // Abstracts: fetch as XML and match by PMID. (Splitting plain text by position
+            // attached abstracts to the wrong paper whenever one record had no abstract.)
             const papersNeedingAbstract = uniquePapers.filter(p => !p.abstract && p.pmid);
             if (papersNeedingAbstract.length > 0) {
-                const ids = papersNeedingAbstract.map(p => p.pmid).join(',');
-                const res = await fetch(`${PUBMED_BASE_URL}efetch.fcgi?db=pubmed&id=${ids}&rettype=abstract&retmode=text&api_key=${PUBMED_API_KEY}`);
-                if (res.ok) {
-                    const text = await res.text();
-                    const blocks = text.split(/\n{3,}/);
-                    blocks.forEach((block, i) => {
-                        if (i >= papersNeedingAbstract.length) return;
-                        const abstractMatch = block.match(/(?:Abstract|ABSTRACT)\s*\n([\s\S]*?)(?=\n\n[A-Z ]+:|$)/i);
-                        if (abstractMatch) {
-                            papersNeedingAbstract[i].abstract = abstractMatch[1].trim().replace(/\s+/g, ' ');
-                        }
-                    });
+                try {
+                    const ids = papersNeedingAbstract.map(p => p.pmid).join(',');
+                    const res = await fetch(`${PUBMED_BASE_URL}efetch.fcgi?db=pubmed&id=${ids}&retmode=xml&api_key=${PUBMED_API_KEY}`);
+                    if (res.ok) {
+                        const xml = new DOMParser().parseFromString(await res.text(), 'text/xml');
+                        const byPmid = new Map();
+                        xml.querySelectorAll('PubmedArticle').forEach(article => {
+                            const pmid = article.querySelector('MedlineCitation > PMID')?.textContent;
+                            const parts = Array.from(article.querySelectorAll('Abstract > AbstractText')).map(n => {
+                                const label = n.getAttribute('Label');
+                                return (label ? label + ': ' : '') + n.textContent.trim();
+                            });
+                            if (pmid && parts.length) byPmid.set(pmid, parts.join(' ').replace(/\s+/g, ' '));
+                        });
+                        papersNeedingAbstract.forEach(p => {
+                            if (byPmid.has(String(p.pmid))) p.abstract = byPmid.get(String(p.pmid));
+                        });
+                    }
+                } catch {
+                    // Missing abstracts show "No abstract available."
                 }
             }
 
@@ -824,8 +841,11 @@
         }
     }
 
+    let studyModalOpener = null;
+
     async function openStudyModal(study) {
         currentStudy = study;
+        studyModalOpener = document.activeElement;
         const modal = document.getElementById('study-modal');
         const modalTitle = document.querySelector('.study-modal-title');
         const modalAuthors = document.querySelector('.study-modal-authors');
@@ -848,6 +868,8 @@
         modal.style.display = 'none';
         document.body.style.overflow = '';
         currentStudy = null;
+        if (studyModalOpener && typeof studyModalOpener.focus === 'function') studyModalOpener.focus();
+        studyModalOpener = null;
     }
 
     async function loadStudyVotesAndComments(study) {
@@ -1033,6 +1055,12 @@
                 }
             });
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal && modal.style.display !== 'none' && modal.style.display !== '') {
+                closeStudyModal();
+            }
+        });
         
         const upvoteBtn = document.getElementById('study-upvote-btn');
         if (upvoteBtn) {

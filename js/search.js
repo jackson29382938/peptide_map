@@ -155,12 +155,20 @@ function initializeSearch() {
       }
     }
 
-    // All characters must be found
+    // All characters must be found...
     if (queryIndex === query.length) {
+      const spread = matches[matches.length - 1] - matches[0];
+
+      // ...and found reasonably close together. Without this, any short gibberish query
+      // "matches" a long paragraph because its letters occur somewhere in order (x...y...z).
+      // Allow roughly one stray character per query character (typos / transpositions).
+      if (spread > query.length * 2 + 2) {
+        return { score: 0, matched: false };
+      }
+
       // Bonus for match at start
       if (matches[0] === 0) score += 20;
       // Penalty for spread out matches
-      const spread = matches[matches.length - 1] - matches[0];
       score -= spread;
 
       return { score, matched: true, exactMatch: false, matches };
@@ -329,8 +337,13 @@ function initializeSearch() {
           peptide.dose || '',
           peptide.vialAmount || ''
         ];
-        const combinedText = searchableFields.join(' ');
-        const matchResult = fuzzyMatch(combinedText, query);
+        // Fuzzy (typo-tolerant) matching only on names; descriptive text must contain the query
+        const nameText = [peptide.fullName || '', ...(peptide.shortcuts || []), peptide.category || ''].join(' ');
+        const bodyText = searchableFields.join(' ');
+        let matchResult = fuzzyMatch(nameText, query);
+        if (!matchResult.matched && bodyText.toLowerCase().includes(query.toLowerCase())) {
+          matchResult = { score: 1, matched: true, exactMatch: true };
+        }
         if (matchResult.matched) {
           const displayName = peptide.fullName || key;
           const shortcutsStr = peptide.shortcuts && peptide.shortcuts.length > 0 

@@ -26,6 +26,9 @@ function hideSidePanel() {
         if (window.updateRightFloatingControls) window.updateRightFloatingControls();
     }
 
+    // Let listeners (e.g. the "Save Selected Spot" button) know nothing is selected any more
+    window.dispatchEvent(new CustomEvent('regionDeselected'));
+
     // Show title card when side panel is hidden
     const titleCard = document.getElementById('title-card');
     if (titleCard) {
@@ -35,16 +38,66 @@ function hideSidePanel() {
 
 // Ignore "clicks" that are really the end of an orbit/pan drag
 let pointerDownPos = null;
+let pointerDownTime = 0;
 const DRAG_THRESHOLD_PX = 5;
-(function trackPointerDown() {
+const TAP_MAX_MS = 600;
+let activePointers = 0;
+let gestureWasMultiTouch = false;
+let lastTouchSelect = 0;
+
+// OrbitControls calls preventDefault() on touch events, which stops the browser from ever firing
+// a "click" after a tap -- so on phones and tablets nothing could be selected. Taps are therefore
+// detected from pointer events directly (mouse input keeps using the normal click event).
+(function trackPointers() {
     const c = document.getElementById('container');
     if (!c) return;
+
     c.addEventListener('pointerdown', (e) => {
+        activePointers++;
+        if (activePointers > 1) gestureWasMultiTouch = true; // pinch / two-finger pan
         pointerDownPos = { x: e.clientX, y: e.clientY };
+        pointerDownTime = performance.now();
     });
+
+    const endPointer = (e) => {
+        activePointers = Math.max(0, activePointers - 1);
+        if (activePointers > 0) return;
+
+        const wasMulti = gestureWasMultiTouch;
+        gestureWasMultiTouch = false;
+        if (e.type !== 'pointerup' || e.pointerType === 'mouse' || wasMulti || !pointerDownPos) return;
+
+        const moved = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > DRAG_THRESHOLD_PX;
+        if (moved || performance.now() - pointerDownTime > TAP_MAX_MS) return;
+
+        lastTouchSelect = performance.now();
+        onMouseClick(e);
+        // No hover on touch: show the injection-point tooltip for the tapped point instead
+        handleInjectionHover(e);
+    };
+    c.addEventListener('pointerup', endPointer);
+    c.addEventListener('pointercancel', endPointer);
+})();
+
+// Close the region details panel and clear the highlight / injection points
+window.deselectRegion = function () {
+    removeCurrentHighlight();
+    removeInjectionPointSpheres();
+    hideSidePanel();
+    const infoBox = document.getElementById('info-box');
+    if (infoBox) infoBox.style.display = 'block';
+    document.getElementById('injection-tooltip')?.classList.remove('visible');
+    updateInfo('Model Ready', 'Click on any muscle region to see a highlight!');
+};
+
+(function bindSidePanelClose() {
+    const btn = document.getElementById('side-panel-close');
+    if (btn) btn.addEventListener('click', () => window.deselectRegion());
 })();
 
 function onMouseClick(event) {
+    // A tap is already handled from pointerup; ignore the click the browser may also synthesize
+    if (event.type === 'click' && performance.now() - lastTouchSelect < 500) return;
     event.preventDefault();
 
     if (pointerDownPos &&
@@ -165,6 +218,12 @@ window.selectRegion = function (regionName, position = null) {
 
     addHighlightSphere(position, regionName);
     addInjectionPointSpheres(regionName);
+
+    // On phones the details sheet covers the lower part of the screen: bring the selection to the
+    // centre of the visible area
+    if (window.matchMedia('(max-width: 768px)').matches && window.flyToPosition) {
+        window.flyToPosition(position);
+    }
 
     const parts = regionName.split(' - ');
     const muscle = parts[0];
@@ -321,15 +380,17 @@ window.removePermanentMarker = function (id) {
 
 // Smoothly move the orbit target (and camera) to a point on the model
 let flyAnimationId = null;
-window.flyToPosition = function (position) {
+// options.distance: camera distance from the target to end at; omit to keep the current distance
+window.flyToPosition = function (position, options = {}) {
     if (!controls || !camera || !position) return;
 
     const target = new THREE.Vector3(position.x, position.y, position.z);
     const startTarget = controls.target.clone();
     const startCam = camera.position.clone();
-    // Keep the current viewing direction, but move in a little closer
+    // Keep the current viewing direction; zoom only when a distance is requested (an automatic
+    // "move closer" on every call compounded into extreme zoom after a few selections)
     const offset = startCam.clone().sub(startTarget);
-    offset.setLength(Math.max(8, offset.length() * 0.6));
+    if (options.distance) offset.setLength(options.distance);
     const endCam = target.clone().add(offset);
 
     const duration = 700;
@@ -441,7 +502,10 @@ function onMouseMove(event) {
 }
 
 function handleInjectionHover(event) {
-    if (injectionPointSpheres.length === 0) return;
+    if (injectionPointSpheres.length === 0) {
+        document.getElementById('injection-tooltip')?.classList.remove('visible');
+        return;
+    }
 
     const container = document.getElementById('container');
     if (!container) return;
@@ -451,6 +515,9 @@ function handleInjectionHover(event) {
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
+    // Spheres created a moment ago (e.g. by the tap that triggered this) have no world matrix until
+    // the next render, so refresh them or the ray test misses
+    injectionPointSpheres.forEach(sphere => sphere.updateMatrixWorld(true));
     const intersects = raycaster.intersectObjects(injectionPointSpheres, false);
 
     const tooltip = document.getElementById('injection-tooltip');

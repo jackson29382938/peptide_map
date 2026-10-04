@@ -2447,6 +2447,7 @@
     <!-- Title Card removed - was covering the 3D canvas -->
 
     <div id="side-panel" class="side-panel">
+        <button id="side-panel-close" type="button" aria-label="Close region details" title="Close">&times;</button>
         <h2 id="panel-title" class="text-xl font-bold mb-3 text-white"></h2>
         <p id="panel-portion" class="text-gray-300 mb-3"></p>
 
@@ -2623,7 +2624,7 @@
                 <!-- Advanced Mode -->
                 <div id="advanced-mode" class="calc-mode-content">
                     <p class="mode-note">
-                        Choose "Advanced mode" to dose peptide blends.
+                        Dose peptide blends here. Syringe-capacity warnings use the syringe size chosen in Normal Mode.
                     </p>
 
                     <div id="peptide-blends">
@@ -2746,6 +2747,7 @@
         <script src="js/peptide-chat.js"></script>
         <script src="js/saved-locations.js"></script>
         <script src="js/mobile-menu.js"></script>
+        <script src="js/panel-resize.js"></script>
         <script>
             // Global error handler
             window.onerror = function (msg, url, lineNo, columnNo, error) {

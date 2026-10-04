@@ -193,7 +193,7 @@
         const loc = savedLocations.find(l => l.id === id);
         if (loc) {
             if (window.flyToPosition) {
-                window.flyToPosition(loc.position);
+                window.flyToPosition(loc.position, { distance: 14 });
             }
             if (window.selectRegion) {
                 window.selectRegion(loc.name, loc.position);

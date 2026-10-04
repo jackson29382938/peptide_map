@@ -133,56 +133,64 @@ const UnitConverter = (function() {
     return container;
   }
 
+  // Every attached toggle: { toggle, inputId, type }. The unit is a single global setting, so a
+  // change must convert and relabel EVERY field of that type -- otherwise one calculator could be
+  // switched to kg while another still shows "200 lbs" but is computed as 200 kg.
+  const attached = [];
+
+  function paintToggle(toggle, unit) {
+    toggle.querySelectorAll('.unit-toggle-btn').forEach(b => {
+      const isActive = b.dataset.unit === unit;
+      b.classList.toggle('active', isActive);
+      b.style.background = isActive ? 'var(--text-accent)' : 'transparent';
+      b.style.color = isActive ? '#fff' : 'var(--text-secondary)';
+      b.setAttribute('aria-pressed', String(isActive));
+    });
+  }
+
+  function convertValue(type, value, from, to) {
+    if (from === to) return value;
+    if (type === 'weight') return from === 'kg' ? kgToLbs(value) : lbsToKg(value);
+    return from === 'cm' ? cmToInches(value) : inchesToCm(value);
+  }
+
+  function applyUnitChange(type, newUnit) {
+    const oldUnit = type === 'weight' ? state.weightUnit : state.heightUnit;
+    if (oldUnit === newUnit) return;
+
+    // Prune toggles whose DOM was removed (e.g. quiz questions are re-rendered per step)
+    for (let i = attached.length - 1; i >= 0; i--) {
+      if (!attached[i].toggle.isConnected) attached.splice(i, 1);
+    }
+
+    if (type === 'weight') setWeightUnit(newUnit); else setHeightUnit(newUnit);
+
+    attached.filter(a => a.type === type).forEach(({ toggle, inputId }) => {
+      const input = document.getElementById(inputId);
+      if (input) {
+        const current = parseFloat(input.value);
+        if (!isNaN(current)) {
+          input.value = Math.round(convertValue(type, current, oldUnit, newUnit) * 10) / 10;
+        }
+        updateInputAttributes(input, newUnit);
+      }
+      paintToggle(toggle, newUnit);
+    });
+  }
+
   function attachUnitToggle(labelElement, inputId, type) {
     if (!labelElement) return;
-    
+
     const toggle = createUnitToggle(type);
     labelElement.appendChild(toggle);
-    
+    attached.push({ toggle, inputId, type });
+    paintToggle(toggle, type === 'weight' ? state.weightUnit : state.heightUnit);
+
     toggle.querySelectorAll('.unit-toggle-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const newUnit = this.dataset.unit;
-        const input = document.getElementById(inputId);
-        
-        if (!input) return;
-        
-        const currentValue = parseFloat(input.value) || 0;
-        let convertedValue;
-        
-        if (type === 'weight') {
-          const oldUnit = state.weightUnit;
-          if (oldUnit === 'kg' && newUnit === 'lbs') {
-            convertedValue = kgToLbs(currentValue);
-          } else if (oldUnit === 'lbs' && newUnit === 'kg') {
-            convertedValue = lbsToKg(currentValue);
-          } else {
-            convertedValue = currentValue;
-          }
-          setWeightUnit(newUnit);
-        } else {
-          const oldUnit = state.heightUnit;
-          if (oldUnit === 'cm' && newUnit === 'inches') {
-            convertedValue = cmToInches(currentValue);
-          } else if (oldUnit === 'inches' && newUnit === 'cm') {
-            convertedValue = inchesToCm(currentValue);
-          } else {
-            convertedValue = currentValue;
-          }
-          setHeightUnit(newUnit);
-        }
-        
-        if (convertedValue !== undefined) {
-          input.value = Math.round(convertedValue * 10) / 10;
-        }
-        
-        updateInputAttributes(input, newUnit);
-        
-        toggle.querySelectorAll('.unit-toggle-btn').forEach(b => {
-          const isActive = b.dataset.unit === newUnit;
-          b.classList.toggle('active', isActive);
-          b.style.background = isActive ? 'var(--text-accent)' : 'transparent';
-          b.style.color = isActive ? '#fff' : 'var(--text-secondary)';
-        });
+      btn.addEventListener('click', function(e) {
+        // The toggle lives inside a <label>; don't let the click also focus/activate the input
+        e.preventDefault();
+        applyUnitChange(type, this.dataset.unit);
       });
     });
   }
@@ -213,16 +221,26 @@ const UnitConverter = (function() {
       }
     });
     
+    // The HTML defaults (200 lbs, 70 in) are authored in imperial units. If the saved preference is
+    // metric, convert them once so the number on screen matches the unit shown next to it.
     weightInputs.forEach(item => {
       const input = document.getElementById(item.inputId);
       if (input) {
+        if (state.weightUnit === 'kg' && input.dataset.unitsApplied !== 'true') {
+          input.value = Math.round(lbsToKg(parseFloat(input.value) || 0) * 10) / 10;
+        }
+        input.dataset.unitsApplied = 'true';
         updateInputAttributes(input, state.weightUnit);
       }
     });
-    
+
     heightInputs.forEach(item => {
       const input = document.getElementById(item.inputId);
       if (input) {
+        if (state.heightUnit === 'cm' && input.dataset.unitsApplied !== 'true') {
+          input.value = Math.round(inchesToCm(parseFloat(input.value) || 0) * 10) / 10;
+        }
+        input.dataset.unitsApplied = 'true';
         updateInputAttributes(input, state.heightUnit);
       }
     });

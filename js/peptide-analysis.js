@@ -14,16 +14,18 @@ function inRange(value, min, max) {
 function initializePeptideAnalysis() {
   const analysisToggle = document.getElementById("peptide-analysis-toggle");
   const tabPanel = document.getElementById("tab-panel");
-  const analysisTab = document.querySelector('[data-tab="analysis"]');
 
-  if (!analysisToggle || !tabPanel || !analysisTab) {
+  if (!analysisToggle || !tabPanel || !document.querySelector('[data-tab="analysis"]')) {
     console.error("❌ Peptide analysis UI elements not found");
     return;
   }
 
-  // Open tab panel and switch to analysis tab when button clicked
+  // Open tab panel and switch to analysis tab when button clicked.
+  // The tab button is looked up on every click: the tab bar is rebuilt during startup, so a
+  // reference captured here would point at a detached element and clicking it would do nothing.
   analysisToggle.addEventListener("click", () => {
     const tabToggle = document.getElementById("tab-toggle");
+    const analysisTab = document.querySelector('.tab-btn[data-tab="analysis"]');
     if (!tabPanel || !tabToggle || !analysisTab) return;
 
     const isCollapsed = tabPanel.classList.contains("collapsed");
@@ -292,6 +294,26 @@ function initGLP1Calculator() {
 }
 
 // Advanced Dosing Calculator
+// Base dose per kg of lean body mass (mcg), keyed by peptide then condition. Only combinations
+// listed here are offered; the condition dropdown is rebuilt from this table when the peptide changes.
+const ADV_BASE_DOSING = {
+  bpc157: { musculoskeletal: 8, gut: 5, neurological: 7 },
+  tb500: { acute: 60, chronic: 35, maintenance: 20 },
+  ghrp2: { anti_aging: 1.5, recovery: 2.0, muscle_growth: 2.5 },
+  ipamorelin: { anti_aging: 1.2, recovery: 1.8, muscle_growth: 2.2 },
+};
+const ADV_CONDITION_LABELS = {
+  musculoskeletal: "Musculoskeletal",
+  gut: "Gut Health",
+  neurological: "Neurological",
+  acute: "Acute Injury",
+  chronic: "Chronic",
+  maintenance: "Maintenance",
+  recovery: "Recovery",
+  muscle_growth: "Muscle Growth",
+  anti_aging: "Anti-Aging",
+};
+
 function initAdvancedDosing() {
   const weightInput = document.getElementById("adv-weight");
   const heightInput = document.getElementById("adv-height");
@@ -304,6 +326,19 @@ function initAdvancedDosing() {
   const resultsDiv = document.getElementById("adv-results");
 
   if (!weightInput || !calculateBtn) return;
+
+  // Offer only the conditions that have dosing data for the chosen peptide
+  function syncConditionOptions() {
+    const supported = Object.keys(ADV_BASE_DOSING[peptideInput.value] || {});
+    const previous = conditionInput.value;
+    conditionInput.innerHTML = supported
+      .map((c) => `<option value="${c}">${ADV_CONDITION_LABELS[c] || c}</option>`)
+      .join("");
+    if (supported.includes(previous)) conditionInput.value = previous;
+    resultsDiv.style.display = "none";
+  }
+  peptideInput.addEventListener("change", syncConditionOptions);
+  syncConditionOptions();
 
   calculateBtn.addEventListener("click", () => {
     const weightValue = parseFloat(weightInput.value);
@@ -327,14 +362,13 @@ function initAdvancedDosing() {
     const activityFactor = { 1: 0.9, 2: 1.0, 3: 1.1, 4: 1.2, 5: 1.3 };
     const ageFactor = Math.max(0.7, 1.0 - (Math.max(age, 30) - 30) * 0.01);
 
-    const baseDosing = {
-      bpc157: { musculoskeletal: 8, gut: 5, neurological: 7 },
-      tb500: { acute: 60, chronic: 35, maintenance: 20 },
-      ghrp2: { anti_aging: 1.5, recovery: 2.0, muscle_growth: 2.5 },
-      ipamorelin: { anti_aging: 1.2, recovery: 1.8, muscle_growth: 2.2 },
-    };
-
-    const baseDose = baseDosing[peptide]?.[condition] || 1.0;
+    const baseDose = ADV_BASE_DOSING[peptide]?.[condition];
+    if (baseDose === undefined) {
+      // Never invent a number for a peptide/condition pair that has no dosing data
+      resultsDiv.innerHTML = `<div class="calc-results active"><p class="text-gray-300 text-sm">No dosing data for this peptide and condition combination. Choose one of the listed conditions.</p></div>`;
+      resultsDiv.style.display = "block";
+      return;
+    }
     const adjustedDose = Math.round(
       baseDose * lbm * activityFactor[activity] * ageFactor,
     );

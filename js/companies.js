@@ -539,7 +539,9 @@
       await reloadVendor(id);
       alert("Changes saved!");
     } catch (e) {
-      console.error(e);
+      // A cancelled prompt or a wrong token is a normal outcome, not an error
+      if (e.message === "cancelled" || e.message === "Admin token rejected") console.warn(e.message);
+      else console.error(e);
       if (e.message !== "cancelled") alert(e.message === "Admin token rejected" ? e.message : "Failed to save");
     }
   }
@@ -562,7 +564,8 @@
       await loadVendors();
       alert("Vendor added successfully!");
     } catch (e) {
-      console.error(e);
+      if (e.message === "cancelled" || e.message === "Admin token rejected") console.warn(e.message);
+      else console.error(e);
       if (e.message !== "cancelled") alert(e.message === "Admin token rejected" ? e.message : "Failed to add vendor");
     }
   }

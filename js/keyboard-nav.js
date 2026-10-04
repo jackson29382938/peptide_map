@@ -152,9 +152,10 @@
             return;
         }
 
-        // Clear side panel selection
-        if (sidePanel && sidePanel.classList.contains('visible')) {
-            sidePanel.classList.remove('visible');
+        // Clear side panel selection (the open state class is "active")
+        if (sidePanel && sidePanel.classList.contains('active')) {
+            if (typeof window.deselectRegion === 'function') window.deselectRegion();
+            else sidePanel.classList.remove('active');
             return;
         }
 
