@@ -3,7 +3,73 @@
 
   const API_BASE = "php/api";
 
+  // Seed directory used when the ratings backend (PHP/MySQL) is unreachable, e.g. on the static
+  // Vercel deployment. Read-only: no ratings, comments or edits.
+  const FALLBACK_VENDORS = [
+    ["Peptide Sciences", "https://www.peptidesciences.com"],
+    ["Science.bio", "https://science.bio"],
+    ["Pure Rawz", "https://purerawz.com"],
+    ["Limitless Life Nootropics (Limitless Biotech)", "https://www.limitlesslifenootropics.com"],
+    ["Soma Chems", "https://somachems.com"],
+    ["Core Peptides", "https://www.corepeptides.com"],
+    ["Biotech Peptides", "https://biotechpeptides.com"],
+    ["Phoenix Pharmaceuticals", "https://phoenixpeptide.com"],
+    ["Bachem", "https://www.bachem.com"],
+    ["NuScience Peptides", "https://nusciencepeptides.com"],
+    ["Direct Peptides", "https://directpeptides.com"],
+    ["AmbioPharm", "https://www.ambiopharm.com"],
+    ["PolyPeptide Group", "https://www.polypeptide.com"],
+    ["Chinese Peptide Company", "https://www.chinesepeptide.com"],
+    ["rPeptide", "https://www.rpeptide.com"],
+    ["AAPPTec", "https://www.aapptec.com"],
+    ["CPC Scientific", "https://www.cpcscientific.com"],
+    ["BCN Peptides", "https://www.bcnpeptides.com"],
+    ["Auspep", "https://www.auspep.com.au"],
+    ["GenScript", "https://www.genscript.com"],
+    ["Advanced Peptides", "https://advancedpeptides.com"],
+    ["QYAOBio (China Peptides)", "https://www.qyaobio.com"],
+    ["Synpeptide", "https://www.synpeptide.com"],
+    ["Synbio Technologies", "https://www.synbio-tech.com"],
+    ["Peptide Institute", "https://www.peptide.co.jp"],
+    ["LifeTein", "https://www.lifetein.com"],
+    ["Thermo Fisher Scientific", "https://www.thermofisher.com"],
+    ["AnaSpec", "https://www.anaspec.com"],
+    ["Activotec", "https://www.activotec.com"],
+    ["Bio-Synthesis (BSI)", "https://www.biosyn.com"],
+    ["CSBio", "https://www.csbio.com"],
+    ["CordenPharma", "https://www.cordenpharma.com"],
+  ].map(([name, url], i) => ({ id: i + 1, name, url }));
+
+  // Vendor add/edit is admin-only: the server checks an X-Admin-Token header. The token is kept
+  // for this tab only (sessionStorage) and never written to disk.
+  function getAdminToken(forcePrompt) {
+    let token = "";
+    try { token = sessionStorage.getItem("vendorAdminToken") || ""; } catch (e) { /* ignore */ }
+    if (!token || forcePrompt) {
+      token = (prompt("Admin token required to change vendors:") || "").trim();
+      try { sessionStorage.setItem("vendorAdminToken", token); } catch (e) { /* ignore */ }
+    }
+    return token;
+  }
+
+  async function adminPost(payload) {
+    const token = getAdminToken(false);
+    if (!token) throw new Error("cancelled");
+    const res = await fetch(`${API_BASE}/companies.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Admin-Token": token },
+      body: JSON.stringify(payload),
+    });
+    if (res.status === 403) {
+      try { sessionStorage.removeItem("vendorAdminToken"); } catch (e) { /* ignore */ }
+      throw new Error("Admin token rejected");
+    }
+    if (!res.ok) throw new Error("Request failed");
+    return res;
+  }
+
   // State
+  let offline = false;
   let vendors = [];
   let loading = false;
   let expandedComments = new Set();
@@ -139,14 +205,19 @@
     listEl.innerHTML = '<div class="loading">Loading vendors…</div>';
     try {
       const res = await fetch(`${API_BASE}/companies.php`);
-      vendors = await res.json();
-      renderVendors();
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error("Unexpected response");
+      vendors = data;
+      offline = false;
     } catch (e) {
-      console.error("Failed to load vendors", e);
-      listEl.innerHTML = '<div class="error">Failed to load vendors.</div>';
+      console.warn("Vendor ratings service unavailable, showing static directory", e);
+      vendors = FALLBACK_VENDORS;
+      offline = true;
     } finally {
       loading = false;
     }
+    renderVendors();
   }
 
   function getFiltered() {
@@ -160,6 +231,10 @@
   }
 
   function renderVendors() {
+    if (addBtn) {
+      addBtn.disabled = offline;
+      addBtn.title = offline ? "Adding vendors is unavailable right now" : "Add vendor";
+    }
     const data = getFiltered()
       .slice()
       .sort((a, b) => {
@@ -178,9 +253,12 @@
       return;
     }
 
-    listEl.innerHTML = data.map((v) => renderVendorCard(v)).join("");
+    const notice = offline
+      ? '<div class="no-results" style="margin-bottom:12px;padding:12px 16px;text-align:left;font-size:0.85rem;font-style:normal;">Community ratings and comments are unavailable right now, so this is the plain vendor directory. Listings are not endorsements and are not vetted for quality, legality or purity; see the Links Disclaimer.</div>'
+      : "";
+    listEl.innerHTML = notice + data.map((v) => (offline ? renderOfflineCard(v) : renderVendorCard(v))).join("");
     // Attach handlers
-    data.forEach((v) => attachCardHandlers(v.id));
+    if (!offline) data.forEach((v) => attachCardHandlers(v.id));
   }
 
   function renderStars(avgRating, totalRatings) {
@@ -204,25 +282,24 @@
     return html;
   }
 
-  function getVendorBadges(v) {
-    const badges = [];
-    const avg = parseFloat(v.avg_rating) || 0;
-    const total = parseInt(v.total_ratings) || 0;
-    const comments = parseInt(v.total_comments) || 0;
+  // Only http(s) links are ever rendered as hrefs (blocks javascript: and data: URLs
+  // that could be stored through the add/edit vendor API)
+  function safeHref(url) {
+    return /^https?:\/\//i.test(url || "") ? url : "#";
+  }
 
-    // Mock logic for badges
-    if (avg >= 4.5 && total >= 5) {
-      badges.push({ text: 'Community Trusted', class: 'badge-trusted', icon: '🛡️' });
-    }
-    if (total >= 10) {
-      badges.push({ text: 'Verified', class: 'badge-verified', icon: '✅' });
-    }
-    // Random "Lab Tested" for demo purposes based on ID parity
-    if (v.id % 3 === 0) {
-      badges.push({ text: 'Lab Tested', class: 'badge-tested', icon: '🔬' });
-    }
-
-    return badges;
+  function renderOfflineCard(v) {
+    return `
+        <div class="company-card" id="company-${v.id}" data-vendor-id="${v.id}">
+            <div class="company-header">
+                <div class="vendor-name-row">
+                    <span class="company-name">${escapeHtml(v.name || "")}</span>
+                </div>
+            </div>
+            <div class="vendor-url-row">
+                <a href="${escapeHtml(safeHref(v.url))}" target="_blank" rel="noopener noreferrer" class="company-visit">${escapeHtml((v.url || "").replace(/^https?:\/\//i, ""))} 🔗</a>
+            </div>
+        </div>`;
   }
 
   function renderVendorCard(v) {
@@ -231,22 +308,18 @@
     const avgRating = parseFloat(v.avg_rating) || 0;
     const totalRatings = parseInt(v.total_ratings) || 0;
     const totalComments = parseInt(v.total_comments) || 0;
-    const badges = getVendorBadges(v);
 
     return `
         <div class="company-card" id="company-${v.id}" data-vendor-id="${v.id}">
             <div class="company-header">
                 <div class="vendor-name-row">
                     <input class="company-name" data-id="${v.id}" value="${safeName}" readonly/>
-                    <div class="vendor-badges">
-                        ${badges.map(b => `<span class="vendor-badge ${b.class}" title="${b.text}">${b.icon} ${b.text}</span>`).join('')}
-                    </div>
                 </div>
                 <button class="company-edit" data-id="${v.id}" title="Edit vendor">✏️</button>
             </div>
             <div class="vendor-url-row">
                 <input class="company-url" data-id="${v.id}" value="${safeUrl}" readonly/>
-                <a href="${safeUrl}" target="_blank" rel="noopener" class="company-visit" title="Visit website">🔗</a>
+                <a href="${escapeHtml(safeHref(v.url))}" target="_blank" rel="noopener noreferrer" class="company-visit" title="Visit website">🔗</a>
             </div>
             <div class="company-rating">
                 ${renderStars(avgRating, totalRatings)}
@@ -361,7 +434,7 @@
       const comments = await res.json();
 
       let html =
-        '<div class="comment-form"><textarea class="comment-input" id="comment-input-${vendorId}" placeholder="Add your comment..." maxlength="2000"></textarea><button class="comment-submit" data-id="' +
+        '<div class="comment-form"><textarea class="comment-input" id="comment-input-' + vendorId + '" placeholder="Add your comment..." maxlength="2000" aria-label="Add your comment"></textarea><button class="comment-submit" data-id="' +
         vendorId +
         '">Post Comment</button></div>';
 
@@ -450,14 +523,13 @@
       alert("Name and URL are required");
       return;
     }
+    if (!/^https?:\/\//i.test(payload.url)) {
+      alert("The vendor URL must start with http:// or https://");
+      return;
+    }
 
     try {
-      const res = await fetch(`${API_BASE}/companies.php`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "update", ...payload }),
-      });
-      if (!res.ok) throw new Error("Save failed");
+      await adminPost({ action: "update", ...payload });
 
       nameEl.readOnly = true;
       urlEl.readOnly = true;
@@ -467,38 +539,40 @@
       await reloadVendor(id);
       alert("Changes saved!");
     } catch (e) {
-      console.error(e);
-      alert("Failed to save");
+      // A cancelled prompt or a wrong token is a normal outcome, not an error
+      if (e.message === "cancelled" || e.message === "Admin token rejected") console.warn(e.message);
+      else console.error(e);
+      if (e.message !== "cancelled") alert(e.message === "Admin token rejected" ? e.message : "Failed to save");
     }
   }
 
   async function onAddVendor() {
+    if (offline) {
+      alert("Adding vendors is unavailable right now.");
+      return;
+    }
     const name = prompt("Vendor name:");
     if (!name) return;
     const url = prompt("Vendor URL (include https://):");
     if (!url) return;
+    if (!/^https?:\/\//i.test(url.trim())) {
+      alert("The vendor URL must start with http:// or https://");
+      return;
+    }
     try {
-      const res = await fetch(`${API_BASE}/companies.php`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "add",
-          name: name.trim(),
-          url: url.trim(),
-        }),
-      });
-      if (!res.ok) throw new Error("Add failed");
+      await adminPost({ action: "add", name: name.trim(), url: url.trim() });
       await loadVendors();
       alert("Vendor added successfully!");
     } catch (e) {
-      console.error(e);
-      alert("Failed to add vendor");
+      if (e.message === "cancelled" || e.message === "Admin token rejected") console.warn(e.message);
+      else console.error(e);
+      if (e.message !== "cancelled") alert(e.message === "Admin token rejected" ? e.message : "Failed to add vendor");
     }
   }
 
   function escapeHtml(value) {
     return value
-      ? value
+      ? String(value)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")

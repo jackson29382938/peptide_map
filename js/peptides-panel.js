@@ -39,6 +39,7 @@
     let filterInput = null;
     let countElement = null;
     let activeFilter = '';
+    let lastFocusedElement = null;
 
     function initializePeptidesPanel(options = {}) {
         peptidesIndex = createPeptidesIndex();
@@ -96,10 +97,17 @@
         listElement.innerHTML = filtered.map(peptide => createPeptideCard(peptide, filter)).join('');
 
         listElement.querySelectorAll('.study-card').forEach(card => {
-            card.addEventListener('click', (event) => {
+            const open = () => {
                 const peptideId = card.dataset.peptideId;
                 if (peptideId) {
                     openPeptideModal(peptideId);
+                }
+            };
+            card.addEventListener('click', open);
+            card.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    open();
                 }
             });
         });
@@ -130,7 +138,7 @@
             : '';
 
         return `
-            <article class="study-card peptide-card" data-peptide-id="${peptide.id}">
+            <article class="study-card peptide-card" data-peptide-id="${escapeHtml(peptide.id)}" role="button" tabindex="0" aria-label="View details for ${escapeHtml(peptide.fullName)}">
                 <div class="study-card-header">
                     ${badge}
                     <h3>${highlightedName}</h3>
@@ -146,12 +154,23 @@
         `;
     }
 
+    // Highlight on the raw text, escaping each piece, so a filter like "amp" can never
+    // land inside an HTML entity such as &amp;
     function highlightMatches(text, filter) {
+        text = String(text == null ? '' : text);
         if (!filter) {
             return escapeHtml(text);
         }
-        const regex = new RegExp(`(${escapeRegExp(filter)})`, 'gi');
-        return escapeHtml(text).replace(regex, '<mark>$1</mark>');
+        const regex = new RegExp(escapeRegExp(filter), 'gi');
+        let out = '';
+        let last = 0;
+        let match;
+        while ((match = regex.exec(text)) !== null) {
+            out += escapeHtml(text.slice(last, match.index)) + '<mark>' + escapeHtml(match[0]) + '</mark>';
+            last = match.index + match[0].length;
+            if (match[0].length === 0) regex.lastIndex++;
+        }
+        return out + escapeHtml(text.slice(last));
     }
 
     function escapeHtml(value) {
@@ -185,9 +204,12 @@
         
         if (!modal || !modalBody) return;
 
+        lastFocusedElement = document.activeElement;
         modalBody.innerHTML = generatePeptideModalHTML(peptide);
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
+        const closeBtn = modal.querySelector('.peptide-modal-close');
+        if (closeBtn) closeBtn.focus();
     }
 
     function closePeptideModal() {
@@ -196,11 +218,19 @@
 
         modal.classList.remove('active');
         document.body.style.overflow = '';
+        if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+            lastFocusedElement.focus();
+        }
+        lastFocusedElement = null;
     }
 
     function generatePeptideModalHTML(peptide) {
         return `
             <h1 class="peptide-modal-title">${escapeHtml(peptide.fullName)}</h1>
+            <button type="button" class="peptide-modal-compare" data-peptide-id="${escapeHtml(peptide.id)}"
+                style="margin: 0 0 12px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: transparent; color: var(--text-primary); cursor: pointer;">
+                ⚖️ Add to comparison
+            </button>
             ${peptide.shortcuts && peptide.shortcuts.length > 0 
                 ? `<p class="peptide-modal-shortcuts">Also known as: ${peptide.shortcuts.map(s => escapeHtml(s)).join(', ')}</p>` 
                 : ''}
@@ -292,6 +322,13 @@
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
                     closePeptideModal();
+                    return;
+                }
+                const compareBtn = e.target.closest('.peptide-modal-compare');
+                if (compareBtn && window.PeptideCompare) {
+                    if (window.PeptideCompare.add(compareBtn.dataset.peptideId)) {
+                        closePeptideModal();
+                    }
                 }
             });
         }

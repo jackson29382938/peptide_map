@@ -26,6 +26,9 @@ function hideSidePanel() {
         if (window.updateRightFloatingControls) window.updateRightFloatingControls();
     }
 
+    // Let listeners (e.g. the "Save Selected Spot" button) know nothing is selected any more
+    window.dispatchEvent(new CustomEvent('regionDeselected'));
+
     // Show title card when side panel is hidden
     const titleCard = document.getElementById('title-card');
     if (titleCard) {
@@ -33,8 +36,74 @@ function hideSidePanel() {
     }
 }
 
+// Ignore "clicks" that are really the end of an orbit/pan drag
+let pointerDownPos = null;
+let pointerDownTime = 0;
+const DRAG_THRESHOLD_PX = 5;
+const TAP_MAX_MS = 600;
+let activePointers = 0;
+let gestureWasMultiTouch = false;
+let lastTouchSelect = 0;
+
+// OrbitControls calls preventDefault() on touch events, which stops the browser from ever firing
+// a "click" after a tap -- so on phones and tablets nothing could be selected. Taps are therefore
+// detected from pointer events directly (mouse input keeps using the normal click event).
+(function trackPointers() {
+    const c = document.getElementById('container');
+    if (!c) return;
+
+    c.addEventListener('pointerdown', (e) => {
+        activePointers++;
+        if (activePointers > 1) gestureWasMultiTouch = true; // pinch / two-finger pan
+        pointerDownPos = { x: e.clientX, y: e.clientY };
+        pointerDownTime = performance.now();
+    });
+
+    const endPointer = (e) => {
+        activePointers = Math.max(0, activePointers - 1);
+        if (activePointers > 0) return;
+
+        const wasMulti = gestureWasMultiTouch;
+        gestureWasMultiTouch = false;
+        if (e.type !== 'pointerup' || e.pointerType === 'mouse' || wasMulti || !pointerDownPos) return;
+
+        const moved = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y) > DRAG_THRESHOLD_PX;
+        if (moved || performance.now() - pointerDownTime > TAP_MAX_MS) return;
+
+        lastTouchSelect = performance.now();
+        onMouseClick(e);
+        // No hover on touch: show the injection-point tooltip for the tapped point instead
+        handleInjectionHover(e);
+    };
+    c.addEventListener('pointerup', endPointer);
+    c.addEventListener('pointercancel', endPointer);
+})();
+
+// Close the region details panel and clear the highlight / injection points
+window.deselectRegion = function () {
+    removeCurrentHighlight();
+    removeInjectionPointSpheres();
+    hideSidePanel();
+    const infoBox = document.getElementById('info-box');
+    if (infoBox) infoBox.style.display = 'block';
+    document.getElementById('injection-tooltip')?.classList.remove('visible');
+    updateInfo('Model Ready', 'Click on any muscle region to see a highlight!');
+};
+
+(function bindSidePanelClose() {
+    const btn = document.getElementById('side-panel-close');
+    if (btn) btn.addEventListener('click', () => window.deselectRegion());
+})();
+
 function onMouseClick(event) {
+    // A tap is already handled from pointerup; ignore the click the browser may also synthesize
+    if (event.type === 'click' && performance.now() - lastTouchSelect < 500) return;
     event.preventDefault();
+
+    if (pointerDownPos &&
+        Math.hypot(event.clientX - pointerDownPos.x, event.clientY - pointerDownPos.y) > DRAG_THRESHOLD_PX) {
+        return;
+    }
 
     // Readiness check - ensure all systems are initialized
     if (!initState.allReady) {
@@ -149,6 +218,12 @@ window.selectRegion = function (regionName, position = null) {
 
     addHighlightSphere(position, regionName);
     addInjectionPointSpheres(regionName);
+
+    // On phones the details sheet covers the lower part of the screen: bring the selection to the
+    // centre of the visible area
+    if (window.matchMedia('(max-width: 768px)').matches && window.flyToPosition) {
+        window.flyToPosition(position);
+    }
 
     const parts = regionName.split(' - ');
     const muscle = parts[0];
@@ -272,45 +347,64 @@ function addHighlightSphere(position, regionName) {
     }));
 }
 
-// Map to store persistent markers
+// Map of saved-location id -> marker mesh
 const persistentMarkers = new Map();
 
-window.addPermanentMarker = function (position, name) {
+window.addPermanentMarker = function (position, name, id) {
+    if (!scene || !position) return;
+    if (id && persistentMarkers.has(id)) return; // already shown
+
     const geometry = new THREE.ConeGeometry(0.3, 0.8, 16);
     geometry.translate(0, 0.4, 0);
     geometry.rotateX(Math.PI / 2);
     const material = new THREE.MeshBasicMaterial({ color: 0x3b82f6 });
     const mesh = new THREE.Mesh(geometry, material);
 
-    // Ensure position is Vector3
     const pos = new THREE.Vector3(position.x, position.y, position.z);
     mesh.position.copy(pos);
-    mesh.lookAt(pos.clone().add(new THREE.Vector3(0, 0, 1))); // Simple orientation
+    mesh.lookAt(pos.clone().add(new THREE.Vector3(0, 0, 1)));
+    mesh.name = `saved-${name || id || 'marker'}`;
 
     scene.add(mesh);
-    // Use a unique ID or composite key if needed, or simple ID if passed
-    // But here we rely on the marker collection
-    // Actually, we'd better return the object or store it referenced by ID if passed previously
-    // For now, let's just add it. To delete, we need the ID.
-    // Let's refactor to accept ID?
-    // No, let's just support visual addition for now. 
-    // Wait, delete needs to remove it.
-    // Let's assume re-render from list is safer? Or just simple add.
+    if (id) persistentMarkers.set(id, mesh);
 };
 
 window.removePermanentMarker = function (id) {
-    // Requires storing reference. Skipping strict implementation for this turn to avoid complex state management
-    // Ideally, we'd clear all and re-render from savedLocations list on init.
+    const mesh = persistentMarkers.get(id);
+    if (!mesh) return;
+    scene.remove(mesh);
+    mesh.geometry.dispose();
+    mesh.material.dispose();
+    persistentMarkers.delete(id);
 };
 
-window.flyToPosition = function (position) {
-    if (controls) {
-        // Move camera to look at position
-        // Basic implementation
-        // controls.target.copy(position);
-        // camera.position.set(position.x, position.y, position.z + 10);
-        // controls.update();
+// Smoothly move the orbit target (and camera) to a point on the model
+let flyAnimationId = null;
+// options.distance: camera distance from the target to end at; omit to keep the current distance
+window.flyToPosition = function (position, options = {}) {
+    if (!controls || !camera || !position) return;
+
+    const target = new THREE.Vector3(position.x, position.y, position.z);
+    const startTarget = controls.target.clone();
+    const startCam = camera.position.clone();
+    // Keep the current viewing direction; zoom only when a distance is requested (an automatic
+    // "move closer" on every call compounded into extreme zoom after a few selections)
+    const offset = startCam.clone().sub(startTarget);
+    if (options.distance) offset.setLength(options.distance);
+    const endCam = target.clone().add(offset);
+
+    const duration = 700;
+    const t0 = performance.now();
+    if (flyAnimationId) cancelAnimationFrame(flyAnimationId);
+
+    function step(now) {
+        const k = Math.min((now - t0) / duration, 1);
+        const eased = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+        controls.target.lerpVectors(startTarget, target, eased);
+        camera.position.lerpVectors(startCam, endCam, eased);
+        flyAnimationId = k < 1 ? requestAnimationFrame(step) : null;
     }
+    flyAnimationId = requestAnimationFrame(step);
 };
 
 // Global function to animate the highlight
@@ -393,8 +487,23 @@ function addInjectionPointSpheres(regionName) {
 }
 
 // Tooltip functionality for injection points
+let mouseMoveQueued = false;
 function onMouseMove(event) {
     if (!initState.allReady || injectionPointSpheres.length === 0) {
+        return;
+    }
+    // Raycasting on every mousemove is wasteful; handle at most once per frame
+    if (mouseMoveQueued) return;
+    mouseMoveQueued = true;
+    requestAnimationFrame(() => {
+        mouseMoveQueued = false;
+        handleInjectionHover(event);
+    });
+}
+
+function handleInjectionHover(event) {
+    if (injectionPointSpheres.length === 0) {
+        document.getElementById('injection-tooltip')?.classList.remove('visible');
         return;
     }
 
@@ -406,6 +515,9 @@ function onMouseMove(event) {
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
+    // Spheres created a moment ago (e.g. by the tap that triggered this) have no world matrix until
+    // the next render, so refresh them or the ray test misses
+    injectionPointSpheres.forEach(sphere => sphere.updateMatrixWorld(true));
     const intersects = raycaster.intersectObjects(injectionPointSpheres, false);
 
     const tooltip = document.getElementById('injection-tooltip');

@@ -14,7 +14,19 @@
         })(window, document, 'script', 'dataLayer', 'GTM-NVH4ZRRX');</script>
     <!-- End Google Tag Manager -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Body Map Peptides</title>
+    <!-- Apply the saved/system theme before first paint to avoid a dark/light flash -->
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('theme');
+                if (t !== 'light' && t !== 'dark') {
+                    t = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+                }
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) { /* theme.js falls back to the system preference */ }
+        })();
+    </script>
+    <title>Body Map Peptides – Interactive 3D Peptide Injection Site Map</title>
 
     <!-- Favicon & Icons -->
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png" />
@@ -42,6 +54,7 @@
     <meta property="og:image" content="https://peptide-map.vercel.app/assets/logo_main.png" />
     <meta property="og:url" content="https://peptide-map.vercel.app/" />
     <meta property="og:site_name" content="Body Map Peptides" />
+    <meta property="og:image:alt" content="Body Map Peptides logo" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -50,15 +63,27 @@
         content="Interactive 3D body map for exploring peptides, injection points, and peptide recommendations." />
     <meta name="twitter:image" content="https://peptide-map.vercel.app/assets/logo_main.png" />
 
-    <!-- Preload Critical Resources -->
-    <link rel="preload" href="css/styles.css" as="style" />
-
-    <!-- Tailwind CSS (via CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind utilities (prebuilt + minified; rebuild with `npm run build:css`) -->
+    <link rel="stylesheet" href="css/tailwind.css" />
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/styles.css" />
     <link rel="stylesheet" href="css/onboarding.css" />
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Body Map Peptides",
+        "url": "https://peptide-map.vercel.app/",
+        "description": "Interactive 3D body map for exploring peptides, injection points, reconstitution calculations and published peptide research. Educational use only; not medical advice.",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires WebGL",
+        "image": "https://peptide-map.vercel.app/assets/logo_main.png",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
 </head>
 
 <body>
@@ -67,42 +92,45 @@
             style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
 
-    <!-- Semantic Content for SEO - Hidden from users but crawlable by search engines -->
-    <main id="semantic-content"
-        style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">
-        <h1>Peptide Mapping & Visualization Tool</h1>
+    <!-- Accurate, crawlable summary of the app. Visually hidden for sighted users but available to
+         search engines and screen readers (also the fallback when WebGL/JS is unavailable). -->
+    <main id="semantic-content" class="sr-only">
+        <h1>Body Map Peptides – Interactive 3D Peptide Injection Site Map</h1>
         <p>
-            Peptide Map is an interactive web application for visualizing peptide structures,
-            relationships, and biochemical mappings. Researchers can explore peptide sequences,
-            interactions, and spatial layouts through an intuitive graphical interface.
+            Body Map Peptides is an educational web app built around an interactive 3D model of the human body.
+            Click a muscle or region to see common injuries, typical injection sites and technique notes, and
+            browse a database of commonly discussed research peptides.
         </p>
         <p>
-            This tool is designed for students, researchers, and professionals working in
-            biochemistry, molecular biology, and computational biology.
+            Content is for general education only and is not medical advice. Peptide use should be discussed with a
+            qualified healthcare professional.
         </p>
 
         <section>
             <h2>Features</h2>
             <ul>
-                <li>Interactive 3D body map for exploring peptide injection points</li>
-                <li>Comprehensive peptide database with detailed information</li>
-                <li>Personalized peptide recommendations based on your needs</li>
-                <li>Peptide stack calculator with dosing protocols</li>
-                <li>Research studies and scientific literature references</li>
-                <li>Vendor ratings and reviews for peptide suppliers</li>
-                <li>Sequence-based mapping and biochemical relationships</li>
+                <li>Interactive 3D body map showing common peptide injection points by region</li>
+                <li>Peptides database with categories, benefits, and research notes</li>
+                <li>Recommendation quiz that suggests peptides to research for a stated goal</li>
+                <li>Reconstitution and dosing calculator with unit converters</li>
+                <li>Peptide comparison tool and a personal journal stored in your browser</li>
+                <li>Live PubMed and Semantic Scholar research search</li>
+                <li>Vendor directory</li>
             </ul>
         </section>
 
         <section>
-            <h2>About Peptides</h2>
+            <h2>About peptides</h2>
             <p>
-                Peptides are short chains of amino acids that play crucial roles in biological processes.
-                They can influence hormones, metabolism, tissue repair, and various physiological functions.
-                This interactive tool helps researchers and practitioners understand peptide applications,
-                injection sites, and recommended protocols for different therapeutic goals.
+                Peptides are short chains of amino acids that act as signalling molecules in the body. Many
+                peptides discussed online are investigational and not approved for human use, and may be subject to
+                legal and regulatory restrictions where you live.
             </p>
         </section>
+
+        <noscript>
+            <p>This app needs JavaScript and WebGL to render the 3D body map. Please enable JavaScript to use it.</p>
+        </noscript>
     </main>
 
     <!-- 3D CANVAS CONTAINER (Moved to top so it renders first) -->
@@ -154,7 +182,7 @@
                 </button>
             </div>
             <div class="studies-meta">
-                <span>Rate vendors with ★ stars (1-5) and add comments</span>
+                <span>Vendor directory. When the ratings service is online you can rate vendors ★ (1-5) and comment. Listings are not endorsements.</span>
             </div>
         </div>
         <div id="companies-list" class="studies-list"></div>
@@ -171,13 +199,18 @@
             </div>
         </div>
         <div id="contact-container" class="studies-list">
-            <form id="contact-form">
+            <form id="contact-form" novalidate>
+                <!-- Honeypot: hidden from people, filled in by simple bots -->
+                <div style="position:absolute;left:-9999px;" aria-hidden="true">
+                    <label for="contact-website">Leave this field empty</label>
+                    <input type="text" id="contact-website" name="website" tabindex="-1" autocomplete="off" />
+                </div>
                 <div style="margin-bottom: 20px;">
                     <label for="contact-email"
                         style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem;">
                         Your Email Address
                     </label>
-                    <input type="email" id="contact-email" name="email" required placeholder="your.email@example.com"
+                    <input type="email" id="contact-email" name="email" required autocomplete="email" placeholder="your.email@example.com"
                         style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-primary); background: var(--bg-input); color: var(--text-primary); font-size: 0.95rem; box-sizing: border-box;" />
                 </div>
                 <div style="margin-bottom: 20px;">
@@ -229,7 +262,9 @@
             </div>
         </div>
         <div id="bpc157-container" class="studies-list" style="height: calc(100vh - 80px); padding: 0;">
-            <iframe src="BPC-157_interactive_dashboard.html" style="width: 100%; height: 100%; border: none;"></iframe>
+            <!-- 4.8 MB (Plotly inlined): loaded the first time the panel is opened, not on every page view -->
+            <iframe id="bpc157-frame" data-src="BPC-157_interactive_dashboard.html" title="BPC-157 publication forecast dashboard"
+                style="width: 100%; height: 100%; border: none;"></iframe>
         </div>
     </div>
 
@@ -244,7 +279,7 @@
     </div>
 
     <!-- Peptide Details Modal -->
-    <div id="peptide-modal" class="peptide-modal">
+    <div id="peptide-modal" class="peptide-modal" role="dialog" aria-modal="true" aria-label="Peptide details">
         <div class="peptide-modal-content">
             <button class="peptide-modal-close" aria-label="Close">&times;</button>
             <div id="peptide-modal-body"></div>
@@ -252,7 +287,7 @@
     </div>
 
     <!-- Study Actions Modal -->
-    <div id="study-modal" class="study-modal">
+    <div id="study-modal" class="study-modal" role="dialog" aria-modal="true" aria-label="Study details">
         <div class="study-modal-content">
             <button class="study-modal-close" aria-label="Close">&times;</button>
             <div id="study-modal-body">
@@ -400,7 +435,7 @@
 
     <!-- Chat Panel Toggle Button -->
     <button id="chat-toggle" class="left-toggle" data-closed-icon="🤖" data-open-icon="✕"
-        title="AI Peptide Q&A">🤖</button>
+        title="Peptide Q&amp;A (answers from the peptides database)">🤖</button>
 
     <!-- Toggle Button for Tab Panel -->
     <button id="tab-toggle" class="left-toggle" data-closed-icon="☰" data-open-icon="✕"
@@ -1953,7 +1988,7 @@
                                     <td>5 mg</td>
                                     <td>2 ml</td>
                                     <td>300 mcg</td>
-                                    <td>11</td>
+                                    <td>12</td>
                                     <td>AM</td>
                                     <td>5 days on, 2 days off</td>
                                     <td>8 weeks on, 8 weeks off</td>
@@ -2051,7 +2086,7 @@
                                 <td>3 weeks straight, once per year</td>
                                 </tr>
                                 <tr>
-                                    <td>Thyamlin</td>
+                                    <td>Thymulin</td>
                                     <td>100 mg</td>
                                     <td>3 ml</td>
                                     <td>5 mg</td>
@@ -2061,11 +2096,11 @@
                                     <td>Once every 6 months</td>
                                 </tr>
                                 <tr>
-                                    <td>GHK-CU</td>
+                                    <td>GHK-Cu</td>
                                     <td>100 mg</td>
                                     <td>3 ml</td>
                                     <td>1.5 mg</td>
-                                    <td>5</td>
+                                    <td>4.5</td>
                                     <td>AM</td>
                                     <td>Every day</td>
                                     <td>8 weeks on, 8 weeks off</td>
@@ -2379,11 +2414,11 @@
                 </div>
                 <div class="research-filter-group">
                     <label for="research-year-from">Year from</label>
-                    <input type="number" id="research-year-from" placeholder="e.g., 2020" min="1900" max="2025">
+                    <input type="number" id="research-year-from" placeholder="e.g., 2020" min="1900" max="2100">
                 </div>
                 <div class="research-filter-group">
                     <label for="research-year-to">Year to</label>
-                    <input type="number" id="research-year-to" placeholder="e.g., 2024" min="1900" max="2025">
+                    <input type="number" id="research-year-to" placeholder="e.g., 2024" min="1900" max="2100">
                 </div>
                 <div class="research-filter-group">
                     <label for="research-primary-terms">Primary terms (title)</label>
@@ -2412,6 +2447,7 @@
     <!-- Title Card removed - was covering the 3D canvas -->
 
     <div id="side-panel" class="side-panel">
+        <button id="side-panel-close" type="button" aria-label="Close region details" title="Close">&times;</button>
         <h2 id="panel-title" class="text-xl font-bold mb-3 text-white"></h2>
         <p id="panel-portion" class="text-gray-300 mb-3"></p>
 
@@ -2525,28 +2561,28 @@
                 <!-- Normal Mode -->
                 <div id="normal-mode" class="calc-mode-content active">
                     <div class="calc-row">
-                        <label>Choose syringe volume:</label>
+                        <label for="syringe-volume">Choose syringe volume:</label>
                         <select id="syringe-volume">
-                            <option value="0.3">0.3 ml</option>
-                            <option value="0.5">0.5 ml</option>
-                            <option value="1">1 ml</option>
+                            <option value="0.3">0.3 ml (30 units)</option>
+                            <option value="0.5">0.5 ml (50 units)</option>
+                            <option value="1">1 ml (100 units)</option>
                         </select>
                     </div>
 
                     <div class="calc-row">
-                        <label>Choose peptide amount (mg):</label>
+                        <label for="peptide-amount">Choose peptide amount (mg):</label>
                         <input type="number" id="peptide-amount" value="5" min="1" max="100" step="0.1" />
                         <span class="unit">mg</span>
                     </div>
 
                     <div class="calc-row">
-                        <label>Choose amount of bacteriostatic water (ml):</label>
+                        <label for="bac-water">Choose amount of bacteriostatic water (ml):</label>
                         <input type="number" id="bac-water" value="2" min="0.5" max="10" step="0.1" />
                         <span class="unit">ml</span>
                     </div>
 
                     <div class="calc-row">
-                        <label>Choose Peptide dose:</label>
+                        <label for="peptide-dose">Choose Peptide dose:</label>
                         <input type="number" id="peptide-dose" value="250" min="1" max="10000" step="1" />
                         <div class="unit-toggle">
                             <button class="unit-btn active" data-unit="mcg">
@@ -2588,47 +2624,47 @@
                 <!-- Advanced Mode -->
                 <div id="advanced-mode" class="calc-mode-content">
                     <p class="mode-note">
-                        Choose "Advanced mode" to dose peptide blends.
+                        Dose peptide blends here. Syringe-capacity warnings use the syringe size chosen in Normal Mode.
                     </p>
 
                     <div id="peptide-blends">
                         <div class="peptide-blend">
                             <h4>Peptide 1</h4>
                             <div class="blend-row">
-                                <label>Peptide Name:</label>
-                                <input type="text" class="blend-name" placeholder="e.g., BPC-157" />
+                                <label for="blend-name-1">Peptide Name:</label>
+                                <input type="text" id="blend-name-1" class="blend-name" placeholder="e.g., BPC-157" />
                             </div>
                             <div class="blend-row">
-                                <label>Amount (mg):</label>
-                                <input type="number" class="blend-amount" value="5" min="1" step="0.1" />
+                                <label for="blend-amount-1">Amount (mg):</label>
+                                <input type="number" id="blend-amount-1" class="blend-amount" value="5" min="1" step="0.1" />
                             </div>
                             <div class="blend-row">
-                                <label>Dosage (mcg):</label>
-                                <input type="number" class="blend-dosage" value="250" min="1" step="1" />
+                                <label for="blend-dosage-1">Dosage (mcg):</label>
+                                <input type="number" id="blend-dosage-1" class="blend-dosage" value="250" min="1" step="1" />
                             </div>
                             <div class="blend-row">
-                                <label>BAC Used (ml):</label>
-                                <input type="number" class="blend-bac" value="2" min="0.5" step="0.1" />
+                                <label for="blend-bac-1">BAC Used (ml):</label>
+                                <input type="number" id="blend-bac-1" class="blend-bac" value="2" min="0.5" step="0.1" />
                             </div>
                         </div>
 
                         <div class="peptide-blend">
                             <h4>Peptide 2</h4>
                             <div class="blend-row">
-                                <label>Peptide Name:</label>
-                                <input type="text" class="blend-name" placeholder="e.g., TB-500" />
+                                <label for="blend-name-2">Peptide Name:</label>
+                                <input type="text" id="blend-name-2" class="blend-name" placeholder="e.g., TB-500" />
                             </div>
                             <div class="blend-row">
-                                <label>Amount (mg):</label>
-                                <input type="number" class="blend-amount" value="5" min="1" step="0.1" />
+                                <label for="blend-amount-2">Amount (mg):</label>
+                                <input type="number" id="blend-amount-2" class="blend-amount" value="5" min="1" step="0.1" />
                             </div>
                             <div class="blend-row">
-                                <label>Dosage (mcg):</label>
-                                <input type="number" class="blend-dosage" value="250" min="1" step="1" />
+                                <label for="blend-dosage-2">Dosage (mcg):</label>
+                                <input type="number" id="blend-dosage-2" class="blend-dosage" value="250" min="1" step="1" />
                             </div>
                             <div class="blend-row">
-                                <label>Amount (mg):</label>
-                                <input type="number" class="blend-bac" value="2" min="0.5" step="0.1" />
+                                <label for="blend-bac-2">BAC Used (ml):</label>
+                                <input type="number" id="blend-bac-2" class="blend-bac" value="2" min="0.5" step="0.1" />
                             </div>
                         </div>
                     </div>
@@ -2682,7 +2718,10 @@
         <!-- Quiz script -->
         <script src="js/quiz.js"></script>
 
-        <!-- Three.js core + helpers -->
+        <!-- Three.js r128 core + helpers (self-hosted) -->
+        <script src="js/vendor/three.min.js"></script>
+        <script src="js/vendor/OrbitControls.js"></script>
+        <script src="js/vendor/OBJLoader.js"></script>
         <script src="js/three-deps.js"></script>
 
         <!-- Application modules (order matters) -->
@@ -2703,11 +2742,12 @@
         <script src="js/research-studies.js"></script>
         <script src="js/peptides-panel.js"></script>
         <script src="js/keyboard-nav.js"></script>
-        <script src="js/analytics.js"></script>
         <script src="js/peptide-compare.js"></script>
         <script src="js/peptide-journal.js"></script>
         <script src="js/peptide-chat.js"></script>
         <script src="js/saved-locations.js"></script>
+        <script src="js/mobile-menu.js"></script>
+        <script src="js/panel-resize.js"></script>
         <script>
             // Global error handler
             window.onerror = function (msg, url, lineNo, columnNo, error) {
@@ -2746,6 +2786,12 @@
                     container.addEventListener("mousemove", onMouseMove);
                 }
 
+                // Icon-only buttons need an accessible name; reuse their tooltip text
+                document.querySelectorAll(".left-toggle, .right-toggle").forEach(btn => {
+                    if (!btn.hasAttribute("aria-label") && btn.title) btn.setAttribute("aria-label", btn.title);
+                    if (!btn.hasAttribute("aria-expanded") && btn.dataset.openIcon) btn.setAttribute("aria-expanded", "false");
+                });
+
                 // Initialize UI
                 initializeTabs();
                 initializeToggleButtons();
@@ -2780,6 +2826,14 @@
                     } else {
                         savedPanel.style.right = "0px";
                     }
+                }
+
+                // Keep the tiny disclaimer links clear of any open right-hand panel
+                const disclaimer = document.querySelector(".disclaimer-links");
+                if (disclaimer && !window.matchMedia("(max-width: 768px)").matches) {
+                    disclaimer.style.right = `${infoWidth + savedWidth + 8}px`;
+                } else if (disclaimer) {
+                    disclaimer.style.right = "";
                 }
 
                 // Position Toggle to the left of the leftmost panel
@@ -2862,6 +2916,7 @@
                         if (otherPanel && otherPanel !== panel) {
                             otherPanel.classList.add("collapsed");
                             if (otherToggle) {
+                                otherToggle.setAttribute("aria-expanded", "false");
                                 otherToggle.classList.add("panel-collapsed");
                                 if (otherToggle.dataset.closedIcon) {
                                     otherToggle.innerHTML = otherToggle.dataset.closedIcon;
@@ -2873,11 +2928,17 @@
                     // Open target
                     panel.classList.remove("collapsed");
                     toggle.classList.remove("panel-collapsed");
+                    toggle.setAttribute("aria-expanded", "true");
                     if (toggle.dataset.openIcon) toggle.innerHTML = toggle.dataset.openIcon;
+
+                    // Lazy-load heavy embedded content on first open
+                    const frame = panel.querySelector("iframe[data-src]");
+                    if (frame && !frame.getAttribute("src")) frame.setAttribute("src", frame.dataset.src);
                 } else {
                     // Close target
                     panel.classList.add("collapsed");
                     toggle.classList.add("panel-collapsed");
+                    toggle.setAttribute("aria-expanded", "false");
                     if (toggle.dataset.closedIcon) toggle.innerHTML = toggle.dataset.closedIcon;
                 }
 
@@ -2977,18 +3038,14 @@
             }
         </script>
 
-        <!-- Quiz script -->
-        <script src="js/quiz.js"></script>
-
-        <!-- Companies script (ensure it runs after the DOM is fully loaded) -->
+        <!-- Vendors panel + contact form -->
+        <script src="js/companies.js"></script>
+        <script src="js/contact.js"></script>
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 if (typeof window.initializeCompaniesPanel === "function") {
                     window.initializeCompaniesPanel();
                 }
-
-                // Quiz and companies toggles should already be set up by initializeToggleButtons()
-                // This fallback is no longer needed as we handle it in the early initialization
             });
         </script>
 </body>

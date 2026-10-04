@@ -51,16 +51,27 @@ try {
 
     // POST add/update
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!isAdminRequest()) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Adding or editing vendors requires an admin token']);
+            exit();
+        }
         $data = getJSONInput();
         $action = isset($data['action']) ? $data['action'] : '';
+
+        // Only http(s) links may be stored; anything else (javascript:, data:) would become a
+        // clickable attack link on the vendor list.
+        $isHttpUrl = function ($u) {
+            return (bool)preg_match('#^https?://[^\s]+$#i', $u) && strlen($u) <= 500;
+        };
 
         if ($action === 'add') {
             $name = sanitize($data['name'] ?? '');
             $url = sanitize($data['url'] ?? '');
             $description = sanitize($data['description'] ?? '');
-            if (!$name || !$url) { 
+            if (!$name || !$url || !$isHttpUrl(html_entity_decode($url))) { 
                 http_response_code(400); 
-                echo json_encode(['error'=>'name and url required']); 
+                echo json_encode(['error'=>'name and a valid http(s) url required']); 
                 exit(); 
             }
             $stmt = $db->prepare("INSERT INTO peptide_vendors (name, url, description) VALUES (:name, :url, :description)");
@@ -74,9 +85,9 @@ try {
             $name = sanitize($data['name'] ?? '');
             $url = sanitize($data['url'] ?? '');
             $description = sanitize($data['description'] ?? '');
-            if ($id <= 0 || !$name || !$url) { 
+            if ($id <= 0 || !$name || !$url || !$isHttpUrl(html_entity_decode($url))) { 
                 http_response_code(400); 
-                echo json_encode(['error'=>'id, name, url required']); 
+                echo json_encode(['error'=>'id, name and a valid http(s) url required']); 
                 exit(); 
             }
             $stmt = $db->prepare("UPDATE peptide_vendors SET name=:name, url=:url, description=:description, updated_at=NOW() WHERE id=:id");
@@ -94,5 +105,6 @@ try {
     echo json_encode(['error' => 'Method not allowed']);
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Server error', 'message' => $e->getMessage()]);
+    error_log('companies.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'Server error']);
 }

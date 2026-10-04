@@ -18,6 +18,10 @@
         { id: 'contact-toggle', icon: '✉️', label: 'Contact' },
         { id: 'new-panel-toggle', icon: '💊', label: 'Peptides Database' },
         { id: 'bpc157-toggle', icon: '📊', label: 'BPC-157 Dashboard' },
+        { id: 'compare-toggle', icon: '⚖️', label: 'Compare Peptides' },
+        { id: 'journal-toggle', icon: '📓', label: 'Journal' },
+        { id: 'chat-toggle', icon: '🤖', label: 'Peptide Q&A' },
+        { id: 'saved-toggle', icon: '📍', label: 'Saved Locations' },
         { id: 'tab-toggle', icon: '☰', label: 'Injection Info' }
     ];
 
@@ -36,6 +40,7 @@
         hamburgerBtn.id = 'mobile-hamburger';
         hamburgerBtn.className = 'mobile-hamburger';
         hamburgerBtn.setAttribute('aria-label', 'Open menu');
+        hamburgerBtn.setAttribute('aria-controls', 'mobile-drawer');
         hamburgerBtn.innerHTML = `
             <span class="hamburger-line"></span>
             <span class="hamburger-line"></span>
@@ -60,6 +65,10 @@
                 <button class="mobile-drawer-close" aria-label="Close menu">✕</button>
             </div>
             <nav class="mobile-drawer-nav">
+                <button class="mobile-menu-item" id="mobile-close-panel" hidden>
+                    <span class="mobile-menu-icon">✕</span>
+                    <span class="mobile-menu-label">Close current panel</span>
+                </button>
                 ${menuItems.map(item => `
                     <button class="mobile-menu-item" data-target="${item.id}">
                         <span class="mobile-menu-icon">${item.icon}</span>
@@ -95,6 +104,13 @@
             });
         });
 
+        // Close whichever panel is open (the desktop toggle buttons are hidden on mobile)
+        const closePanelBtn = mobileDrawer.querySelector('#mobile-close-panel');
+        closePanelBtn.addEventListener('click', () => {
+            closeDrawer();
+            openPanelToggles().forEach(btn => setTimeout(() => btn.click(), 150));
+        });
+
         // Restart tutorial button
         const restartBtn = mobileDrawer.querySelector('#mobile-restart-tutorial');
         if (restartBtn) {
@@ -121,7 +137,26 @@
         }
     }
 
+    // Toggle buttons whose panel is currently open
+    function openPanelToggles() {
+        const pairs = [
+            ['tab-panel', 'tab-toggle'], ['studies-panel', 'studies-toggle'], ['companies-panel', 'companies-toggle'],
+            ['quiz-panel', 'quiz-toggle'], ['calc-panel', 'calc-toggle'], ['contact-panel', 'contact-toggle'],
+            ['new-panel', 'new-panel-toggle'], ['bpc157-panel', 'bpc157-toggle'], ['compare-panel', 'compare-toggle'],
+            ['journal-panel', 'journal-toggle'], ['chat-panel', 'chat-toggle'], ['saved-locations-panel', 'saved-toggle']
+        ];
+        return pairs
+            .map(([panelId, toggleId]) => {
+                const panel = document.getElementById(panelId);
+                const toggle = document.getElementById(toggleId);
+                return panel && toggle && !panel.classList.contains('collapsed') ? toggle : null;
+            })
+            .filter(Boolean);
+    }
+
     function openDrawer() {
+        const closeItem = mobileDrawer.querySelector('#mobile-close-panel');
+        if (closeItem) closeItem.hidden = openPanelToggles().length === 0;
         isDrawerOpen = true;
         mobileDrawer.classList.add('open');
         overlay.classList.add('visible');
@@ -151,7 +186,7 @@
         }
 
         // Toggle visibility of desktop toggle buttons
-        const desktopToggles = document.querySelectorAll('.left-toggle');
+        const desktopToggles = document.querySelectorAll('.left-toggle, .right-toggle');
         desktopToggles.forEach(btn => {
             if (btn.id !== 'mobile-hamburger') {
                 btn.classList.toggle('hide-on-mobile', mobile);

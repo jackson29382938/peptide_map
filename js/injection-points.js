@@ -43,54 +43,6 @@ const INJECTION_SIZES = {
  */
 
 const injectionPoints = {
-    // ===== KNEE REGIONS =====
-    'Right Knee': [
-        {
-            position: new THREE.Vector3(-2.2, -2.8, 0.8),  // Medial soft tissue
-            size: INJECTION_SIZES.SMALL,
-            type: 'injury_specific',
-            targetInjuries: ['MCL sprain', 'Medial meniscus tear', 'Pes anserine bursitis'],
-            notes: 'Medial knee soft tissue - target MCL and medial compartment'
-        },
-        {
-            position: new THREE.Vector3(-1.6, -2.8, 0.8),  // Lateral soft tissue
-            size: INJECTION_SIZES.SMALL,
-            type: 'injury_specific',
-            targetInjuries: ['LCL sprain', 'Lateral meniscus tear', 'IT band syndrome'],
-            notes: 'Lateral knee soft tissue - target LCL and lateral compartment'
-        },
-        {
-            position: new THREE.Vector3(-1.9, -2.5, 1.0),  // Anterior/patellar region
-            size: INJECTION_SIZES.MEDIUM,
-            type: 'general',
-            targetInjuries: ['Patellar tendonitis', 'Quadriceps tendon strain'],
-            notes: 'Patellar tendon and anterior knee'
-        }
-    ],
-
-    'Left Knee': [
-        {
-            position: new THREE.Vector3(2.2, -2.8, 0.8),   // Medial soft tissue
-            size: INJECTION_SIZES.SMALL,
-            type: 'injury_specific',
-            targetInjuries: ['MCL sprain', 'Medial meniscus tear', 'Pes anserine bursitis'],
-            notes: 'Medial knee soft tissue - target MCL and medial compartment'
-        },
-        {
-            position: new THREE.Vector3(1.6, -2.8, 0.8),   // Lateral soft tissue
-            size: INJECTION_SIZES.SMALL,
-            type: 'injury_specific',
-            targetInjuries: ['LCL sprain', 'Lateral meniscus tear', 'IT band syndrome'],
-            notes: 'Lateral knee soft tissue - target LCL and lateral compartment'
-        },
-        {
-            position: new THREE.Vector3(1.9, -2.5, 1.0),   // Anterior/patellar region
-            size: INJECTION_SIZES.MEDIUM,
-            type: 'general',
-            targetInjuries: ['Patellar tendonitis', 'Quadriceps tendon strain'],
-            notes: 'Patellar tendon and anterior knee'
-        }
-    ],
 
     // ===== ABDOMINAL REGIONS =====
     'Upper Abs': [
@@ -260,53 +212,7 @@ const injectionPoints = {
     ],
 
     // ===== LOWER LEG REGIONS =====
-    'Right Calf - Gastrocnemius': [
-        {
-            position: new THREE.Vector3(-1.9, -4.2, -0.3), // Medial gastrocnemius
-            size: INJECTION_SIZES.MEDIUM,
-            type: 'injury_specific',
-            targetInjuries: ['Medial gastrocnemius strain', 'Calf tear'],
-            notes: 'Medial head of gastrocnemius - common strain site'
-        },
-        {
-            position: new THREE.Vector3(-1.7, -4.2, -0.3), // Lateral gastrocnemius
-            size: INJECTION_SIZES.MEDIUM,
-            type: 'injury_specific',
-            targetInjuries: ['Lateral gastrocnemius strain', 'Calf tear'],
-            notes: 'Lateral head of gastrocnemius'
-        },
-        {
-            position: new THREE.Vector3(-1.8, -3.8, -0.2), // Upper calf
-            size: INJECTION_SIZES.LARGE,
-            type: 'general',
-            targetInjuries: ['General calf strain', 'Muscle tightness'],
-            notes: 'Upper gastrocnemius - broader injection area'
-        }
-    ],
 
-    'Left Calf - Gastrocnemius': [
-        {
-            position: new THREE.Vector3(1.9, -4.2, -0.3),  // Medial gastrocnemius
-            size: INJECTION_SIZES.MEDIUM,
-            type: 'injury_specific',
-            targetInjuries: ['Medial gastrocnemius strain', 'Calf tear'],
-            notes: 'Medial head of gastrocnemius - common strain site'
-        },
-        {
-            position: new THREE.Vector3(1.7, -4.2, -0.3),  // Lateral gastrocnemius
-            size: INJECTION_SIZES.MEDIUM,
-            type: 'injury_specific',
-            targetInjuries: ['Lateral gastrocnemius strain', 'Calf tear'],
-            notes: 'Lateral head of gastrocnemius'
-        },
-        {
-            position: new THREE.Vector3(1.8, -3.8, -0.2),  // Upper calf
-            size: INJECTION_SIZES.LARGE,
-            type: 'general',
-            targetInjuries: ['General calf strain', 'Muscle tightness'],
-            notes: 'Upper gastrocnemius - broader injection area'
-        }
-    ],
 
     // ===== BACK REGIONS =====
     'Lower Back': [

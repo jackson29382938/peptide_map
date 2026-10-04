@@ -9,6 +9,15 @@
     let comparisonPanel = null;
     let isInitialized = false;
 
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // Get peptide data from global database
     function getPeptideData(peptideId) {
         if (typeof window.PEPTIDES_DATABASE !== 'undefined') {
@@ -82,16 +91,16 @@
             const selected = selectedPeptides[i] || '';
             html += `
                 <div class="compare-selector">
-                    <label>Peptide ${i + 1}</label>
-                    <select class="compare-select" data-index="${i}">
+                    <label for="compare-select-${i}">Peptide ${i + 1}</label>
+                    <select class="compare-select" id="compare-select-${i}" data-index="${i}">
                         <option value="">-- Select Peptide --</option>
                         ${peptides.map(p => `
-                            <option value="${p.id}" ${selected === p.id ? 'selected' : ''}>
-                                ${p.name}
+                            <option value="${escapeHtml(p.id)}" ${selected === p.id ? 'selected' : ''}>
+                                ${escapeHtml(p.name)}
                             </option>
                         `).join('')}
                     </select>
-                    ${selected ? `<button class="compare-remove" data-index="${i}" title="Remove">✕</button>` : ''}
+                    ${selected ? `<button class="compare-remove" data-index="${i}" title="Remove" aria-label="Remove peptide ${i + 1}">✕</button>` : ''}
                 </div>
             `;
         }
@@ -104,8 +113,15 @@
         // Add event listeners
         container.querySelectorAll('.compare-select').forEach(select => {
             select.addEventListener('change', (e) => {
-                const index = parseInt(e.target.dataset.index);
+                const index = parseInt(e.target.dataset.index, 10);
                 const value = e.target.value;
+
+                // Picking a peptide that's already selected elsewhere would compare it with itself
+                if (value && selectedPeptides.some((p, i) => p === value && i !== index)) {
+                    alert('That peptide is already selected.');
+                    renderSelectors();
+                    return;
+                }
 
                 if (value) {
                     selectedPeptides[index] = value;
@@ -114,14 +130,14 @@
                 }
 
                 // Remove nulls and update
-                selectedPeptides = selectedPeptides.filter(p => p);
+                selectedPeptides = Array.from(selectedPeptides).filter(p => p);
                 renderSelectors();
             });
         });
 
         container.querySelectorAll('.compare-remove').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const index = parseInt(e.target.dataset.index);
+                const index = parseInt(e.currentTarget.dataset.index, 10);
                 selectedPeptides.splice(index, 1);
                 renderSelectors();
                 renderComparison();
@@ -166,9 +182,9 @@
             { label: 'Typical Dose', key: 'dose' },
             { label: 'Administration', key: 'administration' },
             { label: 'Protocol', key: 'protocol' },
-            { label: 'Benefits', key: 'benefits', format: v => Array.isArray(v) ? `<ul>${v.slice(0, 5).map(b => `<li>${b}</li>`).join('')}</ul>` : v },
-            { label: 'Side Effects', key: 'sideEffects', format: v => Array.isArray(v) ? `<ul>${v.map(s => `<li>${s}</li>`).join('')}</ul>` : v },
-            { label: 'Available Forms', key: 'forms', format: v => Array.isArray(v) ? v.slice(0, 3).join(', ') : v }
+            { label: 'Benefits', key: 'benefits', format: v => Array.isArray(v) ? `<ul>${v.slice(0, 5).map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>` : escapeHtml(v) },
+            { label: 'Side Effects', key: 'sideEffects', format: v => Array.isArray(v) ? `<ul>${v.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul>` : escapeHtml(v) },
+            { label: 'Available Forms', key: 'forms', format: v => Array.isArray(v) ? escapeHtml(v.slice(0, 3).join(', ')) : escapeHtml(v) }
         ];
 
         let html = `
@@ -176,7 +192,7 @@
                 <thead>
                     <tr>
                         <th>Attribute</th>
-                        ${peptideData.map(p => `<th>${p.data.shortcuts?.[0] || p.id}</th>`).join('')}
+                        ${peptideData.map(p => `<th>${escapeHtml(p.data.shortcuts?.[0] || p.id)}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
@@ -185,7 +201,7 @@
                             <td class="compare-label">${row.label}</td>
                             ${peptideData.map(p => {
             const value = p.data[row.key];
-            const formatted = row.format ? row.format(value) : (value || 'N/A');
+            const formatted = row.format ? row.format(value) : escapeHtml(value || 'N/A');
             return `<td>${formatted}</td>`;
         }).join('')}
                         </tr>

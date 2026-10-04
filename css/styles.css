@@ -721,7 +721,9 @@ body.bg-black {
 
 /* Side Panel Styles */
 #side-panel {
-    position: absolute;
+    /* fixed (not absolute): an off-canvas absolute box stretches the scrollable width, which made
+       phones lay the whole page out ~1.8x wider than the screen */
+    position: fixed;
     top: 0;
     right: -320px;
     /* Hidden off-screen */
@@ -743,6 +745,31 @@ body.bg-black {
 #side-panel.active {
     right: 0;
     /* Slide in */
+}
+
+#side-panel-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+    color: var(--text-tertiary);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 2;
+}
+
+#side-panel-close:hover {
+    color: var(--text-accent);
+    border-color: var(--border-accent);
+}
+
+#side-panel #panel-title {
+    padding-right: 44px; /* keep the title clear of the close button */
 }
 
 /* Override Tailwind text colors in light mode for side panel */
@@ -1775,9 +1802,17 @@ body.bg-black {
 
 .study-card-header {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
+    gap: 6px 10px;
     margin-bottom: 8px;
+    min-width: 0;
+}
+
+.study-card-header h3 {
+    flex: 1 1 12rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .study-badge {
@@ -1831,7 +1866,9 @@ body.bg-black {
 
 /* Peptide-specific card styles */
 .peptide-shortcuts {
-    margin: 4px 0 0 0;
+    flex-basis: 100%;
+    overflow-wrap: anywhere;
+    margin: 0;
     font-size: 0.75rem;
     color: var(--text-tertiary);
     font-style: italic;
@@ -3981,7 +4018,7 @@ body.bg-black {
 }
 
 .mobile-drawer-header h2 {
-    margin: 0;
+    margin: 0 0 0 54px; /* clear the fixed hamburger button that sits above the drawer */
     font-size: 1.3rem;
     font-weight: 700;
     color: var(--text-primary);
@@ -4056,8 +4093,13 @@ body.bg-black {
 }
 
 /* Hide desktop toggles on mobile */
-.left-toggle.hide-on-mobile {
+.left-toggle.hide-on-mobile,
+.right-toggle.hide-on-mobile {
     display: none !important;
+}
+
+.mobile-menu-item[hidden] {
+    display: none;
 }
 
 /* ==========================================
@@ -4074,10 +4116,49 @@ body.bg-black {
     #contact-panel,
     #new-panel,
     #bpc157-panel,
-    #calc-panel {
+    #calc-panel,
+    #compare-panel,
+    #journal-panel,
+    #chat-panel,
+    #saved-locations-panel {
         width: 100vw !important;
         max-width: 100vw !important;
         min-width: 100vw !important;
+    }
+
+    /* Region details become a bottom sheet on phones so the model (and its tappable injection
+       points) stays visible above it; the camera recentres on the selection (see interaction.js) */
+    #side-panel {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100vw;
+        height: 45vh;
+        box-sizing: border-box;
+        border-left: none;
+        border-top: 1px solid var(--border-primary);
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -4px 16px var(--shadow-sm);
+        transform: translateY(105%);
+        transition: transform 0.3s ease-in-out, background 0.3s ease, color 0.3s ease;
+    }
+
+    #side-panel.active {
+        right: 0;
+        transform: translateY(0);
+    }
+
+    /* The sheet covers the corner where these live; they return when it closes */
+    body:has(#side-panel.active) .logo-container,
+    body:has(#side-panel.active) .disclaimer-links {
+        display: none;
+    }
+
+    /* Keep panel headings clear of the fixed hamburger button */
+    .studies-header,
+    .tab-buttons {
+        padding-top: 64px;
     }
 
     /* Info box adjustments */
@@ -5392,4 +5473,34 @@ body.bg-black {
     background: var(--bg-tertiary);
     color: var(--text-tertiary);
     border-color: transparent;
+}
+/* ==========================================
+   PANEL RESIZE HANDLES (generic)
+   Panels created by JS (chat, compare, journal) have no per-panel handle rule; the id-specific
+   rules above still win for the static panels.
+   ========================================== */
+[id$="-drag-handle"] {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 10px;
+    height: 100%;
+    background: rgba(239, 68, 68, 0.2);
+    cursor: ew-resize;
+    transition: background 0.2s ease;
+    z-index: 50;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+[id$="-drag-handle"]:hover,
+[id$="-drag-handle"]:focus-visible {
+    background: rgba(239, 68, 68, 0.5);
+    outline: none;
+}
+
+@media (max-width: 768px) {
+    [id$="-drag-handle"] {
+        display: none;
+    }
 }
