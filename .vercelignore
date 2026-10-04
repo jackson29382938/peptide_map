@@ -8,3 +8,4 @@ test.py
 tailwind.config.js
 css/tailwind.src.css
 README.md
+tests/

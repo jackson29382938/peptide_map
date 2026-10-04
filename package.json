@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build:css": "tailwindcss -c tailwind.config.js -i css/tailwind.src.css -o css/tailwind.css --minify"
+    "build:css": "tailwindcss -c tailwind.config.js -i css/tailwind.src.css -o css/tailwind.css --minify",
+    "test:e2e": "node tests/e2e/run-all.js"
   },
   "keywords": [
     "peptide",
@@ -24,7 +25,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "playwright": "^1.56.1"
   },
   "engines": {
     "node": ">=18"

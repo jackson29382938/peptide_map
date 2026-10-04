@@ -31,6 +31,20 @@ comments, research cache). `api/contact.js` is the Vercel serverless function be
 | `php/` | Legacy PHP/MySQL backend for vendor ratings (not used on Vercel; see below) |
 | `test.py` | Data-science script that generates `BPC-157_interactive_dashboard.html` |
 
+## End-to-end tests
+
+`tests/e2e/` drives the real UI in headless Chromium (every panel, calculator, search path, the 79 body
+regions, touch/mobile behaviour, the contact form, vendors, quiz, journal, onboarding, drag-resize...).
+
+```bash
+npm install
+npx playwright install chromium      # or set CHROMIUM_PATH to an existing Chromium
+npm start &                          # serves http://localhost:3000 (set BASE to test another URL)
+npm run test:e2e
+```
+
+The research-search checks call the live PubMed API; everything else is self-contained.
+
 ## Deploying to Vercel
 
 Set these environment variables for the contact form: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
